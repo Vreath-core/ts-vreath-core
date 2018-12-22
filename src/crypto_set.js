@@ -29,7 +29,6 @@ exports.PublicFromPrivate = (Private) => {
     return secp256k1.publicKeyCreate(Buffer.from(Private, 'hex')).toString('hex');
 };
 exports.EncryptData = (data, Private, Public) => {
-    const ecdh = crypto.createECDH('secp256k1');
     const secret = secp256k1.ecdh(Buffer.from(Public, 'hex'), Private);
     const cipher = crypto.createCipher('aes-256-cbc', secret);
     let crypted = cipher.update(data, 'utf-8', 'hex');
@@ -37,17 +36,11 @@ exports.EncryptData = (data, Private, Public) => {
     return crypted;
 };
 exports.DecryptData = (data, Private, Public) => {
-    try {
-        const ecdh = crypto.createECDH('secp256k1');
-        const secret = secp256k1.ecdh(Buffer.from(Public, 'hex'), Private);
-        const decipher = crypto.createDecipher('aes-256-cbc', secret);
-        let dec = decipher.update(data, 'hex', 'utf-8');
-        dec += decipher.final('utf-8');
-        return dec;
-    }
-    catch (e) {
-        throw new Error(e);
-    }
+    const secret = secp256k1.ecdh(Buffer.from(Public, 'hex'), Private);
+    const decipher = crypto.createDecipher('aes-256-cbc', secret);
+    let dec = decipher.update(data, 'hex', 'utf-8');
+    dec += decipher.final('utf-8');
+    return dec;
 };
 exports.SignData = (data, Private) => {
     const hash = crypto.createHash("sha256").update(data).digest();

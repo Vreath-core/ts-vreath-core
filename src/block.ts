@@ -84,7 +84,7 @@ const tx_fee_sum = (pure_txs:T.TxPure[],raws:T.TxRaw[]):number=>{
     return txs.reduce((sum,tx)=>math.chain(sum).add(TxSet.tx_fee(tx)).done(),0);
 };
 
-const pos_hash = (previoushash:string,address:string,timestamp:number)=>{
+export const pos_hash = (previoushash:string,address:string,timestamp:number)=>{
     return _.toHashNum(math.chain(_.Hex_to_Num(previoushash)).add(_.toHashNum(address)).add(timestamp).done().toString());
 }
 
@@ -101,7 +101,7 @@ const PoS_mining = (previoushash:string,address:string,balance:number,difficulty
     return timestamp;
 }
 
-const Wait_block_time = (pre:number,block_time:number)=>{
+export const Wait_block_time = (pre:number,block_time:number)=>{
     let date;
     let timestamp;
     do{
@@ -454,7 +454,7 @@ const compute_issue = (height:number)=>{
     else return issue;
 }
 
-export const AcceptKeyBlock = (block:T.Block,chain:T.Block[],StateData:T.State[],LockData:T.Lock[])=>{
+export const AcceptKeyBlock = (block:T.Block,chain:T.Block[],StateData:T.State[],LockData:T.Lock[]):[T.State[],T.Lock[]]=>{
     const last_key = search_key_block(chain);
     const last_micros = search_micro_block(chain,last_key);
     const fees:number = last_micros.reduce((sum,b)=>math.chain(sum).add(b.meta.fee_sum).done(),0);
@@ -507,7 +507,7 @@ export const AcceptKeyBlock = (block:T.Block,chain:T.Block[],StateData:T.State[]
     return [reduced,LockData];
 }
 
-export const AcceptMicroBlock = (block:T.Block,chain:T.Block[],StateData:T.State[],LockData:T.Lock[])=>{
+export const AcceptMicroBlock = (block:T.Block,chain:T.Block[],StateData:T.State[],LockData:T.Lock[]):[T.State[],T.Lock[]]=>{
     const first_data:[T.State[],T.Lock[]] = [StateData,LockData];
     const txs = block.txs.map(pure=>TxSet.pure_to_tx(pure,block));
     const txed = txs.reduce((data:[T.State[],T.Lock[]],tx,i)=>{

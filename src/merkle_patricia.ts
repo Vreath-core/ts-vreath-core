@@ -1,23 +1,24 @@
 import Merkle from 'merkle-patricia-tree'
-import rlp from 'rlp'
+import * as rlp from 'rlp'
 import {Promise} from 'es6-promise'
 import promisify from 'util.promisify'
 
-const en_key = (key:string):string=>{
-  return rlp.encode(key).toString();
+export const en_key = (key:string):string=>{
+  return rlp.encode(key).toString('hex');
 }
 
-const de_key = (key:string):string=>{
-  return rlp.decode(key).toString();
+export const de_key = (key:string):string=>{
+  return rlp.decode(Buffer.from(key,'hex')).toString('hex');
 }
 
-const en_value = (value:any):string=>{
-  return rlp.encode(JSON.stringify(value)).toString();
+export const en_value = <T>(value:T):string=>{
+  return rlp.encode(JSON.stringify(value)).toString('hex');
 }
 
-const de_value = (value:any)=>{
-  return JSON.parse(rlp.decode(value).toString());
+export const de_value = (value:string)=>{
+  return JSON.parse(rlp.decode(Buffer.from(value,'hex')).toString());
 }
+
 
 export class Trie {
   private trie:any;
@@ -83,6 +84,6 @@ export class Trie {
   async checkRoot(root:string){
     const result:boolean = await promisify(this.trie.checkRoot).bind(this.trie)(en_key(root));
     if(result==null) return false;
-    return de_value(result);
+    return result
   }
 }

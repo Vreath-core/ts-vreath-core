@@ -1,4 +1,5 @@
 import * as CryptoSet from './crypto_set'
+import {en_key} from './merkle_patricia'
 import {cloneDeep} from 'lodash'
 
 
@@ -15,15 +16,18 @@ export const toHash = (str:string)=>{
   return CryptoSet.HashFromPass(str);
 }
 
-export const Object2string = <T>(obj:{[key:string]:T}|T[]):string=>{
-  const keys = Object.keys(obj).sort();
-  let result = '';
-  keys.forEach(((key:string)=>{
-    let val:any = obj[key];
-    if(typeof val==="object") val = Object2string(val);
-    result = result + val;
-  }));
-  return result;
+export const Object2string = <T>(obj:{[key:string]:T}|T[]|T):string=>{
+  if(obj instanceof Array){
+    return obj.reduce((res:string,val)=>res+Object2string(val),'');
+  }
+  else if(obj instanceof Object){
+    return Object.entries(obj).slice().sort((a,b)=>Number(en_key(a[0])||"0")-Number(en_key(b[0]||"0"))).reduce((res:string,item)=>{
+      const val:T = item[1];
+      return res+Object2string(val);
+    },'');
+  }
+  else if(['number','string','booleam'].indexOf(typeof obj)!=-1) return String(obj);
+  else return '';
 }
 
 export const ObjectHash = <T>(obj:{[key:string]:T}|T[])=>{

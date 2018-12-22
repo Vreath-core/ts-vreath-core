@@ -150,7 +150,7 @@ export const tx_fee = (tx:T.Tx):number=>{
 }
 
 
-const unit_hash = (request:string,height:number,block_hash:string,nonce:number,refresher:string,output:string,unit_price:number)=>{
+export const unit_hash = (request:string,height:number,block_hash:string,nonce:number,refresher:string,output:string,unit_price:number)=>{
   return  _.toHashNum(math.chain(_.Hex_to_Num(request)).add(height).add(_.Hex_to_Num(block_hash)).add(nonce).add(_.toHashNum(refresher)).add(_.Hex_to_Num(output)).add(unit_price).toString());
 }
 
@@ -196,7 +196,7 @@ const output_create_check = (token_state:T.State,code:string,StateData:T.State[]
 
 
 
-export const ValidTxBasic = (tx:T.Tx)=>{
+const ValidTxBasic = (tx:T.Tx)=>{
   const hash = tx.hash;
   const tx_meta = tx.meta;
   const version = tx.meta.version;
@@ -567,16 +567,13 @@ export const CreateRequestTx = (pub_key:string[],type:T.TxType,tokens:string[],b
 
 
 
-export const CreateRefreshTx = (pub_key:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,output_raw:string[],log_raw:string,chain:T.Block[])=>{
+export const CreateRefreshTx = (pub_key:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string,chain:T.Block[])=>{
   const req_tx= chain[height].txs[index];
   const token = req_tx.meta.tokens[0];
   const address = CryptoSet.GenereateAddress(token,_.reduce_pub(pub_key));
-  const unit = constant.unit;
-  const unit_add = CryptoSet.GenereateAddress(unit,_.reduce_pub(pub_key));
   const date = new Date();
   const timestamp = date.getTime();
   const output = _.ObjectHash(output_raw);
-  const nonce = mining(req_tx_hash,height,block_hash,unit_add,output,unit_price);
   const log_hash = _.toHash(log_raw);
   const empty = empty_tx_pure();
 

@@ -144,7 +144,7 @@ exports.tx_fee = (tx) => {
     const target = meta_part + raw_part;
     return math.chain(price).multiply(Buffer.from(target).length).done();
 };
-const unit_hash = (request, height, block_hash, nonce, refresher, output, unit_price) => {
+exports.unit_hash = (request, height, block_hash, nonce, refresher, output, unit_price) => {
     return _.toHashNum(math.chain(_.Hex_to_Num(request)).add(height).add(_.Hex_to_Num(block_hash)).add(nonce).add(_.toHashNum(refresher)).add(_.Hex_to_Num(output)).add(unit_price).toString());
 };
 const mining = (request, height, block_hash, refresher, output, unit_price) => {
@@ -155,7 +155,7 @@ const mining = (request, height, block_hash, refresher, output, unit_price) => {
         i++;
         //if(i>1000000) break;
         nonce++;
-        num = unit_hash(request, height, block_hash, nonce, refresher, output, unit_price);
+        num = exports.unit_hash(request, height, block_hash, nonce, refresher, output, unit_price);
     } while (math.larger(num, con_1.constant.pow_target));
     return nonce;
 };
@@ -187,7 +187,7 @@ const output_create_check = (token_state, code, StateData) => {
     else
         return false;
 };
-exports.ValidTxBasic = (tx) => {
+const ValidTxBasic = (tx) => {
     const hash = tx.hash;
     const tx_meta = tx.meta;
     const version = tx.meta.version;
@@ -257,7 +257,7 @@ exports.ValidRequestTx = (tx, request_mode, StateData, LockData) => {
     const base_states = bases.map(key => {
         return StateData.filter(s => s.kind === "state" && tokens.indexOf(s.token) != -1 && s.owner === key)[0] || StateSet.CreateState();
     });
-    if (!exports.ValidTxBasic(tx)) {
+    if (!ValidTxBasic(tx)) {
         return false;
     }
     else if (kind != "request") {
@@ -314,14 +314,14 @@ exports.ValidRefreshTx = (tx, chain, refresh_mode, StateData, LockData) => {
     const block_tx_hashes = block.txs.map(tx => tx.hash);
     const bases = req_tx.meta.bases;
     const output_states = raw.raw.map(s => JSON.parse(s));
-    if (!exports.ValidTxBasic(tx)) {
+    if (!ValidTxBasic(tx)) {
         return false;
     }
     else if (kind != "refresh") {
         console.log("invalid kind");
         return false;
     }
-    else if (math.larger(unit_hash(request, height, block_hash, nonce, unit_add, output, unit_price), pow_target)) {
+    else if (math.larger(exports.unit_hash(request, height, block_hash, nonce, unit_add, output, unit_price), pow_target)) {
         console.log("invalid nonce");
         return false;
     }
@@ -419,7 +419,7 @@ exports.unit_code = (StateData, req_tx, chain) => {
         })();
         const unit_owner_state = StateData.filter(s => s.kind === "state" && s.token === unit && s.owner === u.address)[0] || StateSet.CreateState(0, u.address, unit, 0, { used: "[]" });
         const used_units = JSON.parse(unit_owner_state.data.used || "[]");
-        return unit_ref_tx.meta.output != u.output || math.larger(unit_hash(u.request, u.height, u.block_hash, u.nonce, u.address, u.output, u.unit_price), con_1.constant.pow_target) || unit_base.indexOf(u.address) != -1 || used_units.indexOf(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())) != -1;
+        return unit_ref_tx.meta.output != u.output || math.larger(exports.unit_hash(u.request, u.height, u.block_hash, u.nonce, u.address, u.output, u.unit_price), con_1.constant.pow_target) || unit_base.indexOf(u.address) != -1 || used_units.indexOf(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())) != -1;
     });
     if (unit_check || _.ObjectHash(native_base.map(add => add.split(":")[2])) != _.ObjectHash(unit_base.map(add => add.split(":")[2])))
         return StateData;
@@ -526,16 +526,13 @@ exports.CreateRequestTx = (pub_key, type, tokens, bases, feeprice, gas, input_ra
     };
     return tx;
 };
-exports.CreateRefreshTx = (pub_key, feeprice, unit_price, height, block_hash, index, req_tx_hash, success, output_raw, log_raw, chain) => {
+exports.CreateRefreshTx = (pub_key, feeprice, unit_price, height, block_hash, index, req_tx_hash, success, nonce, output_raw, log_raw, chain) => {
     const req_tx = chain[height].txs[index];
     const token = req_tx.meta.tokens[0];
     const address = CryptoSet.GenereateAddress(token, _.reduce_pub(pub_key));
-    const unit = con_1.constant.unit;
-    const unit_add = CryptoSet.GenereateAddress(unit, _.reduce_pub(pub_key));
     const date = new Date();
     const timestamp = date.getTime();
     const output = _.ObjectHash(output_raw);
-    const nonce = mining(req_tx_hash, height, block_hash, unit_add, output, unit_price);
     const log_hash = _.toHash(log_raw);
     const empty = exports.empty_tx_pure();
     const meta = {

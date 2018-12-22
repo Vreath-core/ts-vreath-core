@@ -92,7 +92,7 @@ const tx_fee_sum = (pure_txs, raws) => {
     });
     return txs.reduce((sum, tx) => math.chain(sum).add(TxSet.tx_fee(tx)).done(), 0);
 };
-const pos_hash = (previoushash, address, timestamp) => {
+exports.pos_hash = (previoushash, address, timestamp) => {
     return _.toHashNum(math.chain(_.Hex_to_Num(previoushash)).add(_.toHashNum(address)).add(timestamp).done().toString());
 };
 const PoS_mining = (previoushash, address, balance, difficulty) => {
@@ -105,10 +105,10 @@ const PoS_mining = (previoushash, address, balance, difficulty) => {
         i++;
         if (i > 1000)
             break;
-    } while (math.chain(2 ** 256).multiply(balance).divide(difficulty).smaller(pos_hash(previoushash, address, timestamp)));
+    } while (math.chain(2 ** 256).multiply(balance).divide(difficulty).smaller(exports.pos_hash(previoushash, address, timestamp)));
     return timestamp;
 };
-const Wait_block_time = (pre, block_time) => {
+exports.Wait_block_time = (pre, block_time) => {
     let date;
     let timestamp;
     do {
@@ -168,7 +168,7 @@ exports.ValidKeyBlock = (block, chain, right_stateroot, right_lockroot, StateDat
     const native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
     const unit_validator = CryptoSet.GenereateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
     const unit_validator_state = StateData.filter(s => s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit)[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
-    if (_.object_hash_check(hash, meta) || math.chain(2 ** 256).multiply(unit_validator_state.amount).divide(right_diff).largerEq(pos_hash(last.hash, unit_validator, timestamp))) {
+    if (_.object_hash_check(hash, meta) || math.chain(2 ** 256).multiply(unit_validator_state.amount).divide(right_diff).largerEq(exports.pos_hash(last.hash, unit_validator, timestamp))) {
         console.log("invalid hash");
         return false;
     }
@@ -391,7 +391,7 @@ exports.CreateMicroBlock = (chain, stateroot, lockroot, txs, extra) => {
     const empty = exports.empty_block();
     const last = chain[chain.length - 1] || empty;
     const key = exports.search_key_block(chain);
-    const timestamp = Wait_block_time(last.meta.timestamp, con_1.constant.block_time);
+    const timestamp = exports.Wait_block_time(last.meta.timestamp, con_1.constant.block_time);
     const pures = txs.map(tx => TxSet.tx_to_pure(tx));
     const raws = txs.map(tx => tx.raw);
     const tx_root = exports.GetTreeroot(txs.map(t => t.hash))[0];

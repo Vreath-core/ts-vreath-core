@@ -8,6 +8,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const CryptoSet = __importStar(require("./crypto_set"));
+const merkle_patricia_1 = require("./merkle_patricia");
 const lodash_1 = require("lodash");
 exports.copy = (data) => {
     return lodash_1.cloneDeep(data);
@@ -19,15 +20,19 @@ exports.toHash = (str) => {
     return CryptoSet.HashFromPass(str);
 };
 exports.Object2string = (obj) => {
-    const keys = Object.keys(obj).sort();
-    let result = '';
-    keys.forEach(((key) => {
-        let val = obj[key];
-        if (typeof val === "object")
-            val = exports.Object2string(val);
-        result = result + val;
-    }));
-    return result;
+    if (obj instanceof Array) {
+        return obj.reduce((res, val) => res + exports.Object2string(val), '');
+    }
+    else if (obj instanceof Object) {
+        return Object.entries(obj).slice().sort((a, b) => Number(merkle_patricia_1.en_key(a[0]) || "0") - Number(merkle_patricia_1.en_key(b[0] || "0"))).reduce((res, item) => {
+            const val = item[1];
+            return res + exports.Object2string(val);
+        }, '');
+    }
+    else if (['number', 'string', 'booleam'].indexOf(typeof obj) != -1)
+        return String(obj);
+    else
+        return '';
 };
 exports.ObjectHash = (obj) => {
     const str = exports.Object2string(obj);

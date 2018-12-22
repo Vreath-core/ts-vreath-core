@@ -24,7 +24,6 @@ export const PublicFromPrivate = (Private:string):string=>{
 }
 
 export const EncryptData = (data:string,Private:string,Public:string):string=>{
-  const ecdh = crypto.createECDH('secp256k1');
   const secret = secp256k1.ecdh(Buffer.from(Public,'hex'),Private);
   const cipher = crypto.createCipher('aes-256-cbc', secret);
   let crypted = cipher.update(data, 'utf-8', 'hex');
@@ -33,15 +32,11 @@ export const EncryptData = (data:string,Private:string,Public:string):string=>{
 }
 
 export const DecryptData = (data:string,Private:string,Public:string)=>{
-  try{
-  const ecdh = crypto.createECDH('secp256k1');
   const secret = secp256k1.ecdh(Buffer.from(Public,'hex'),Private);
   const decipher = crypto.createDecipher('aes-256-cbc', secret);
   let dec = decipher.update(data, 'hex', 'utf-8');
   dec += decipher.final('utf-8');
   return dec;
-  }
-  catch(e){throw new Error(e)}
 }
 
 
@@ -52,7 +47,7 @@ export const SignData = (data:string,Private:string):string=>{
 }
 
 
-export const verifyData = (data:string,sign:string,Public:string)=>{
+export const verifyData = (data:string,sign:string,Public:string):boolean=>{
   const hash = crypto.createHash("sha256").update(data).digest();
   const verify = secp256k1.verify(Buffer.from(hash),Buffer.from(sign,'hex'),Buffer.from(Public,'hex'));
   return verify
