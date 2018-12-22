@@ -32,7 +32,6 @@
     "@types/util.promisify": "^1.0.0",
     "abstract-leveldown": "^4.0.3",
     "body-parser": "^1.18.3",
-    "browserify-fs": "^1.0.0",
     "buffer": "^5.2.1",
     "circom": "0.0.22",
     "detect-node": "^2.0.4",
