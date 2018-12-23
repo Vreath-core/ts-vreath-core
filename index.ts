@@ -1,6 +1,6 @@
 export * from './src/types'
 import * as T from './src/types'
-import {constant} from './src/con'
+import {constant,change_config, Config} from './src/con'
 import * as CryptoSet from './src/crypto_set'
 import * as _ from './src/basic'
 import { Trie } from './src/merkle_patricia'
@@ -160,7 +160,31 @@ export const crypto = {
     verify_address:verify_address
 }
 
-const trie = Trie;
+const change_configs = (version:number,network_id:number,chain_id:number,compatible_version:number)=>{
+    try{
+        if(typeof version!='number'||version<0||!Number.isInteger(version)) throw new Error('invalid version');
+        else if(typeof network_id!='number'||network_id<0||!Number.isInteger(network_id)) throw new Error('invalid network id');
+        else if(typeof chain_id!='number'||chain_id<0||!Number.isInteger(chain_id)) throw new Error('invalid chain id');
+        else if(typeof compatible_version!='number'||compatible_version<0||!Number.isInteger(compatible_version)) throw new Error('invalid compatible version');
+        const config:Config = {
+            my_version:version,
+            my_net_id:network_id,
+            my_chain_id:chain_id,
+            compatible_version:compatible_version
+        }
+        change_config(config);
+    }
+    catch(e){
+        throw new Error(e);
+    }
+}
+
+export const con = {
+    constant:constant,
+    change_configs:change_configs
+}
+
+export const trie = Trie;
 
 const isState = (state:T.State):state is T.State =>{
     return ['state','info'].indexOf(state.owner)!=-1 && typeof state.nonce==='number' && state.nonce>=0 && Number.isInteger(state.nonce) && typeof state.token==='string' && Buffer.from(state.token).length<=constant.token_name_maxsize && typeof state.owner==='string' && !_.address_form_check(state.owner,constant.token_name_maxsize) && typeof state.amount==='number' && state.amount>=0 && !Object.values(state.data).some(val=>typeof val==='string') && typeof state.issued==='number' && state.issued>=0 && typeof state.code==='string' && !_.hash_size_check(state.code);

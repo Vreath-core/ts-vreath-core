@@ -3,7 +3,7 @@ let my_net_id = 1;
 let my_chain_id = 1;
 let compatible_version = 0;
 
-type Config = {
+export type Config = {
     my_version:number,
     my_net_id:number,
     my_chain_id:number,

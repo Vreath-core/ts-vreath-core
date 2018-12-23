@@ -1,5 +1,3 @@
-import {Trie} from './merkle_patricia'
-import { constant } from './con';
 import * as TxSet from './tx'
 import * as T from './types'
 import * as _ from './basic'
