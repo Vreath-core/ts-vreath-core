@@ -257,7 +257,7 @@ exports.ValidMicroBlock = function (block, chain, right_stateroot, right_lockroo
     var validatorPub = key_block.meta.validatorPub;
     var tx_roots = txs.map(function (t) { return t.hash; });
     var date = new Date();
-    var now = date.getTime();
+    var now = Math.floor(date.getTime() / 1000);
     var already_micro = exports.search_micro_block(chain, key_block);
     if (_.object_hash_check(hash, meta)) {
         console.log("invalid hash");

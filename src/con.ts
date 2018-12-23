@@ -17,7 +17,7 @@ export const constant = {
     native:"native",
     unit:"unit",
     token_name_maxsize:256,
-    block_time:1000,
+    block_time:1,
     max_blocks:60,
     block_size:10000000,
     all_issue:Math.pow(10,8),

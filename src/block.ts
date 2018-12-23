@@ -268,7 +268,7 @@ export const ValidMicroBlock = (block:T.Block,chain:T.Block[],right_stateroot:st
     const tx_roots = txs.map(t=>t.hash);
 
     const date = new Date();
-    const now = date.getTime();
+    const now = Math.floor(date.getTime()/1000);
 
     const already_micro = search_micro_block(chain,key_block);
 
