@@ -740,6 +740,8 @@ var accept_micro_block = function (micro_block, chain, StateData, LockData) {
     }
 };
 exports.block = {
+    isBlock: isBlock,
+    isBlockMeta: isBlockMeta,
     empty_block: BlockSet.empty_block(),
     search_key_block: search_key_block,
     search_micro_block: search_micro_block,

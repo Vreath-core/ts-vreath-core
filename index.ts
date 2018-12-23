@@ -633,6 +633,8 @@ const accept_micro_block = (micro_block:T.Block,chain:T.Block[],StateData:T.Stat
 }
 
 export const block = {
+    isBlock:isBlock,
+    isBlockMeta:isBlockMeta,
     empty_block:BlockSet.empty_block(),
     search_key_block:search_key_block,
     search_micro_block:search_micro_block,
