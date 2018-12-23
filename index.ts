@@ -514,16 +514,6 @@ const pos_staking = (previoushash:string,timestamp:number,address:string,balance
     }
 }
 
-const wait_block_time = (pre_time:number)=>{
-    try{
-        if(typeof pre_time!='number'||pre_time<0) throw new Error('invalid pre time');
-        return BlockSet.Wait_block_time(pre_time,constant.block_time);
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}
-
 const verify_key_block = (key_block:T.Block,chain:T.Block[],right_stateroot:string,right_lockroot:string,StateData:T.State[])=>{
     try{
         if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid block');
@@ -639,7 +629,6 @@ export const block = {
     search_micro_block:search_micro_block,
     get_tree_root:get_tree_root,
     pos_staking:pos_staking,
-    wait_block_time:wait_block_time,
     verify_key_block:verify_key_block,
     verify_micro_block:verify_micro_block,
     create_key_block:create_key_block,

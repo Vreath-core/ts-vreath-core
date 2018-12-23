@@ -157,10 +157,12 @@ exports.find_req_tx = function (ref_tx, chain) {
     var block = chain[height] || BlockSet.empty_block();
     if (block.hash != ref_tx.meta.block_hash)
         return exports.empty_tx();
-    var req_pure = block.txs[ref_tx.meta.index] || exports.empty_tx().raw;
+    var req_pure = block.txs[ref_tx.meta.index];
     if (req_pure == null)
         return exports.empty_tx();
-    var req_raw = block.raws[ref_tx.meta.index] || exports.empty_tx().raw;
+    var req_raw = block.raws[ref_tx.meta.index];
+    if (req_raw == null)
+        return exports.empty_tx();
     return {
         hash: req_pure.hash,
         meta: req_pure.meta,

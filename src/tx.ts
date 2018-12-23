@@ -171,9 +171,10 @@ export const find_req_tx = (ref_tx:T.Tx,chain:T.Block[]):T.Tx=>{
   const height = ref_tx.meta.height || 0;
   const block = chain[height] || BlockSet.empty_block();
   if(block.hash!=ref_tx.meta.block_hash) return empty_tx();
-  const req_pure = block.txs[ref_tx.meta.index] || empty_tx().raw;
+  const req_pure = block.txs[ref_tx.meta.index];
   if(req_pure==null) return empty_tx();
-  const req_raw = block.raws[ref_tx.meta.index] || empty_tx().raw;
+  const req_raw = block.raws[ref_tx.meta.index];
+  if(req_raw==null) return empty_tx();
   return {
     hash:req_pure.hash,
     meta:req_pure.meta,
