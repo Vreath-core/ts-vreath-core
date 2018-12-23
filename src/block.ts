@@ -88,7 +88,7 @@ export const pos_hash = (previoushash:string,address:string,timestamp:number)=>{
     return _.toHashNum(math.chain(_.Hex_to_Num(previoushash)).add(_.toHashNum(address)).add(timestamp).done().toString());
 }
 
-const PoS_mining = (previoushash:string,address:string,balance:number,difficulty:number)=>{
+/*const PoS_mining = (previoushash:string,address:string,balance:number,difficulty:number)=>{
     let date;
     let timestamp
     let i=0;
@@ -99,9 +99,9 @@ const PoS_mining = (previoushash:string,address:string,balance:number,difficulty
       if(i>1000) break;
     } while (math.chain(2**256).multiply(balance).divide(difficulty).smaller(pos_hash(previoushash,address,timestamp)));
     return timestamp;
-}
+}*/
 
-export const Wait_block_time = (pre:number,block_time:number)=>{
+/*export const Wait_block_time = (pre:number,block_time:number)=>{
     let date;
     let timestamp;
     do{
@@ -109,7 +109,7 @@ export const Wait_block_time = (pre:number,block_time:number)=>{
         timestamp = date.getTime();
     } while(math.chain(timestamp).subtract(pre).smaller(block_time))
     return timestamp;
-}
+}*/
 
 export const txs_check = (block:T.Block,chain:T.Block[],StateData:T.State[],LocationData:T.Lock[])=>{
     const txs = block.txs.map((tx,i):T.Tx=>{
@@ -200,7 +200,7 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
         console.log("invalid parenthash");
         return false;
     }
-    else if(_.time_check(timestamp)){
+    else if(timestamp.toString().length!=10||_.time_check(timestamp)){
         console.log("invalid timestamp");
         return false;
     }
@@ -305,7 +305,7 @@ export const ValidMicroBlock = (block:T.Block,chain:T.Block[],right_stateroot:st
         console.log("invalid parenthash");
         return false;
     }
-    else if(last.hash===empty_block().hash||_.time_check(timestamp)||math.chain(now).subtract(last.meta.timestamp).smaller(constant.block_time)){
+    else if(last.hash===empty_block().hash||timestamp.toString().length!=10||_.time_check(timestamp)||math.chain(now).subtract(last.meta.timestamp).smaller(constant.block_time)){
         console.log("invalid timestamp");
         return false;
     }
@@ -354,13 +354,11 @@ export const ValidMicroBlock = (block:T.Block,chain:T.Block[],right_stateroot:st
     }
 }
 
-export const CreateKeyBlock = (chain:T.Block[],validatorPub:string[],stateroot:string,lockroot:string,extra:string,StateData:T.State[]):T.Block=>{
+export const CreateKeyBlock = (chain:T.Block[],validatorPub:string[],stateroot:string,lockroot:string,extra:string):T.Block=>{
     const empty = empty_block();
     const last = chain[chain.length-1] || empty;
-    const parenthash = last.hash
+    const previoushash = last.hash
     const native_validator = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(validatorPub));
-    const unit_validator = CryptoSet.GenereateAddress(constant.unit,_.reduce_pub(validatorPub));
-    const validator_state = StateData.filter(s=>{return s.kind==="state"&&s.owner===unit_validator&&s.token===constant.unit})[0] || StateSet.CreateState(0,unit_validator,constant.unit,0);
 
     const genesis_time = chain[0].meta.timestamp;
     const lwma_infos = chain.reduce((res:{times:number[],diffs:number[]},block)=>{
@@ -369,7 +367,8 @@ export const CreateKeyBlock = (chain:T.Block[],validatorPub:string[],stateroot:s
         return res;
     },{times:[],diffs:[]});
     const pos_diff = get_diff(lwma_infos.diffs,constant.block_time*constant.max_blocks,lwma_infos.times);
-    const timestamp = PoS_mining(parenthash,unit_validator,validator_state.amount,pos_diff);
+    const date = new Date();
+    const timestamp = Math.floor(date.getTime()/1000);
 
     const meta:T.BlockMeta = {
         kind:'key',
@@ -378,7 +377,7 @@ export const CreateKeyBlock = (chain:T.Block[],validatorPub:string[],stateroot:s
         chain_id:constant.my_chain_id,
         validator:native_validator,
         height:chain.length,
-        previoushash:last.hash,
+        previoushash:previoushash,
         timestamp:timestamp,
         pos_diff:pos_diff,
         validatorPub:validatorPub,
@@ -402,7 +401,8 @@ export const CreateMicroBlock = (chain:T.Block[],stateroot:string,lockroot:strin
     const empty = empty_block();
     const last = chain[chain.length-1] || empty;
     const key = search_key_block(chain);
-    const timestamp = Wait_block_time(last.meta.timestamp,constant.block_time);
+    const date = new Date();
+    const timestamp = Math.floor(date.getTime()/1000);
     const pures:T.TxPure[] = txs.map(tx=>TxSet.tx_to_pure(tx));
     const raws:T.TxRaw[] = txs.map(tx=>tx.raw);
     const tx_root = GetTreeroot(txs.map(t=>t.hash))[0];

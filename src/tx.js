@@ -214,7 +214,7 @@ var ValidTxBasic = function (tx) {
         console.log("invalid address");
         return false;
     }
-    else if (_.time_check(timestamp)) {
+    else if (timestamp.toString().length != 10 || _.time_check(timestamp)) {
         console.log("invalid timestamp");
         return false;
     }

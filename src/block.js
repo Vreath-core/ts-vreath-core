@@ -89,28 +89,27 @@ var tx_fee_sum = function (pure_txs, raws) {
 exports.pos_hash = function (previoushash, address, timestamp) {
     return _.toHashNum(math.chain(_.Hex_to_Num(previoushash)).add(_.toHashNum(address)).add(timestamp).done().toString());
 };
-var PoS_mining = function (previoushash, address, balance, difficulty) {
-    var date;
-    var timestamp;
-    var i = 0;
+/*const PoS_mining = (previoushash:string,address:string,balance:number,difficulty:number)=>{
+    let date;
+    let timestamp
+    let i=0;
     do {
+      date = new Date();
+      timestamp = date.getTime();
+      i++;
+      if(i>1000) break;
+    } while (math.chain(2**256).multiply(balance).divide(difficulty).smaller(pos_hash(previoushash,address,timestamp)));
+    return timestamp;
+}*/
+/*export const Wait_block_time = (pre:number,block_time:number)=>{
+    let date;
+    let timestamp;
+    do{
         date = new Date();
         timestamp = date.getTime();
-        i++;
-        if (i > 1000)
-            break;
-    } while (math.chain(Math.pow(2, 256)).multiply(balance).divide(difficulty).smaller(exports.pos_hash(previoushash, address, timestamp)));
+    } while(math.chain(timestamp).subtract(pre).smaller(block_time))
     return timestamp;
-};
-exports.Wait_block_time = function (pre, block_time) {
-    var date;
-    var timestamp;
-    do {
-        date = new Date();
-        timestamp = date.getTime();
-    } while (math.chain(timestamp).subtract(pre).smaller(block_time));
-    return timestamp;
-};
+}*/
 exports.txs_check = function (block, chain, StateData, LocationData) {
     var txs = block.txs.map(function (tx, i) {
         return {
@@ -194,7 +193,7 @@ exports.ValidKeyBlock = function (block, chain, right_stateroot, right_lockroot,
         console.log("invalid parenthash");
         return false;
     }
-    else if (_.time_check(timestamp)) {
+    else if (timestamp.toString().length != 10 || _.time_check(timestamp)) {
         console.log("invalid timestamp");
         return false;
     }
@@ -292,7 +291,7 @@ exports.ValidMicroBlock = function (block, chain, right_stateroot, right_lockroo
         console.log("invalid parenthash");
         return false;
     }
-    else if (last.hash === exports.empty_block().hash || _.time_check(timestamp) || math.chain(now).subtract(last.meta.timestamp).smaller(con_1.constant.block_time)) {
+    else if (last.hash === exports.empty_block().hash || timestamp.toString().length != 10 || _.time_check(timestamp) || math.chain(now).subtract(last.meta.timestamp).smaller(con_1.constant.block_time)) {
         console.log("invalid timestamp");
         return false;
     }
@@ -340,13 +339,11 @@ exports.ValidMicroBlock = function (block, chain, right_stateroot, right_lockroo
         return true;
     }
 };
-exports.CreateKeyBlock = function (chain, validatorPub, stateroot, lockroot, extra, StateData) {
+exports.CreateKeyBlock = function (chain, validatorPub, stateroot, lockroot, extra) {
     var empty = exports.empty_block();
     var last = chain[chain.length - 1] || empty;
-    var parenthash = last.hash;
+    var previoushash = last.hash;
     var native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
-    var unit_validator = CryptoSet.GenereateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
-    var validator_state = StateData.filter(function (s) { return s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit; })[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
     var genesis_time = chain[0].meta.timestamp;
     var lwma_infos = chain.reduce(function (res, block) {
         res.times = res.times.concat(math.chain(block.meta.timestamp).subtract(genesis_time).done());
@@ -354,7 +351,8 @@ exports.CreateKeyBlock = function (chain, validatorPub, stateroot, lockroot, ext
         return res;
     }, { times: [], diffs: [] });
     var pos_diff = lwma_1.get_diff(lwma_infos.diffs, con_1.constant.block_time * con_1.constant.max_blocks, lwma_infos.times);
-    var timestamp = PoS_mining(parenthash, unit_validator, validator_state.amount, pos_diff);
+    var date = new Date();
+    var timestamp = Math.floor(date.getTime() / 1000);
     var meta = {
         kind: 'key',
         version: con_1.constant.my_version,
@@ -362,7 +360,7 @@ exports.CreateKeyBlock = function (chain, validatorPub, stateroot, lockroot, ext
         chain_id: con_1.constant.my_chain_id,
         validator: native_validator,
         height: chain.length,
-        previoushash: last.hash,
+        previoushash: previoushash,
         timestamp: timestamp,
         pos_diff: pos_diff,
         validatorPub: validatorPub,
@@ -385,7 +383,8 @@ exports.CreateMicroBlock = function (chain, stateroot, lockroot, txs, extra) {
     var empty = exports.empty_block();
     var last = chain[chain.length - 1] || empty;
     var key = exports.search_key_block(chain);
-    var timestamp = exports.Wait_block_time(last.meta.timestamp, con_1.constant.block_time);
+    var date = new Date();
+    var timestamp = Math.floor(date.getTime() / 1000);
     var pures = txs.map(function (tx) { return TxSet.tx_to_pure(tx); });
     var raws = txs.map(function (tx) { return tx.raw; });
     var tx_root = exports.GetTreeroot(txs.map(function (t) { return t.hash; }))[0];

@@ -553,15 +553,14 @@ const verify_micro_block = (micro_block:T.Block,chain:T.Block[],right_stateroot:
     }
 }
 
-const create_key_block = (chain:T.Block[],validatorPub:string[],stateroot:string,lockroot:string,extra:string,StateData:T.State[])=>{
+const create_key_block = (chain:T.Block[],validatorPub:string[],stateroot:string,lockroot:string,extra:string)=>{
     try{
         if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
         else if(validatorPub.some(pub=>typeof pub!='string')) throw new Error('invalid validator public keys');
         else if(typeof stateroot!='string') throw new Error('invalid stateroot');
         else if(typeof lockroot!='string') throw new Error('invalid lockroot');
         else if(typeof extra!='string') throw new Error('invalid extra');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        const key_block = BlockSet.CreateKeyBlock(chain,validatorPub,stateroot,lockroot,extra,StateData);
+        const key_block = BlockSet.CreateKeyBlock(chain,validatorPub,stateroot,lockroot,extra);
         if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid block');
         return key_block;
     }
