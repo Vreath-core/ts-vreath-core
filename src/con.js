@@ -1,9 +1,9 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-let my_version = 0;
-let my_net_id = 1;
-let my_chain_id = 1;
-let compatible_version = 0;
+exports.__esModule = true;
+var my_version = 0;
+var my_net_id = 1;
+var my_chain_id = 1;
+var compatible_version = 0;
 exports.constant = {
     my_version: my_version,
     my_net_id: my_net_id,
@@ -22,7 +22,7 @@ exports.constant = {
     def_pos_diff: Math.pow(10, -30),
     compatible_version: compatible_version
 };
-exports.change_config = (config) => {
+exports.change_config = function (config) {
     my_version = config.my_version;
     my_net_id = config.my_net_id;
     my_chain_id = config.my_chain_id;

@@ -1,15 +1,8 @@
 "use strict";
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const TxSet = __importStar(require("./tx"));
-const _ = __importStar(require("./basic"));
-const check_tx = (tx, chain, StateData, LockData) => {
+exports.__esModule = true;
+var TxSet = require("./tx");
+var _ = require("./basic");
+var check_tx = function (tx, chain, StateData, LockData) {
     if (tx.meta.kind == "request") {
         return TxSet.ValidRequestTx(tx, false, StateData, LockData);
     }
@@ -19,10 +12,10 @@ const check_tx = (tx, chain, StateData, LockData) => {
     else
         return false;
 };
-exports.Tx_to_Pool = (pool, tx, chain, StateData, LockData) => {
+exports.Tx_to_Pool = function (pool, tx, chain, StateData, LockData) {
     if (!check_tx(tx, chain, StateData, LockData))
         return pool;
-    const new_pool = _.new_obj(pool, p => {
+    var new_pool = _.new_obj(pool, function (p) {
         p[tx.hash] = tx;
         return p;
     });

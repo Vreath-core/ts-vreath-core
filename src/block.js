@@ -1,24 +1,17 @@
 "use strict";
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const _ = __importStar(require("./basic"));
-const CryptoSet = __importStar(require("./crypto_set"));
-const StateSet = __importStar(require("./state"));
-const TxSet = __importStar(require("./tx"));
-const lwma_1 = require("./lwma");
-const math = __importStar(require("mathjs"));
-const con_1 = require("./con");
+exports.__esModule = true;
+var _ = require("./basic");
+var CryptoSet = require("./crypto_set");
+var StateSet = require("./state");
+var TxSet = require("./tx");
+var lwma_1 = require("./lwma");
+var math = require("mathjs");
+var con_1 = require("./con");
 math.config({
     number: 'BigNumber'
 });
-exports.empty_block = () => {
-    const meta = {
+exports.empty_block = function () {
+    var meta = {
         kind: 'key',
         version: 0,
         network_id: 0,
@@ -35,7 +28,7 @@ exports.empty_block = () => {
         fee_sum: 0,
         extra: ''
     };
-    const hash = _.ObjectHash(meta);
+    var hash = _.ObjectHash(meta);
     return {
         hash: hash,
         validatorSign: [],
@@ -44,30 +37,31 @@ exports.empty_block = () => {
         raws: []
     };
 };
-exports.search_key_block = (chain) => {
-    let block;
-    for (block of chain.slice().reverse()) {
+exports.search_key_block = function (chain) {
+    var block;
+    for (var _i = 0, _a = chain.slice().reverse(); _i < _a.length; _i++) {
+        block = _a[_i];
         if (block.meta.kind === "key")
             return block;
     }
     return exports.empty_block();
 };
-exports.search_micro_block = (chain, key_block) => {
-    return chain.slice(key_block.meta.height).filter((block) => {
+exports.search_micro_block = function (chain, key_block) {
+    return chain.slice(key_block.meta.height).filter(function (block) {
         return block.meta.kind === "micro" && block.meta.validator === key_block.meta.validator;
     });
 };
-exports.GetTreeroot = (pre) => {
+exports.GetTreeroot = function (pre) {
     if (pre.length == 0)
         return [_.toHash("")];
     else if (pre.length == 1)
         return pre;
     else {
-        const union = pre.reduce((result, val, index, array) => {
-            const i = Number(index);
+        var union = pre.reduce(function (result, val, index, array) {
+            var i = Number(index);
             if (i % 2 == 0) {
-                const left = val;
-                const right = ((left, i, array) => {
+                var left = val;
+                var right = (function (left, i, array) {
                     if (array[i + 1] == null)
                         return _.toHash("");
                     else
@@ -81,8 +75,8 @@ exports.GetTreeroot = (pre) => {
         return exports.GetTreeroot(union);
     }
 };
-const tx_fee_sum = (pure_txs, raws) => {
-    const txs = pure_txs.map((t, i) => {
+var tx_fee_sum = function (pure_txs, raws) {
+    var txs = pure_txs.map(function (t, i) {
         return {
             hash: t.hash,
             meta: t.meta,
@@ -90,35 +84,35 @@ const tx_fee_sum = (pure_txs, raws) => {
             additional: t.additional
         };
     });
-    return txs.reduce((sum, tx) => math.chain(sum).add(TxSet.tx_fee(tx)).done(), 0);
+    return txs.reduce(function (sum, tx) { return math.chain(sum).add(TxSet.tx_fee(tx)).done(); }, 0);
 };
-exports.pos_hash = (previoushash, address, timestamp) => {
+exports.pos_hash = function (previoushash, address, timestamp) {
     return _.toHashNum(math.chain(_.Hex_to_Num(previoushash)).add(_.toHashNum(address)).add(timestamp).done().toString());
 };
-const PoS_mining = (previoushash, address, balance, difficulty) => {
-    let date;
-    let timestamp;
-    let i = 0;
+var PoS_mining = function (previoushash, address, balance, difficulty) {
+    var date;
+    var timestamp;
+    var i = 0;
     do {
         date = new Date();
         timestamp = date.getTime();
         i++;
         if (i > 1000)
             break;
-    } while (math.chain(2 ** 256).multiply(balance).divide(difficulty).smaller(exports.pos_hash(previoushash, address, timestamp)));
+    } while (math.chain(Math.pow(2, 256)).multiply(balance).divide(difficulty).smaller(exports.pos_hash(previoushash, address, timestamp)));
     return timestamp;
 };
-exports.Wait_block_time = (pre, block_time) => {
-    let date;
-    let timestamp;
+exports.Wait_block_time = function (pre, block_time) {
+    var date;
+    var timestamp;
     do {
         date = new Date();
         timestamp = date.getTime();
     } while (math.chain(timestamp).subtract(pre).smaller(block_time));
     return timestamp;
 };
-exports.txs_check = (block, chain, StateData, LocationData) => {
-    const txs = block.txs.map((tx, i) => {
+exports.txs_check = function (block, chain, StateData, LocationData) {
+    var txs = block.txs.map(function (tx, i) {
         return {
             hash: tx.hash,
             meta: tx.meta,
@@ -126,7 +120,7 @@ exports.txs_check = (block, chain, StateData, LocationData) => {
             additional: tx.additional
         };
     });
-    return txs.some((tx) => {
+    return txs.some(function (tx) {
         if (tx.meta.kind === "request") {
             return !TxSet.ValidRequestTx(tx, true, StateData, LocationData);
         }
@@ -137,38 +131,38 @@ exports.txs_check = (block, chain, StateData, LocationData) => {
             return true;
     });
 };
-exports.ValidKeyBlock = (block, chain, right_stateroot, right_lockroot, StateData) => {
-    const hash = block.hash;
-    const sign = block.validatorSign;
-    const meta = block.meta;
-    const version = meta.version;
-    const network_id = meta.network_id;
-    const chain_id = meta.chain_id;
-    const validator = meta.validator;
-    const height = meta.height;
-    const previoushash = meta.previoushash;
-    const timestamp = meta.timestamp;
-    const pos_diff = meta.pos_diff;
-    const validatorPub = meta.validatorPub;
-    const stateroot = meta.stateroot;
-    const lockroot = meta.lockroot;
-    const tx_root = meta.tx_root;
-    const fee_sum = meta.fee_sum;
-    const txs = block.txs;
-    const raws = block.raws;
-    const last = chain[chain.length - 1] || exports.empty_block();
-    const right_previoushash = last.hash;
-    const genesis_time = chain[0].meta.timestamp;
-    const lwma_infos = chain.reduce((res, block) => {
+exports.ValidKeyBlock = function (block, chain, right_stateroot, right_lockroot, StateData) {
+    var hash = block.hash;
+    var sign = block.validatorSign;
+    var meta = block.meta;
+    var version = meta.version;
+    var network_id = meta.network_id;
+    var chain_id = meta.chain_id;
+    var validator = meta.validator;
+    var height = meta.height;
+    var previoushash = meta.previoushash;
+    var timestamp = meta.timestamp;
+    var pos_diff = meta.pos_diff;
+    var validatorPub = meta.validatorPub;
+    var stateroot = meta.stateroot;
+    var lockroot = meta.lockroot;
+    var tx_root = meta.tx_root;
+    var fee_sum = meta.fee_sum;
+    var txs = block.txs;
+    var raws = block.raws;
+    var last = chain[chain.length - 1] || exports.empty_block();
+    var right_previoushash = last.hash;
+    var genesis_time = chain[0].meta.timestamp;
+    var lwma_infos = chain.reduce(function (res, block) {
         res.times = res.times.concat(math.chain(block.meta.timestamp).subtract(genesis_time).done());
         res.diffs = res.diffs.concat(block.meta.pos_diff);
         return res;
     }, { times: [], diffs: [] });
-    const right_diff = lwma_1.get_diff(lwma_infos.diffs, con_1.constant.block_time * con_1.constant.max_blocks, lwma_infos.times);
-    const native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
-    const unit_validator = CryptoSet.GenereateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
-    const unit_validator_state = StateData.filter(s => s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit)[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
-    if (_.object_hash_check(hash, meta) || math.chain(2 ** 256).multiply(unit_validator_state.amount).divide(right_diff).largerEq(exports.pos_hash(last.hash, unit_validator, timestamp))) {
+    var right_diff = lwma_1.get_diff(lwma_infos.diffs, con_1.constant.block_time * con_1.constant.max_blocks, lwma_infos.times);
+    var native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
+    var unit_validator = CryptoSet.GenereateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
+    var unit_validator_state = StateData.filter(function (s) { return s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit; })[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
+    if (_.object_hash_check(hash, meta) || math.chain(Math.pow(2, 256)).multiply(unit_validator_state.amount).divide(right_diff).largerEq(exports.pos_hash(last.hash, unit_validator, timestamp))) {
         console.log("invalid hash");
         return false;
     }
@@ -176,7 +170,7 @@ exports.ValidKeyBlock = (block, chain, right_stateroot, right_lockroot, StateDat
         console.log("invalid validator");
         return false;
     }
-    else if (sign.length === 0 || sign.some((s, i) => _.sign_check(hash, s, validatorPub[i]))) {
+    else if (sign.length === 0 || sign.some(function (s, i) { return _.sign_check(hash, s, validatorPub[i]); })) {
         console.log("invalid validator signature");
         return false;
     }
@@ -240,37 +234,37 @@ exports.ValidKeyBlock = (block, chain, right_stateroot, right_lockroot, StateDat
         return true;
     }
 };
-exports.ValidMicroBlock = (block, chain, right_stateroot, right_lockroot, StateData, LockData) => {
-    const hash = block.hash;
-    const sign = block.validatorSign;
-    const meta = block.meta;
-    const version = meta.version;
-    const network_id = meta.network_id;
-    const chain_id = meta.chain_id;
-    const validator = meta.validator;
-    const height = meta.height;
-    const previoushash = meta.previoushash;
-    const timestamp = meta.timestamp;
-    const pos_diff = meta.pos_diff;
-    const stateroot = meta.stateroot;
-    const lockroot = meta.lockroot;
-    const tx_root = meta.tx_root;
-    const fee_sum = meta.fee_sum;
-    const txs = block.txs;
-    const raws = block.raws;
-    const last = chain[chain.length - 1] || exports.empty_block();
-    const right_previoushash = last.hash;
-    const key_block = exports.search_key_block(chain);
-    const validatorPub = key_block.meta.validatorPub;
-    const tx_roots = txs.map(t => t.hash);
-    const date = new Date();
-    const now = date.getTime();
-    const already_micro = exports.search_micro_block(chain, key_block);
+exports.ValidMicroBlock = function (block, chain, right_stateroot, right_lockroot, StateData, LockData) {
+    var hash = block.hash;
+    var sign = block.validatorSign;
+    var meta = block.meta;
+    var version = meta.version;
+    var network_id = meta.network_id;
+    var chain_id = meta.chain_id;
+    var validator = meta.validator;
+    var height = meta.height;
+    var previoushash = meta.previoushash;
+    var timestamp = meta.timestamp;
+    var pos_diff = meta.pos_diff;
+    var stateroot = meta.stateroot;
+    var lockroot = meta.lockroot;
+    var tx_root = meta.tx_root;
+    var fee_sum = meta.fee_sum;
+    var txs = block.txs;
+    var raws = block.raws;
+    var last = chain[chain.length - 1] || exports.empty_block();
+    var right_previoushash = last.hash;
+    var key_block = exports.search_key_block(chain);
+    var validatorPub = key_block.meta.validatorPub;
+    var tx_roots = txs.map(function (t) { return t.hash; });
+    var date = new Date();
+    var now = date.getTime();
+    var already_micro = exports.search_micro_block(chain, key_block);
     if (_.object_hash_check(hash, meta)) {
         console.log("invalid hash");
         return false;
     }
-    else if (sign.length === 0 || sign.some((s, i) => _.sign_check(hash, s, validatorPub[i]))) {
+    else if (sign.length === 0 || sign.some(function (s, i) { return _.sign_check(hash, s, validatorPub[i]); })) {
         console.log("invalid validator signature");
         return false;
     }
@@ -346,22 +340,22 @@ exports.ValidMicroBlock = (block, chain, right_stateroot, right_lockroot, StateD
         return true;
     }
 };
-exports.CreateKeyBlock = (chain, validatorPub, stateroot, lockroot, extra, StateData) => {
-    const empty = exports.empty_block();
-    const last = chain[chain.length - 1] || empty;
-    const parenthash = last.hash;
-    const native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
-    const unit_validator = CryptoSet.GenereateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
-    const validator_state = StateData.filter(s => { return s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit; })[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
-    const genesis_time = chain[0].meta.timestamp;
-    const lwma_infos = chain.reduce((res, block) => {
+exports.CreateKeyBlock = function (chain, validatorPub, stateroot, lockroot, extra, StateData) {
+    var empty = exports.empty_block();
+    var last = chain[chain.length - 1] || empty;
+    var parenthash = last.hash;
+    var native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
+    var unit_validator = CryptoSet.GenereateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
+    var validator_state = StateData.filter(function (s) { return s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit; })[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
+    var genesis_time = chain[0].meta.timestamp;
+    var lwma_infos = chain.reduce(function (res, block) {
         res.times = res.times.concat(math.chain(block.meta.timestamp).subtract(genesis_time).done());
         res.diffs = res.diffs.concat(block.meta.pos_diff);
         return res;
     }, { times: [], diffs: [] });
-    const pos_diff = lwma_1.get_diff(lwma_infos.diffs, con_1.constant.block_time * con_1.constant.max_blocks, lwma_infos.times);
-    const timestamp = PoS_mining(parenthash, unit_validator, validator_state.amount, pos_diff);
-    const meta = {
+    var pos_diff = lwma_1.get_diff(lwma_infos.diffs, con_1.constant.block_time * con_1.constant.max_blocks, lwma_infos.times);
+    var timestamp = PoS_mining(parenthash, unit_validator, validator_state.amount, pos_diff);
+    var meta = {
         kind: 'key',
         version: con_1.constant.my_version,
         network_id: con_1.constant.my_net_id,
@@ -378,7 +372,7 @@ exports.CreateKeyBlock = (chain, validatorPub, stateroot, lockroot, extra, State
         fee_sum: 0,
         extra: extra
     };
-    const hash = _.ObjectHash(meta);
+    var hash = _.ObjectHash(meta);
     return {
         hash: hash,
         validatorSign: [],
@@ -387,16 +381,16 @@ exports.CreateKeyBlock = (chain, validatorPub, stateroot, lockroot, extra, State
         raws: []
     };
 };
-exports.CreateMicroBlock = (chain, stateroot, lockroot, txs, extra) => {
-    const empty = exports.empty_block();
-    const last = chain[chain.length - 1] || empty;
-    const key = exports.search_key_block(chain);
-    const timestamp = exports.Wait_block_time(last.meta.timestamp, con_1.constant.block_time);
-    const pures = txs.map(tx => TxSet.tx_to_pure(tx));
-    const raws = txs.map(tx => tx.raw);
-    const tx_root = exports.GetTreeroot(txs.map(t => t.hash))[0];
-    const fee_sum = tx_fee_sum(pures, raws);
-    const meta = {
+exports.CreateMicroBlock = function (chain, stateroot, lockroot, txs, extra) {
+    var empty = exports.empty_block();
+    var last = chain[chain.length - 1] || empty;
+    var key = exports.search_key_block(chain);
+    var timestamp = exports.Wait_block_time(last.meta.timestamp, con_1.constant.block_time);
+    var pures = txs.map(function (tx) { return TxSet.tx_to_pure(tx); });
+    var raws = txs.map(function (tx) { return tx.raw; });
+    var tx_root = exports.GetTreeroot(txs.map(function (t) { return t.hash; }))[0];
+    var fee_sum = tx_fee_sum(pures, raws);
+    var meta = {
         kind: 'key',
         version: con_1.constant.my_version,
         network_id: con_1.constant.my_net_id,
@@ -413,7 +407,7 @@ exports.CreateMicroBlock = (chain, stateroot, lockroot, txs, extra) => {
         fee_sum: fee_sum,
         extra: extra
     };
-    const hash = _.ObjectHash(meta);
+    var hash = _.ObjectHash(meta);
     return {
         hash: hash,
         validatorSign: [],
@@ -422,50 +416,50 @@ exports.CreateMicroBlock = (chain, stateroot, lockroot, txs, extra) => {
         raws: raws
     };
 };
-exports.SignBlock = (block, my_private, my_pub) => {
-    const index = block.meta.validatorPub.indexOf(my_pub);
+exports.SignBlock = function (block, my_private, my_pub) {
+    var index = block.meta.validatorPub.indexOf(my_pub);
     if (index === -1)
         return block;
-    const sign = CryptoSet.SignData(block.hash, my_private);
+    var sign = CryptoSet.SignData(block.hash, my_private);
     block.validatorSign[index] = sign;
     return block;
 };
-const compute_issue = (height) => {
-    const all_issue = con_1.constant.all_issue;
-    const cycle = con_1.constant.cycle;
-    const n = math.chain(height).divide(cycle).fix().done();
-    const new_amount = math.chain(all_issue).multiply(math.pow(0.5, n + 1)).done();
-    const pre_amount = math.chain(all_issue).multiply(math.pow(0.5, n)).done();
-    const issue = math.chain(pre_amount).subtract(new_amount).divide(cycle).done();
+var compute_issue = function (height) {
+    var all_issue = con_1.constant.all_issue;
+    var cycle = con_1.constant.cycle;
+    var n = math.chain(height).divide(cycle).fix().done();
+    var new_amount = math.chain(all_issue).multiply(math.pow(0.5, n + 1)).done();
+    var pre_amount = math.chain(all_issue).multiply(math.pow(0.5, n)).done();
+    var issue = math.chain(pre_amount).subtract(new_amount).divide(cycle).done();
     if (math.chain(issue).smallerEq(math.pow(10, -18)))
         return 0;
     else
         return issue;
 };
-exports.AcceptKeyBlock = (block, chain, StateData, LockData) => {
-    const last_key = exports.search_key_block(chain);
-    const last_micros = exports.search_micro_block(chain, last_key);
-    const fees = last_micros.reduce((sum, b) => math.chain(sum).add(b.meta.fee_sum).done(), 0);
-    const issues = last_micros.concat(last_key).reduce((sum, b) => math.chain(sum).add(compute_issue(b.meta.height)).done(), 0);
-    const fee_sum = math.chain(fees).add(issues).done();
-    const pre_fee = math.multiply(fee_sum, 0.4);
-    const next_fee = math.multiply(fee_sum, 0.6);
-    const paid = StateData.map(s => {
-        const fee = Number(s.data.fee || "0");
+exports.AcceptKeyBlock = function (block, chain, StateData, LockData) {
+    var last_key = exports.search_key_block(chain);
+    var last_micros = exports.search_micro_block(chain, last_key);
+    var fees = last_micros.reduce(function (sum, b) { return math.chain(sum).add(b.meta.fee_sum).done(); }, 0);
+    var issues = last_micros.concat(last_key).reduce(function (sum, b) { return math.chain(sum).add(compute_issue(b.meta.height)).done(); }, 0);
+    var fee_sum = math.chain(fees).add(issues).done();
+    var pre_fee = math.multiply(fee_sum, 0.4);
+    var next_fee = math.multiply(fee_sum, 0.6);
+    var paid = StateData.map(function (s) {
+        var fee = Number(s.data.fee || "0");
         if (fee === 0)
             return s;
-        return _.new_obj(s, s => {
+        return _.new_obj(s, function (s) {
             s.amount = math.chain(s.amount).subtract(fee).done();
             s.data.fee = "0";
             return s;
         });
     });
-    const validators = [last_key.meta.validator, block.meta.validator];
-    const gained = paid.map(s => {
-        const i = validators.indexOf(s.owner);
+    var validators = [last_key.meta.validator, block.meta.validator];
+    var gained = paid.map(function (s) {
+        var i = validators.indexOf(s.owner);
         if (i === -1)
             return s;
-        const gain = (() => {
+        var gain = (function () {
             if (i === 0)
                 return pre_fee;
             else if (i === 1)
@@ -473,17 +467,17 @@ exports.AcceptKeyBlock = (block, chain, StateData, LockData) => {
             else
                 return 0;
         })();
-        return _.new_obj(s, s => {
+        return _.new_obj(s, function (s) {
             s.amount = math.chain(s.amount).add(gain).done();
             s.data.income = math.chain(Number(s.data.income || "0")).add(gain).done().toFixed(18);
             return s;
         });
     });
-    const reduced = gained.map(s => {
+    var reduced = gained.map(function (s) {
         if (s.kind != "state" || s.token != con_1.constant.unit)
             return s;
-        const reduce = Number(s.data.reduce || "1");
-        return _.new_obj(s, s => {
+        var reduce = Number(s.data.reduce || "1");
+        return _.new_obj(s, function (s) {
             s.amount = math.chain(s.amount).multiply(reduce).done();
             s.data.reduce = "1";
             return s;
@@ -491,10 +485,10 @@ exports.AcceptKeyBlock = (block, chain, StateData, LockData) => {
     });
     return [reduced, LockData];
 };
-exports.AcceptMicroBlock = (block, chain, StateData, LockData) => {
-    const first_data = [StateData, LockData];
-    const txs = block.txs.map(pure => TxSet.pure_to_tx(pure, block));
-    const txed = txs.reduce((data, tx, i) => {
+exports.AcceptMicroBlock = function (block, chain, StateData, LockData) {
+    var first_data = [StateData, LockData];
+    var txs = block.txs.map(function (pure) { return TxSet.pure_to_tx(pure, block); });
+    var txed = txs.reduce(function (data, tx, i) {
         if (tx.meta.kind === "request")
             return TxSet.AcceptRequestTx(tx, block.meta.height, block.hash, i, data[0], data[1]);
         else if (tx.meta.kind === "refresh")
@@ -502,11 +496,11 @@ exports.AcceptMicroBlock = (block, chain, StateData, LockData) => {
         else
             return data;
     }, first_data);
-    const reduced = txed[0].map(s => {
+    var reduced = txed[0].map(function (s) {
         if (s.kind != "state" || s.token != con_1.constant.unit)
             return s;
-        const reduce = Number(s.data.reduce || "1");
-        return _.new_obj(s, s => {
+        var reduce = Number(s.data.reduce || "1");
+        return _.new_obj(s, function (s) {
             s.amount = math.chain(s.amount).multiply(reduce).done();
             s.data.reduce = "1";
             return s;
