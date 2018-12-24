@@ -210,7 +210,7 @@ const create_state = (nonce:number=0,owner:string=CryptoSet.GenereateAddress("",
     }
 }
 
-const create_info = (nonce=0,token="",issued=0,code="")=>{
+const create_info = (nonce=0,token="",issued=0,code=_.toHash(''))=>{
     try{
         if(typeof nonce != 'number' || nonce<0 || !Number.isInteger(nonce)) throw new Error('invalid nonce');
         else if(typeof token !='string' || Buffer.from(token).length>constant.token_name_maxsize) throw new Error('invalid token');
