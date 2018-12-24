@@ -19,7 +19,7 @@ exports.constant = {
     gas_limit: 25,
     rate: 0.99,
     pow_target: Math.pow(2, 256),
-    def_pos_diff: Math.pow(10, -30),
+    def_pos_diff: 1,
     compatible_version: compatible_version
 };
 exports.change_config = function (config) {
