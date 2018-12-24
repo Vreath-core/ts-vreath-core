@@ -53,7 +53,7 @@ exports.de_value = function (value) {
 var Trie = /** @class */ (function () {
     function Trie(db, root) {
         if (root === void 0) { root = ""; }
-        if (root == "")
+        if (root === "")
             this.trie = new Merkle(db);
         else
             this.trie = new Merkle(db, Buffer.from(root, 'hex'));
@@ -63,7 +63,7 @@ var Trie = /** @class */ (function () {
             var result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.get).bind(this.trie)(exports.en_key(key))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.get).bind(this.trie)(Buffer.from(exports.en_key(key), 'hex'))];
                     case 1:
                         result = _a.sent();
                         if (result == null)
@@ -77,7 +77,7 @@ var Trie = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.put).bind(this.trie)(exports.en_key(key), exports.en_value(value))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.put).bind(this.trie)(Buffer.from(exports.en_key(key), 'hex'), Buffer.from(exports.en_value(value), 'hex'))];
                     case 1:
                         _a.sent();
                         return [2 /*return*/, this.trie];
@@ -89,7 +89,7 @@ var Trie = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.del).bind(this.trie)(exports.en_key(key))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.del).bind(this.trie)(Buffer.from(exports.en_key(key), 'hex'))];
                     case 1:
                         _a.sent();
                         return [2 /*return*/, this.trie];

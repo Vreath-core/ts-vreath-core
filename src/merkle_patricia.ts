@@ -18,27 +18,26 @@ export const de_value = (value:string)=>{
   return JSON.parse(rlp.decode(Buffer.from(value,'hex')).toString());
 }
 
-
 export class Trie {
   private trie:any;
   constructor(db:any,root:string=""){
-    if(root=="") this.trie = new Merkle(db);
+    if(root==="") this.trie = new Merkle(db);
     else this.trie = new Merkle(db,Buffer.from(root,'hex'));
   }
 
   async get(key:string){
-    const result = await promisify(this.trie.get).bind(this.trie)(en_key(key));
+    const result = await promisify(this.trie.get).bind(this.trie)(Buffer.from(en_key(key),'hex'));
     if(result==null) return null;
     return de_value(result);
   }
 
   async put(key:string,value:any){
-    await promisify(this.trie.put).bind(this.trie)(en_key(key),en_value(value));
+    await promisify(this.trie.put).bind(this.trie)(Buffer.from(en_key(key),'hex'),Buffer.from(en_value(value),'hex'));
     return this.trie;
   }
 
   async delete(key:string){
-    await promisify(this.trie.del).bind(this.trie)(en_key(key));
+    await promisify(this.trie.del).bind(this.trie)(Buffer.from(en_key(key),'hex'));
     return this.trie;
   }
 
