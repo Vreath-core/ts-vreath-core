@@ -1,8 +1,8 @@
 "use strict";
 exports.__esModule = true;
 var my_version = 0;
-var my_net_id = 1;
-var my_chain_id = 1;
+var my_net_id = 75;
+var my_chain_id = 75;
 var compatible_version = 0;
 exports.constant = {
     my_version: my_version,

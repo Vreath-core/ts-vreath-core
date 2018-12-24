@@ -1,6 +1,6 @@
 let my_version = 0;
-let my_net_id = 1;
-let my_chain_id = 1;
+let my_net_id = 75;
+let my_chain_id = 75;
 let compatible_version = 0;
 
 export type Config = {
