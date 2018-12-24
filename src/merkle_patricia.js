@@ -55,9 +55,9 @@ var Trie = /** @class */ (function () {
     function Trie(db, root) {
         if (root === void 0) { root = ""; }
         if (root == "")
-            this.trie = new merkle_patricia_tree_1["default"](db);
+            this.trie = new merkle_patricia_tree_1.Trie(db);
         else
-            this.trie = new merkle_patricia_tree_1["default"](db, Buffer.from(root, 'hex'));
+            this.trie = new merkle_patricia_tree_1.Trie(db, Buffer.from(root, 'hex'));
     }
     Trie.prototype.get = function (key) {
         return __awaiter(this, void 0, void 0, function () {
