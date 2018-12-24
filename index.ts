@@ -254,7 +254,7 @@ const isTxPure = (tx:T.TxPure):tx is T.TxPure =>{
 }
 
 const isBlockMeta = (meta:T.BlockMeta):meta is T.BlockMeta =>{
-    return ['key','micro'].indexOf(meta.kind)!=-1 && typeof meta.version==='number' && typeof meta.network_id==='number' && typeof meta.chain_id==='number' && typeof meta.validator==='string' && typeof meta.height==='number' && meta.height>=0 && Number.isInteger(meta.height) && typeof meta.timestamp==='number' && typeof meta.previoushash==='string' && !_.hash_size_check(meta.previoushash) && typeof meta.pos_diff==='number' && meta.pos_diff>0 && !meta.validatorPub.some(pub=>typeof pub!='string') && typeof meta.stateroot==='string' && typeof meta.lockroot==='string' && typeof meta.tx_root==='string' && !_.hash_size_check(meta.tx_root) && typeof meta.fee_sum==='number' && meta.fee_sum>0 && typeof meta.extra==='string';
+    return ['key','micro'].indexOf(meta.kind)!=-1 && typeof meta.version==='number' && typeof meta.network_id==='number' && typeof meta.chain_id==='number' && typeof meta.validator==='string' && typeof meta.height==='number' && meta.height>=0 && Number.isInteger(meta.height) && typeof meta.timestamp==='number' && typeof meta.previoushash==='string' && !_.hash_size_check(meta.previoushash) && typeof meta.pos_diff==='number' && meta.pos_diff>0 && !meta.validatorPub.some(pub=>typeof pub!='string') && typeof meta.stateroot==='string' && typeof meta.lockroot==='string' && typeof meta.tx_root==='string' && !_.hash_size_check(meta.tx_root) && typeof meta.fee_sum==='number' && meta.fee_sum>=0 && typeof meta.extra==='string';
 }
 
 const isBlock = (block:T.Block):block is T.Block =>{
