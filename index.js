@@ -194,7 +194,7 @@ exports.con = {
 };
 exports.trie = merkle_patricia_1.Trie;
 var isState = function (state) {
-    return ['state', 'info'].indexOf(state.owner) != -1 && typeof state.nonce === 'number' && state.nonce >= 0 && Number.isInteger(state.nonce) && typeof state.token === 'string' && Buffer.from(state.token).length <= con_1.constant.token_name_maxsize && typeof state.owner === 'string' && !_.address_form_check(state.owner, con_1.constant.token_name_maxsize) && typeof state.amount === 'number' && state.amount >= 0 && !Object.values(state.data).some(function (val) { return typeof val != 'string'; }) && typeof state.issued === 'number' && state.issued >= 0 && typeof state.code === 'string' && !_.hash_size_check(state.code);
+    return ['state', 'info'].indexOf(state.kind) != -1 && typeof state.nonce === 'number' && state.nonce >= 0 && Number.isInteger(state.nonce) && typeof state.token === 'string' && Buffer.from(state.token).length <= con_1.constant.token_name_maxsize && typeof state.owner === 'string' && !_.address_form_check(state.owner, con_1.constant.token_name_maxsize) && typeof state.amount === 'number' && state.amount >= 0 && !Object.values(state.data).some(function (val) { return typeof val != 'string'; }) && typeof state.issued === 'number' && state.issued >= 0 && typeof state.code === 'string' && !_.hash_size_check(state.code);
 };
 var isLock = function (lock) {
     return typeof lock.address === 'string' && !_.address_form_check(lock.address, con_1.constant.token_name_maxsize) && ['yet', 'already'].indexOf(lock.state) != -1 && typeof lock.height === 'number' && lock.height >= 0 && Number.isInteger(lock.height) && typeof lock.block_hash === 'string' && !_.hash_size_check(lock.block_hash) && typeof lock.index === 'number' && lock.index >= 0 && Number.isInteger(lock.index) && typeof lock.tx_hash === 'string' && !_.hash_size_check(lock.tx_hash);
@@ -229,7 +229,7 @@ var create_info = function (nonce, token, issued, code) {
     if (nonce === void 0) { nonce = 0; }
     if (token === void 0) { token = ""; }
     if (issued === void 0) { issued = 0; }
-    if (code === void 0) { code = ""; }
+    if (code === void 0) { code = _.toHash(''); }
     try {
         if (typeof nonce != 'number' || nonce < 0 || !Number.isInteger(nonce))
             throw new Error('invalid nonce');
