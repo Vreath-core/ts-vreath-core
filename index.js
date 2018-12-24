@@ -194,7 +194,7 @@ exports.con = {
 };
 exports.trie = merkle_patricia_1.Trie;
 var isState = function (state) {
-    return ['state', 'info'].indexOf(state.owner) != -1 && typeof state.nonce === 'number' && state.nonce >= 0 && Number.isInteger(state.nonce) && typeof state.token === 'string' && Buffer.from(state.token).length <= con_1.constant.token_name_maxsize && typeof state.owner === 'string' && !_.address_form_check(state.owner, con_1.constant.token_name_maxsize) && typeof state.amount === 'number' && state.amount >= 0 && !Object.values(state.data).some(function (val) { return typeof val === 'string'; }) && typeof state.issued === 'number' && state.issued >= 0 && typeof state.code === 'string' && !_.hash_size_check(state.code);
+    return ['state', 'info'].indexOf(state.owner) != -1 && typeof state.nonce === 'number' && state.nonce >= 0 && Number.isInteger(state.nonce) && typeof state.token === 'string' && Buffer.from(state.token).length <= con_1.constant.token_name_maxsize && typeof state.owner === 'string' && !_.address_form_check(state.owner, con_1.constant.token_name_maxsize) && typeof state.amount === 'number' && state.amount >= 0 && !Object.values(state.data).some(function (val) { return typeof val != 'string'; }) && typeof state.issued === 'number' && state.issued >= 0 && typeof state.code === 'string' && !_.hash_size_check(state.code);
 };
 var isLock = function (lock) {
     return typeof lock.address === 'string' && !_.address_form_check(lock.address, con_1.constant.token_name_maxsize) && ['yet', 'already'].indexOf(lock.state) != -1 && typeof lock.height === 'number' && lock.height >= 0 && Number.isInteger(lock.height) && typeof lock.block_hash === 'string' && !_.hash_size_check(lock.block_hash) && typeof lock.index === 'number' && lock.index >= 0 && Number.isInteger(lock.index) && typeof lock.tx_hash === 'string' && !_.hash_size_check(lock.tx_hash);
@@ -588,16 +588,6 @@ var pos_staking = function (previoushash, timestamp, address, balance, difficult
         throw new Error(e);
     }
 };
-var wait_block_time = function (pre_time) {
-    try {
-        if (typeof pre_time != 'number' || pre_time < 0)
-            throw new Error('invalid pre time');
-        return BlockSet.Wait_block_time(pre_time, con_1.constant.block_time);
-    }
-    catch (e) {
-        throw new Error(e);
-    }
-};
 var verify_key_block = function (key_block, chain, right_stateroot, right_lockroot, StateData) {
     try {
         if (!isBlock(key_block) || key_block.meta.kind != 'key')
@@ -636,7 +626,7 @@ var verify_micro_block = function (micro_block, chain, right_stateroot, right_lo
         throw new Error(e);
     }
 };
-var create_key_block = function (chain, validatorPub, stateroot, lockroot, extra, StateData) {
+var create_key_block = function (chain, validatorPub, stateroot, lockroot, extra) {
     try {
         if (chain.some(function (b) { return !isBlock(b); }))
             throw new Error('invalid chain');
@@ -648,9 +638,7 @@ var create_key_block = function (chain, validatorPub, stateroot, lockroot, extra
             throw new Error('invalid lockroot');
         else if (typeof extra != 'string')
             throw new Error('invalid extra');
-        else if (StateData.some(function (s) { return !isState(s); }))
-            throw new Error('invalid state data');
-        var key_block = BlockSet.CreateKeyBlock(chain, validatorPub, stateroot, lockroot, extra, StateData);
+        var key_block = BlockSet.CreateKeyBlock(chain, validatorPub, stateroot, lockroot, extra);
         if (!isBlock(key_block) || key_block.meta.kind != 'key')
             throw new Error('invalid block');
         return key_block;
@@ -747,7 +735,6 @@ exports.block = {
     search_micro_block: search_micro_block,
     get_tree_root: get_tree_root,
     pos_staking: pos_staking,
-    wait_block_time: wait_block_time,
     verify_key_block: verify_key_block,
     verify_micro_block: verify_micro_block,
     create_key_block: create_key_block,
