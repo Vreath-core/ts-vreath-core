@@ -184,7 +184,7 @@ export const con = {
     change_configs:change_configs
 }
 
-export const trie = Trie;
+export class trie extends Trie{};
 
 const isState = (state:T.State):state is T.State =>{
     return ['state','info'].indexOf(state.kind)!=-1 && typeof state.nonce==='number' && state.nonce>=0 && Number.isInteger(state.nonce) && typeof state.token==='string' && Buffer.from(state.token).length<=constant.token_name_maxsize && typeof state.owner==='string' && ((state.kind==='state'&&!_.address_form_check(state.owner,constant.token_name_maxsize))||(state.kind==='info'&&state.owner==='')) && typeof state.amount==='number' && state.amount>=0 && !Object.values(state.data).some(val=>typeof val!='string') && typeof state.issued==='number' && state.issued>=0 && typeof state.code==='string' && !_.hash_size_check(state.code);

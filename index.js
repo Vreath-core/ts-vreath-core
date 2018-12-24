@@ -1,4 +1,17 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 exports.__esModule = true;
 var con_1 = require("./src/con");
 var CryptoSet = require("./src/crypto_set");
@@ -192,7 +205,15 @@ exports.con = {
     constant: con_1.constant,
     change_configs: change_configs
 };
-exports.trie = merkle_patricia_1.Trie;
+var trie = /** @class */ (function (_super) {
+    __extends(trie, _super);
+    function trie() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return trie;
+}(merkle_patricia_1.Trie));
+exports.trie = trie;
+;
 var isState = function (state) {
     return ['state', 'info'].indexOf(state.kind) != -1 && typeof state.nonce === 'number' && state.nonce >= 0 && Number.isInteger(state.nonce) && typeof state.token === 'string' && Buffer.from(state.token).length <= con_1.constant.token_name_maxsize && typeof state.owner === 'string' && ((state.kind === 'state' && !_.address_form_check(state.owner, con_1.constant.token_name_maxsize)) || (state.kind === 'info' && state.owner === '')) && typeof state.amount === 'number' && state.amount >= 0 && !Object.values(state.data).some(function (val) { return typeof val != 'string'; }) && typeof state.issued === 'number' && state.issued >= 0 && typeof state.code === 'string' && !_.hash_size_check(state.code);
 };
