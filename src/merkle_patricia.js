@@ -35,7 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-var merkle_patricia_tree_1 = require("merkle-patricia-tree");
+var Merkle = require("merkle-patricia-tree/secure");
 var rlp = require("rlp");
 var es6_promise_1 = require("es6-promise");
 var util_promisify_1 = require("util.promisify");
@@ -55,9 +55,9 @@ var Trie = /** @class */ (function () {
     function Trie(db, root) {
         if (root === void 0) { root = ""; }
         if (root == "")
-            this.trie = new merkle_patricia_tree_1.Trie(db);
+            this.trie = new Merkle(db);
         else
-            this.trie = new merkle_patricia_tree_1.Trie(db, Buffer.from(root, 'hex'));
+            this.trie = new Merkle(db, Buffer.from(root, 'hex'));
     }
     Trie.prototype.get = function (key) {
         return __awaiter(this, void 0, void 0, function () {

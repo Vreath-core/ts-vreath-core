@@ -1,4 +1,4 @@
-import {Trie as Merkle} from 'merkle-patricia-tree'
+import * as Merkle from 'merkle-patricia-tree/secure'
 import * as rlp from 'rlp'
 import {Promise} from 'es6-promise'
 import promisify from 'util.promisify'
