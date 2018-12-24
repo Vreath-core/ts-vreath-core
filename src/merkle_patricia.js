@@ -114,6 +114,8 @@ var Trie = /** @class */ (function () {
                 return [2 /*return*/, new Promise(function (resolve, reject) {
                         try {
                             stream.on('data', function (data) {
+                                if (data.value == null)
+                                    return result;
                                 var value = JSON.parse(data.value.toString());
                                 if (check(value))
                                     result.push(value);

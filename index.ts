@@ -543,7 +543,7 @@ const verify_micro_block = (micro_block:T.Block,chain:T.Block[],right_stateroot:
     }
 }
 
-const create_key_block = (chain:T.Block[],validatorPub:string[],stateroot:string,lockroot:string,extra:string)=>{
+const create_key_block = (chain:T.Block[],validatorPub:string[],stateroot:string,lockroot:string,extra:string,private_key:string,public_key:string)=>{
     try{
         if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
         else if(validatorPub.some(pub=>typeof pub!='string')) throw new Error('invalid validator public keys');
@@ -552,14 +552,15 @@ const create_key_block = (chain:T.Block[],validatorPub:string[],stateroot:string
         else if(typeof extra!='string') throw new Error('invalid extra');
         const key_block = BlockSet.CreateKeyBlock(chain,validatorPub,stateroot,lockroot,extra);
         if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid block');
-        return key_block;
+        const signed = BlockSet.SignBlock(key_block,private_key,public_key);
+        return signed;
     }
     catch(e){
         throw new Error(e);
     }
 }
 
-const create_micro_block = (chain:T.Block[],stateroot:string,lockroot:string,txs:T.Tx[],extra:string)=>{
+const create_micro_block = (chain:T.Block[],stateroot:string,lockroot:string,txs:T.Tx[],extra:string,private_key:string,public_key:string)=>{
     try{
         if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
         else if(typeof stateroot!='string') throw new Error('invalid stateroot');
@@ -568,7 +569,8 @@ const create_micro_block = (chain:T.Block[],stateroot:string,lockroot:string,txs
         else if(typeof extra!='string') throw new Error('invalid extra');
         const micro_block = BlockSet.CreateMicroBlock(chain,stateroot,lockroot,txs,extra);
         if(!isBlock(micro_block)||micro_block.meta.kind!='micro') throw new Error('invalid block');
-        return micro_block;
+        const signed = BlockSet.SignBlock(micro_block,private_key,public_key);
+        return signed;
     }
     catch(e){
         throw new Error(e);

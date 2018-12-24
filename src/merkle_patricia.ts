@@ -60,6 +60,7 @@ export class Trie {
     return new Promise<T[]>((resolve,reject)=>{
       try{
         stream.on('data',(data:{key:Buffer,value:Buffer})=>{
+          if(data.value==null) return result;
           const value:T = JSON.parse(data.value.toString());
           if(check(value)) result.push(value);
         });

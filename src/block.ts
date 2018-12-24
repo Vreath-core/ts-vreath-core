@@ -409,7 +409,7 @@ export const CreateMicroBlock = (chain:T.Block[],stateroot:string,lockroot:strin
     const fee_sum = tx_fee_sum(pures,raws);
 
     const meta:T.BlockMeta = {
-        kind:'key',
+        kind:'micro',
         version:constant.my_version,
         network_id:constant.my_net_id,
         chain_id:constant.my_chain_id,

@@ -647,7 +647,7 @@ var verify_micro_block = function (micro_block, chain, right_stateroot, right_lo
         throw new Error(e);
     }
 };
-var create_key_block = function (chain, validatorPub, stateroot, lockroot, extra) {
+var create_key_block = function (chain, validatorPub, stateroot, lockroot, extra, private_key, public_key) {
     try {
         if (chain.some(function (b) { return !isBlock(b); }))
             throw new Error('invalid chain');
@@ -662,13 +662,14 @@ var create_key_block = function (chain, validatorPub, stateroot, lockroot, extra
         var key_block = BlockSet.CreateKeyBlock(chain, validatorPub, stateroot, lockroot, extra);
         if (!isBlock(key_block) || key_block.meta.kind != 'key')
             throw new Error('invalid block');
-        return key_block;
+        var signed = BlockSet.SignBlock(key_block, private_key, public_key);
+        return signed;
     }
     catch (e) {
         throw new Error(e);
     }
 };
-var create_micro_block = function (chain, stateroot, lockroot, txs, extra) {
+var create_micro_block = function (chain, stateroot, lockroot, txs, extra, private_key, public_key) {
     try {
         if (chain.some(function (b) { return !isBlock(b); }))
             throw new Error('invalid chain');
@@ -683,7 +684,8 @@ var create_micro_block = function (chain, stateroot, lockroot, txs, extra) {
         var micro_block = BlockSet.CreateMicroBlock(chain, stateroot, lockroot, txs, extra);
         if (!isBlock(micro_block) || micro_block.meta.kind != 'micro')
             throw new Error('invalid block');
-        return micro_block;
+        var signed = BlockSet.SignBlock(micro_block, private_key, public_key);
+        return signed;
     }
     catch (e) {
         throw new Error(e);

@@ -45,7 +45,7 @@ exports.get_unicode = function (str) {
 exports.reduce_pub = function (pubs) {
     return pubs.slice().sort().reduce(function (res, pub) {
         return exports.toHash(pub + res);
-    });
+    }) || '';
 };
 exports.get_string = function (uni) {
     return String.fromCharCode.apply({}, uni);

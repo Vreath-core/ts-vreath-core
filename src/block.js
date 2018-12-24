@@ -390,7 +390,7 @@ exports.CreateMicroBlock = function (chain, stateroot, lockroot, txs, extra) {
     var tx_root = exports.GetTreeroot(txs.map(function (t) { return t.hash; }))[0];
     var fee_sum = tx_fee_sum(pures, raws);
     var meta = {
-        kind: 'key',
+        kind: 'micro',
         version: con_1.constant.my_version,
         network_id: con_1.constant.my_net_id,
         chain_id: con_1.constant.my_chain_id,
