@@ -11,11 +11,11 @@ export const CreateState = (nonce:number=0,owner:string=CryptoSet.GenereateAddre
     amount:amount,
     data:data,
     issued:0,
-    code:""
+    code:_.toHash('')
   }
 }
 
-export const CreateInfo = (nonce=0,token="",issued=0,code=""):T.State=>{
+export const CreateInfo = (nonce=0,token="",issued=0,code=_.toHash('')):T.State=>{
   return {
     kind:"info",
     nonce:nonce,

@@ -16,14 +16,14 @@ exports.CreateState = function (nonce, owner, token, amount, data) {
         amount: amount,
         data: data,
         issued: 0,
-        code: ""
+        code: _.toHash('')
     };
 };
 exports.CreateInfo = function (nonce, token, issued, code) {
     if (nonce === void 0) { nonce = 0; }
     if (token === void 0) { token = ""; }
     if (issued === void 0) { issued = 0; }
-    if (code === void 0) { code = ""; }
+    if (code === void 0) { code = _.toHash(''); }
     return {
         kind: "info",
         nonce: nonce,
