@@ -139,11 +139,11 @@ var Trie = /** @class */ (function () {
                         try {
                             stream.on('data', function (data) {
                                 var key = exports.de_key(data.key);
-                                var value = exports.de_value(data.value);
+                                var value = exports.de_value(data.value.toString('hex'));
                                 if (check(key, value))
                                     result[key] = value;
                             });
-                            stream.on('end', function (val) {
+                            stream.on('end', function (data) {
                                 resolve(result);
                             });
                         }

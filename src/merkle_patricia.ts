@@ -60,18 +60,18 @@ export class Trie {
     return this.trie;
   }
 
-  async filter(check:(key:string,value:any)=>boolean=(key:string,value)=>{return true}){
-    let result:{[key:string]:any;} = {};
+  async filter<T>(check:(key:string,value:T)=>boolean=(key:string,value:T)=>true){
+    let result:{[key:string]:T;} = {};
     const stream = this.trie.createReadStream();
-    return new Promise<{[key:string]:any;}>((resolve,reject)=>{
+    return new Promise<{[key:string]:T;}>((resolve,reject)=>{
       try{
-        stream.on('data',(data:{key:string,value:any})=>{
+        stream.on('data',(data:{key:string,value:Buffer})=>{
           const key = de_key(data.key);
-          const value = de_value(data.value);
+          const value:T = de_value(data.value.toString('hex'));
           if(check(key,value)) result[key] = value;
         });
 
-        stream.on('end',(val:{key:string,value:any})=>{
+        stream.on('end',(data:{key:string,value:any})=>{
           resolve(result);
         });
       }
