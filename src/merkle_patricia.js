@@ -42,7 +42,7 @@ exports.en_key = function (key) {
     return rlp.encode(key).toString('hex');
 };
 exports.de_key = function (key) {
-    return rlp.decode(Buffer.from(key, 'hex')).toString('hex');
+    return rlp.decode(Buffer.from(key, 'hex')).toString('utf-8');
 };
 exports.en_value = function (value) {
     return rlp.encode(JSON.stringify(value)).toString('hex');
@@ -63,12 +63,12 @@ var Trie = /** @class */ (function () {
             var result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.get).bind(this.trie)(Buffer.from(exports.en_key(key), 'hex'))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.get).bind(this.trie)(key)];
                     case 1:
                         result = _a.sent();
                         if (result == null)
                             return [2 /*return*/, null];
-                        return [2 /*return*/, exports.de_value(result)];
+                        return [2 /*return*/, JSON.parse(result)];
                 }
             });
         });
@@ -77,7 +77,7 @@ var Trie = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.put).bind(this.trie)(Buffer.from(exports.en_key(key), 'hex'), Buffer.from(exports.en_value(value), 'hex'))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.put).bind(this.trie)(key, JSON.stringify(value))];
                     case 1:
                         _a.sent();
                         return [2 /*return*/, this.trie];
@@ -89,7 +89,7 @@ var Trie = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.del).bind(this.trie)(Buffer.from(exports.en_key(key), 'hex'))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.del).bind(this.trie)(key)];
                     case 1:
                         _a.sent();
                         return [2 /*return*/, this.trie];
@@ -104,44 +104,19 @@ var Trie = /** @class */ (function () {
         this.trie.checkpoint();
         return this.trie;
     };
-    Trie.prototype.commit = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.commit).bind(this.trie)()];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/, this.trie];
-                }
-            });
-        });
-    };
-    Trie.prototype.revert = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.revert).bind(this.trie)()];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/, this.trie];
-                }
-            });
-        });
-    };
     Trie.prototype.filter = function (check) {
-        if (check === void 0) { check = function (key, value) { return true; }; }
+        if (check === void 0) { check = function (value) { return true; }; }
         return __awaiter(this, void 0, void 0, function () {
             var result, stream;
             return __generator(this, function (_a) {
-                result = {};
+                result = [];
                 stream = this.trie.createReadStream();
                 return [2 /*return*/, new Promise(function (resolve, reject) {
                         try {
                             stream.on('data', function (data) {
-                                var key = exports.de_key(data.key);
-                                var value = exports.de_value(data.value.toString('hex'));
-                                if (check(key, value))
-                                    result[key] = value;
+                                var value = JSON.parse(data.value.toString());
+                                if (check(value))
+                                    result.push(value);
                             });
                             stream.on('end', function (data) {
                                 resolve(result);

@@ -1,14 +1,17 @@
 import * as Merkle from 'merkle-patricia-tree/secure'
 import * as rlp from 'rlp'
 import {promisify} from 'util'
+import levelup from 'levelup'
+import leveldown from 'leveldown'
 
 export const en_key = (key:string):string=>{
   return rlp.encode(key).toString('hex');
 }
 
 export const de_key = (key:string):string=>{
-  return rlp.decode(Buffer.from(key,'hex')).toString('hex');
+  return rlp.decode(Buffer.from(key,'hex')).toString('utf-8')
 }
+
 
 export const en_value = <T>(value:T):string=>{
   return rlp.encode(JSON.stringify(value)).toString('hex');
@@ -18,6 +21,7 @@ export const de_value = (value:string)=>{
   return JSON.parse(rlp.decode(Buffer.from(value,'hex')).toString());
 }
 
+
 export class Trie {
   private trie:any;
   constructor(db:any,root:string=""){
@@ -26,18 +30,18 @@ export class Trie {
   }
 
   async get(key:string){
-    const result = await promisify(this.trie.get).bind(this.trie)(Buffer.from(en_key(key),'hex'));
+    const result:string = await promisify(this.trie.get).bind(this.trie)(key);
     if(result==null) return null;
-    return de_value(result);
+    return JSON.parse(result);
   }
 
   async put(key:string,value:any){
-    await promisify(this.trie.put).bind(this.trie)(Buffer.from(en_key(key),'hex'),Buffer.from(en_value(value),'hex'));
+    await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
     return this.trie;
   }
 
   async delete(key:string){
-    await promisify(this.trie.del).bind(this.trie)(Buffer.from(en_key(key),'hex'));
+    await promisify(this.trie.del).bind(this.trie)(key);
     return this.trie;
   }
 
@@ -50,25 +54,14 @@ export class Trie {
     return this.trie;
   }
 
-  async commit(){
-    await promisify(this.trie.commit).bind(this.trie)();
-    return this.trie;
-  }
-
-  async revert(){
-    await promisify(this.trie.revert).bind(this.trie)();
-    return this.trie;
-  }
-
-  async filter<T>(check:(key:string,value:T)=>boolean=(key:string,value:T)=>true){
-    let result:{[key:string]:T;} = {};
+  async filter<T>(check:(value:T)=>boolean=(value:T)=>true){
+    let result:T[] = [];
     const stream = this.trie.createReadStream();
-    return new Promise<{[key:string]:T;}>((resolve,reject)=>{
+    return new Promise<T[]>((resolve,reject)=>{
       try{
-        stream.on('data',(data:{key:string,value:Buffer})=>{
-          const key = de_key(data.key);
-          const value:T = de_value(data.value.toString('hex'));
-          if(check(key,value)) result[key] = value;
+        stream.on('data',(data:{key:Buffer,value:Buffer})=>{
+          const value:T = JSON.parse(data.value.toString());
+          if(check(value)) result.push(value);
         });
 
         stream.on('end',(data:{key:string,value:any})=>{
