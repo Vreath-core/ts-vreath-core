@@ -3,8 +3,7 @@
   "version": "0.0.1",
   "description": "Vreath bring cryptocurrency to everyone",
   "main": "./index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Vreath-core/ts-vreath-core.git"

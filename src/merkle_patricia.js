@@ -37,8 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 var Merkle = require("merkle-patricia-tree/secure");
 var rlp = require("rlp");
-var es6_promise_1 = require("es6-promise");
-var util_promisify_1 = require("util.promisify");
+var util_1 = require("util");
 exports.en_key = function (key) {
     return rlp.encode(key).toString('hex');
 };
@@ -64,7 +63,7 @@ var Trie = /** @class */ (function () {
             var result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_promisify_1["default"](this.trie.get).bind(this.trie)(exports.en_key(key))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.get).bind(this.trie)(exports.en_key(key))];
                     case 1:
                         result = _a.sent();
                         if (result == null)
@@ -78,7 +77,7 @@ var Trie = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_promisify_1["default"](this.trie.put).bind(this.trie)(exports.en_key(key), exports.en_value(value))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.put).bind(this.trie)(exports.en_key(key), exports.en_value(value))];
                     case 1:
                         _a.sent();
                         return [2 /*return*/, this.trie];
@@ -90,7 +89,7 @@ var Trie = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_promisify_1["default"](this.trie.del).bind(this.trie)(exports.en_key(key))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.del).bind(this.trie)(exports.en_key(key))];
                     case 1:
                         _a.sent();
                         return [2 /*return*/, this.trie];
@@ -109,7 +108,7 @@ var Trie = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_promisify_1["default"](this.trie.commit).bind(this.trie)()];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.commit).bind(this.trie)()];
                     case 1:
                         _a.sent();
                         return [2 /*return*/, this.trie];
@@ -121,7 +120,7 @@ var Trie = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_promisify_1["default"](this.trie.revert).bind(this.trie)()];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.revert).bind(this.trie)()];
                     case 1:
                         _a.sent();
                         return [2 /*return*/, this.trie];
@@ -136,7 +135,7 @@ var Trie = /** @class */ (function () {
             return __generator(this, function (_a) {
                 result = {};
                 stream = this.trie.createReadStream();
-                return [2 /*return*/, new es6_promise_1.Promise(function (resolve, reject) {
+                return [2 /*return*/, new Promise(function (resolve, reject) {
                         try {
                             stream.on('data', function (data) {
                                 var key = exports.de_key(data.key);
@@ -160,7 +159,7 @@ var Trie = /** @class */ (function () {
             var result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, util_promisify_1["default"](this.trie.checkRoot).bind(this.trie)(exports.en_key(root))];
+                    case 0: return [4 /*yield*/, util_1.promisify(this.trie.checkRoot).bind(this.trie)(exports.en_key(root))];
                     case 1:
                         result = _a.sent();
                         if (result == null)

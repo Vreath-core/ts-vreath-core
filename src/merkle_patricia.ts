@@ -1,7 +1,6 @@
 import * as Merkle from 'merkle-patricia-tree/secure'
 import * as rlp from 'rlp'
-import {Promise} from 'es6-promise'
-import promisify from 'util.promisify'
+import {promisify} from 'util'
 
 export const en_key = (key:string):string=>{
   return rlp.encode(key).toString('hex');
