@@ -291,7 +291,7 @@ exports.ValidMicroBlock = function (block, chain, right_stateroot, right_lockroo
         console.log("invalid parenthash");
         return false;
     }
-    else if (last.hash === exports.empty_block().hash || timestamp.toString().length != 10 || _.time_check(timestamp) || math.chain(now).subtract(last.meta.timestamp).smaller(con_1.constant.block_time)) {
+    else if (last.hash === exports.empty_block().hash || timestamp.toString().length != 10 || _.time_check(timestamp) || math.chain(now).subtract(last.meta.timestamp).smaller(con_1.constant.block_time).done()) {
         console.log("invalid timestamp");
         return false;
     }
@@ -299,7 +299,7 @@ exports.ValidMicroBlock = function (block, chain, right_stateroot, right_lockroo
         console.log("invalid pos_diff");
         return false;
     }
-    else if (_.ObjectHash(validatorPub) != _.ObjectHash([])) {
+    else if (_.ObjectHash(block.meta.validatorPub) != _.ObjectHash([])) {
         console.log("invalid validator public key");
         return false;
     }
@@ -323,7 +323,7 @@ exports.ValidMicroBlock = function (block, chain, right_stateroot, right_lockroo
         console.log("invalid raws");
         return false;
     }
-    else if (math.chain(Buffer.from(_.Object2string(meta) + _.Object2string(block.txs) + _.Object2string(block.raws) + _.Object2string(block.validatorSign)).length).larger(con_1.constant.max_blocks)) {
+    else if (math.chain(Buffer.from(_.Object2string(meta) + _.Object2string(block.txs) + _.Object2string(block.raws) + _.Object2string(block.validatorSign)).length).larger(con_1.constant.block_size).done()) {
         console.log("too big block");
         return false;
     }

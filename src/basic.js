@@ -64,7 +64,7 @@ exports.address_check = function (address, Public, token) {
 };
 exports.time_check = function (timestamp) {
     var date = new Date();
-    return timestamp > date.getTime();
+    return timestamp > Math.floor(date.getTime() / 1000);
 };
 exports.address_form_check = function (address, token_name_maxsize) {
     var splitted = address.split(":");
