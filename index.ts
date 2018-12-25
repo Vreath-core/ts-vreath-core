@@ -611,7 +611,7 @@ const accept_key_block = (key_block:T.Block,chain:T.Block[],StateData:T.State[],
 
 const accept_micro_block = (micro_block:T.Block,chain:T.Block[],StateData:T.State[],LockData:T.Lock[])=>{
     try{
-        if(!isBlock(micro_block)||micro_block.meta.kind!='key') throw new Error('invalid block');
+        if(!isBlock(micro_block)||micro_block.meta.kind!='micro') throw new Error('invalid block');
         else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
         else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
         else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');

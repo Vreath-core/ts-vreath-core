@@ -734,7 +734,7 @@ var accept_key_block = function (key_block, chain, StateData, LockData) {
 };
 var accept_micro_block = function (micro_block, chain, StateData, LockData) {
     try {
-        if (!isBlock(micro_block) || micro_block.meta.kind != 'key')
+        if (!isBlock(micro_block) || micro_block.meta.kind != 'micro')
             throw new Error('invalid block');
         else if (chain.some(function (b) { return !isBlock(b); }))
             throw new Error('invalid chain');
