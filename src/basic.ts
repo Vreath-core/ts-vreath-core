@@ -78,7 +78,7 @@ export const address_check = (address:string,Public:string,token:string)=>{
 
 export const time_check = (timestamp:number)=>{
   const date = new Date();
-  return timestamp>date.getTime();
+  return timestamp>Math.floor(date.getTime()/1000);
 }
 
 export const address_form_check = (address:string,token_name_maxsize:number)=>{
