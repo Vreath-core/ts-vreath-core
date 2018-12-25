@@ -661,8 +661,8 @@ var create_key_block = function (chain, validatorPub, stateroot, lockroot, extra
             throw new Error('invalid extra');
         var key_block = BlockSet.CreateKeyBlock(chain, validatorPub, stateroot, lockroot, extra);
         if (!isBlock(key_block) || key_block.meta.kind != 'key')
-            throw new Error('invalid block');
-        var signed = BlockSet.SignBlock(key_block, private_key, public_key);
+            throw new Error('invalid key block');
+        var signed = BlockSet.SignBlock(key_block, key_block.meta.validatorPub, private_key, public_key);
         return signed;
     }
     catch (e) {
@@ -683,8 +683,11 @@ var create_micro_block = function (chain, stateroot, lockroot, txs, extra, priva
             throw new Error('invalid extra');
         var micro_block = BlockSet.CreateMicroBlock(chain, stateroot, lockroot, txs, extra);
         if (!isBlock(micro_block) || micro_block.meta.kind != 'micro')
-            throw new Error('invalid block');
-        var signed = BlockSet.SignBlock(micro_block, private_key, public_key);
+            throw new Error('invalid micro block');
+        var pre_key_block = BlockSet.search_key_block(chain);
+        if (!isBlock(pre_key_block) || pre_key_block.meta.kind != 'key')
+            throw new Error('invalid previous key block');
+        var signed = BlockSet.SignBlock(micro_block, pre_key_block.meta.validatorPub, private_key, public_key);
         return signed;
     }
     catch (e) {

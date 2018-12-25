@@ -551,8 +551,8 @@ const create_key_block = (chain:T.Block[],validatorPub:string[],stateroot:string
         else if(typeof lockroot!='string') throw new Error('invalid lockroot');
         else if(typeof extra!='string') throw new Error('invalid extra');
         const key_block = BlockSet.CreateKeyBlock(chain,validatorPub,stateroot,lockroot,extra);
-        if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid block');
-        const signed = BlockSet.SignBlock(key_block,private_key,public_key);
+        if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid key block');
+        const signed = BlockSet.SignBlock(key_block,key_block.meta.validatorPub,private_key,public_key);
         return signed;
     }
     catch(e){
@@ -568,8 +568,10 @@ const create_micro_block = (chain:T.Block[],stateroot:string,lockroot:string,txs
         else if(txs.some(tx=>!isTx(tx))) throw new Error('invalid txs');
         else if(typeof extra!='string') throw new Error('invalid extra');
         const micro_block = BlockSet.CreateMicroBlock(chain,stateroot,lockroot,txs,extra);
-        if(!isBlock(micro_block)||micro_block.meta.kind!='micro') throw new Error('invalid block');
-        const signed = BlockSet.SignBlock(micro_block,private_key,public_key);
+        if(!isBlock(micro_block)||micro_block.meta.kind!='micro') throw new Error('invalid micro block');
+        const pre_key_block = BlockSet.search_key_block(chain);
+        if(!isBlock(pre_key_block)||pre_key_block.meta.kind!='key') throw new Error('invalid previous key block')
+        const signed = BlockSet.SignBlock(micro_block,pre_key_block.meta.validatorPub,private_key,public_key);
         return signed;
     }
     catch(e){

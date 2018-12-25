@@ -415,13 +415,16 @@ exports.CreateMicroBlock = function (chain, stateroot, lockroot, txs, extra) {
         raws: raws
     };
 };
-exports.SignBlock = function (block, my_private, my_pub) {
-    var index = block.meta.validatorPub.indexOf(my_pub);
+exports.SignBlock = function (block, pub_keys, my_private, my_pub) {
+    var index = pub_keys.indexOf(my_pub);
     if (index === -1)
         return block;
     var sign = CryptoSet.SignData(block.hash, my_private);
-    block.validatorSign[index] = sign;
-    return block;
+    var signed = _.new_obj(block, function (b) {
+        b.validatorSign[index] = sign;
+        return b;
+    });
+    return signed;
 };
 var compute_issue = function (height) {
     var all_issue = con_1.constant.all_issue;

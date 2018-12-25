@@ -435,12 +435,18 @@ export const CreateMicroBlock = (chain:T.Block[],stateroot:string,lockroot:strin
     }
 }
 
-export const SignBlock = (block:T.Block,my_private:string,my_pub:string)=>{
-    const index = block.meta.validatorPub.indexOf(my_pub);
+export const SignBlock = (block:T.Block,pub_keys:string[],my_private:string,my_pub:string)=>{
+    const index = pub_keys.indexOf(my_pub);
     if(index===-1) return block;
     const sign = CryptoSet.SignData(block.hash,my_private);
-    block.validatorSign[index] = sign;
-    return block;
+    const signed = _.new_obj(
+        block,
+        b=>{
+            b.validatorSign[index] = sign;
+            return b;
+        }
+    )
+    return signed;
 }
 
 const compute_issue = (height:number)=>{
