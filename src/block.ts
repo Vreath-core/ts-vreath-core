@@ -169,71 +169,71 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
 
 
     if(_.object_hash_check(hash,meta)||math.chain(2**256).multiply(unit_validator_state.amount).divide(right_diff).largerEq(pos_hash(last.hash,unit_validator,timestamp))){
-        console.log("invalid hash");
+        //console.log("invalid hash");
         return false;
     }
     else if(validator!=native_validator||unit_validator_state.amount===0){
-        console.log("invalid validator");
+        //console.log("invalid validator");
         return false;
     }
     else if(sign.length===0||sign.some((s,i)=>_.sign_check(hash,s,validatorPub[i]))){
-        console.log("invalid validator signature");
+        //console.log("invalid validator signature");
         return false;
     }
     else if(version!=constant.my_version){
-        console.log("invalid version");
+        //console.log("invalid version");
         return false;
     }
     else if(network_id!=constant.my_net_id){
-        console.log("invalid network id");
+        //console.log("invalid network id");
         return false;
     }
     else if(chain_id!=constant.my_chain_id){
-        console.log("invalid chain id");
+        //console.log("invalid chain id");
         return false;
     }
     else if(height!=chain.length){
-        console.log("invalid height");
+        //console.log("invalid height");
         return false;
     }
     else if(previoushash!=right_previoushash){
-        console.log("invalid parenthash");
+        //console.log("invalid parenthash");
         return false;
     }
     else if(timestamp.toString().length!=10||_.time_check(timestamp)){
-        console.log("invalid timestamp");
+        //console.log("invalid timestamp");
         return false;
     }
     else if(pos_diff!=right_diff){
-        console.log("invalid pos_diff");
+        //console.log("invalid pos_diff");
         return false;
     }
     else if(stateroot!=right_stateroot){
-        console.log("invalid stateroot");
+        //console.log("invalid stateroot");
         return false;
     }
     else if(lockroot!=right_lockroot){
-        console.log("invalid location");
+        //console.log("invalid location");
         return false;
     }
     else if(tx_root!=_.toHash("")){
-        console.log("invalid tx_root");
+        //console.log("invalid tx_root");
         return false;
     }
     else if(fee_sum!=0){
-        console.log("invalid fee_sum");
+        //console.log("invalid fee_sum");
         return false;
     }
     else if(txs.length>0){
-        console.log("invalid txs");
+        //console.log("invalid txs");
         return false;
     }
     else if(raws.length>0){
-        console.log("invalid raws");
+        //console.log("invalid raws");
         return false;
     }
     else if(math.chain(Buffer.from(_.Object2string(meta)+_.Object2string(block.txs)+_.Object2string(block.raws)+_.Object2string(block.validatorSign)).length).larger(constant.max_blocks)){
-        console.log("too big block");
+        //console.log("too big block");
         return false;
     }
     else{
@@ -274,79 +274,79 @@ export const ValidMicroBlock = (block:T.Block,chain:T.Block[],right_stateroot:st
 
 
     if(_.object_hash_check(hash,meta)){
-        console.log("invalid hash");
+        //console.log("invalid hash");
         return false;
     }
     else if(sign.length===0||sign.some((s,i)=>_.sign_check(hash,s,validatorPub[i]))){
-        console.log("invalid validator signature");
+        //console.log("invalid validator signature");
         return false;
     }
     else if(version!=constant.my_version){
-        console.log("invalid version");
+        //console.log("invalid version");
         return false;
     }
     else if(network_id!=constant.my_net_id){
-        console.log("invalid network_id");
+        //console.log("invalid network_id");
         return false;
     }
     else if(chain_id!=constant.my_chain_id){
-        console.log("invalid chain id");
+        //console.log("invalid chain id");
         return false;
     }
     else if(validator!=key_block.meta.validator){
-        console.log("invalid validator");
+        //console.log("invalid validator");
         return false;
     }
     else if(height!=chain.length){
-        console.log("invalid height");
+        //console.log("invalid height");
         return false;
     }
     else if(previoushash!=right_previoushash){
-        console.log("invalid parenthash");
+        //console.log("invalid parenthash");
         return false;
     }
     else if(last.hash===empty_block().hash||timestamp.toString().length!=10||_.time_check(timestamp)||math.chain(now).subtract(last.meta.timestamp).smaller(constant.block_time).done() as boolean){
-        console.log("invalid timestamp");
+        //console.log("invalid timestamp");
         return false;
     }
     else if(pos_diff!=key_block.meta.pos_diff){
-        console.log("invalid pos_diff");
+        //console.log("invalid pos_diff");
         return false;
     }
     else if(_.ObjectHash(block.meta.validatorPub)!=_.ObjectHash([])){
-        console.log("invalid validator public key");
+        //console.log("invalid validator public key");
         return false;
     }
     else if(stateroot!=right_stateroot){
-        console.log("invalid stateroot");
+        //console.log("invalid stateroot");
         return false;
     }
     else if(lockroot!=right_lockroot){
-        console.log("invalid location");
+        //console.log("invalid location");
         return false;
     }
     else if(tx_root!=GetTreeroot(tx_roots)[0]){
-        console.log("invalid tx_root");
+        //console.log("invalid tx_root");
         return false;
     }
     else if(fee_sum!=tx_fee_sum(txs,raws)){
-        console.log("invalid fee_sum");
+        //console.log("invalid fee_sum");
         return false;
     }
     else if(txs.length!=raws.length){
-        console.log("invalid raws");
+        //console.log("invalid raws");
         return false;
     }
     else if(math.chain(Buffer.from(_.Object2string(meta)+_.Object2string(block.txs)+_.Object2string(block.raws)+_.Object2string(block.validatorSign)).length).larger(constant.block_size).done() as boolean){
-        console.log("too big block");
+        //console.log("too big block");
         return false;
     }
     else if(already_micro.length>constant.max_blocks){
-        console.log("too many micro blocks");
+        //console.log("too many micro blocks");
         return false;
     }
     else if(txs_check(block,chain,StateData,LockData)){
-        console.log("invalid txs");
+        //console.log("invalid txs");
         return false;
     }
     else{

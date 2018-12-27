@@ -213,35 +213,35 @@ const ValidTxBasic = (tx:T.Tx)=>{
   const log_raw = raw.log;
 
   if(_.object_hash_check(hash,tx_meta)){
-    console.log("invalid hash");
+    //console.log("invalid hash");
     return false;
   }
   else if(version!=constant.my_version){
-    console.log("different version");
+    //console.log("different version");
     return false;
   }
   else if(network_id!=constant.my_net_id){
-    console.log("different network id");
+    //console.log("different network id");
     return false;
   }
   else if(chain_id!=constant.my_chain_id){
-    console.log("different chain id");
+    //console.log("different chain id");
     return false;
   }
   else if(_.address_check(address,_.reduce_pub(pub_key),tokens[0])){
-    console.log("invalid address");
+    //console.log("invalid address");
     return false;
   }
   else if(timestamp.toString().length!=10||_.time_check(timestamp)){
-    console.log("invalid timestamp");
+    //console.log("invalid timestamp");
     return false;
   }
   else if(sign.length===0||sign.some((s,i)=>_.sign_check(hash,s,pub_key[i]))){
-    console.log("invalid signature");
+    //console.log("invalid signature");
     return false;
   }
   else if(log_hash!=_.toHash(log_raw)){
-    console.log("invalid log hash");
+    //console.log("invalid log hash");
     return false;
   }
   else{
@@ -277,27 +277,27 @@ export const ValidRequestTx = (tx:T.Tx,request_mode:boolean,StateData:T.State[],
     return false;
   }
   else if(kind!="request"){
-    console.log("invalid kind");
+    //console.log("invalid kind");
     return false;
   }
   else if(requester_state==null||hashed_pub_check(requester_state,pub_key)||requested_check([requester_state],LockData)){
-    console.log("invalid requester");
+    //console.log("invalid requester");
     return false;
   }
   else if(tokens.length<1||tokens.length>5||tokens.length!=token_states.length){
-    console.log("invalid token");
+    //console.log("invalid token");
     return false;
   }
   else if(bases.some((key,i,array)=>tokens.indexOf(key.split(':')[1])===-1||array.indexOf(key)!=i)||base_states.map(s=>_.ObjectHash(s)).indexOf(_.ObjectHash(StateSet.CreateState()))!=-1){
-    console.log("invalid base");
+    //console.log("invalid base");
     return false;
   }
   else if(request_mode&&requested_check(base_states,LockData)){
-    console.log("base states are already requested");
+    //console.log("base states are already requested");
     return false;
   }
   else if(input!=_.ObjectHash(raw_data)){
-    console.log("invalid input hash");
+    //console.log("invalid input hash");
     return false;
   }
   else{
@@ -343,35 +343,35 @@ export const ValidRefreshTx = (tx:T.Tx,chain:T.Block[],refresh_mode:boolean,Stat
     return false;
   }
   else if(kind!="refresh"){
-    console.log("invalid kind");
+    //console.log("invalid kind");
     return false;
   }
   else if(math.larger(unit_hash(request,height,block_hash,nonce,unit_add,output,unit_price),pow_target)){
-    console.log("invalid nonce");
+    //console.log("invalid nonce");
     return false;
   }
   else if(math.smaller(unit_price,0)){
-    console.log("invalid unit_price");
+    //console.log("invalid unit_price");
     return false;
   }
   else if(req_tx.hash==empty_tx_pure().hash||block_tx_hashes.indexOf(req_tx.hash)===-1){
-    console.log("invalid request hash");
+    //console.log("invalid request hash");
     return false;
   }
   else if(refresh_mode&&refreshed_check(bases,height,block.hash,index,request,LockData)){
-    console.log("base states are already refreshed");
+    //console.log("base states are already refreshed");
     return false;
   }
   else if(refresher_state==null||hashed_pub_check(refresher_state,pub_key)||requested_check([refresher_state],LockData)){
-    console.log("invalid refresher");
+    //console.log("invalid refresher");
     return false;
   }
   else if(output!=_.ObjectHash(output_raw)){
-    console.log("invalid output hash");
+    //console.log("invalid output hash");
     return false;
   }
   else if(refresh_mode&&(!success||(type=="change"&&output_change_check(bases,output_states,StateData))||(type==="create"&&output_create_check(JSON.parse(raw.raw[0]),raw.raw[1],StateData)))){
-    console.log("invalid output");
+   //console.log("invalid output");
     return false;
   }
   else{
