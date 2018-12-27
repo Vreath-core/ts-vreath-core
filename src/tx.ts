@@ -128,7 +128,7 @@ export const refreshed_check = (base:string[],height:number,block_hash:string,in
   });
 }
 
-const state_check = (state:T.State):boolean=>{
+export const state_check = (state:T.State):boolean=>{
   return _.address_form_check(state.owner,constant.token_name_maxsize) || state.owner.split(":")[1]!=state.token || state.nonce<0 || (math.smaller(state.amount,0) as boolean) ||
   (math.smaller(state.issued,0) as boolean )|| Buffer.from(state.code).length<=Buffer.from(_.toHash('')).length;
 }

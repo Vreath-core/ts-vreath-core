@@ -144,6 +144,15 @@ const verify_address = (address:string)=>{
     }
 }
 
+const verify_hash_size = (hash:string)=>{
+    try{
+        return typeof hash!='string' || _.hash_size_check(hash);
+    }
+    catch(e){
+        throw new Error(e);
+    }
+}
+
 export const crypto = {
     genereate_key:CryptoSet.GenerateKeys,
     private2public:private2public,
@@ -157,7 +166,8 @@ export const crypto = {
     object_hash:object_hash,
     object_hash_number:object_hash_number,
     merge_pub_keys:merge_pub_keys,
-    verify_address:verify_address
+    verify_address:verify_address,
+    verify_hash_size:verify_hash_size
 }
 
 const change_configs = (version:number,network_id:number,chain_id:number,compatible_version:number)=>{
@@ -225,11 +235,22 @@ const create_info = (nonce=0,token="",issued=0,code=_.toHash(''))=>{
     }
 }
 
+const verify_state = (state:T.State)=>{
+    try{
+        if(!isState(state)) throw new Error('invalid state');
+        return TxSet.state_check(state);
+    }
+    catch(e){
+        throw new Error(e);
+    }
+}
+
 export const state = {
     isState:isState,
     isLock:isLock,
     create_state:create_state,
-    create_info:create_info
+    create_info:create_info,
+    verify_state:verify_state
 }
 
 
@@ -417,8 +438,8 @@ const accept_req_tx = (req_tx:T.Tx,height:number,block_hash:string,index:number,
         else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
         else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
         const accepted = TxSet.AcceptRequestTx(req_tx,height,block_hash,index,StateData,LockData);
-        if(accepted[0].map(s=>!isState(s))) throw new Error('invalid accepted state data');
-        else if(accepted[1].map(l=>!isLock(l))) throw new Error('invalid accepted lock data');
+        if(accepted[0].some(s=>!isState(s))) throw new Error('invalid accepted state data');
+        else if(accepted[1].some(l=>!isLock(l))) throw new Error('invalid accepted lock data');
         return accepted;
     }
     catch(e){
@@ -433,9 +454,36 @@ const accept_ref_tx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],LockData:
         else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
         else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
         const accepted = TxSet.AcceptRefreshTx(ref_tx,chain,StateData,LockData);
-        if(accepted[0].map(s=>!isState(s))) throw new Error('invalid accepted state data');
-        else if(accepted[1].map(l=>!isLock(l))) throw new Error('invalid accepted lock data');
+        if(accepted[0].some(s=>!isState(s))) throw new Error('invalid accepted state data');
+        else if(accepted[1].some(l=>!isLock(l))) throw new Error('invalid accepted lock data');
         return accepted;
+    }
+    catch(e){
+        throw new Error(e);
+    }
+}
+
+const native_contract = (StateData:T.State[],req_tx:T.Tx)=>{
+    try{
+        if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
+        else if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid request tx');
+        const refreshed = TxSet.native_code(StateData,req_tx);
+        if(refreshed.some(s=>!isState(s))) throw new Error('invalid refreshed state data');
+        return refreshed;
+    }
+    catch(e){
+        throw new Error(e);
+    }
+}
+
+const unit_contract = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
+    try{
+        if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
+        else if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid request tx');
+        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
+        const refreshed = TxSet.unit_code(StateData,req_tx,chain);
+        if(refreshed.some(s=>!isState(s))) throw new Error('invalid refreshed state data');
+        return refreshed;
     }
     catch(e){
         throw new Error(e);
@@ -460,7 +508,9 @@ export const tx = {
     create_ref_tx:create_ref_tx,
     sign_tx:sign_tx,
     accept_req_tx:accept_req_tx,
-    accept_ref_tx:accept_ref_tx
+    accept_ref_tx:accept_ref_tx,
+    native_contract:native_contract,
+    unit_contract:unit_contract
 }
 
 const search_key_block = (chain:T.Block[])=>{

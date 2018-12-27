@@ -119,7 +119,7 @@ exports.refreshed_check = function (base, height, block_hash, index, tx_hash, Lo
             return true;
     });
 };
-var state_check = function (state) {
+exports.state_check = function (state) {
     return _.address_form_check(state.owner, con_1.constant.token_name_maxsize) || state.owner.split(":")[1] != state.token || state.nonce < 0 || math.smaller(state.amount, 0) ||
         math.smaller(state.issued, 0) || Buffer.from(state.code).length <= Buffer.from(_.toHash('')).length;
 };
@@ -171,7 +171,7 @@ exports.find_req_tx = function (ref_tx, chain) {
     };
 };
 var output_change_check = function (bases, new_states, StateData) {
-    if (new_states.some(function (s) { return state_check(s) || base_declaration_check(s, bases, StateData); }))
+    if (new_states.some(function (s) { return exports.state_check(s) || base_declaration_check(s, bases, StateData); }))
         return true;
     return false;
 };

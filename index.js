@@ -164,6 +164,14 @@ var verify_address = function (address) {
         throw new Error(e);
     }
 };
+var verify_hash_size = function (hash) {
+    try {
+        return typeof hash != 'string' || _.hash_size_check(hash);
+    }
+    catch (e) {
+        throw new Error(e);
+    }
+};
 exports.crypto = {
     genereate_key: CryptoSet.GenerateKeys,
     private2public: private2public,
@@ -177,7 +185,8 @@ exports.crypto = {
     object_hash: object_hash,
     object_hash_number: object_hash_number,
     merge_pub_keys: merge_pub_keys,
-    verify_address: verify_address
+    verify_address: verify_address,
+    verify_hash_size: verify_hash_size
 };
 var change_configs = function (version, network_id, chain_id, compatible_version) {
     try {
@@ -269,11 +278,22 @@ var create_info = function (nonce, token, issued, code) {
         throw new Error(e);
     }
 };
+var verify_state = function (state) {
+    try {
+        if (!isState(state))
+            throw new Error('invalid state');
+        return TxSet.state_check(state);
+    }
+    catch (e) {
+        throw new Error(e);
+    }
+};
 exports.state = {
     isState: isState,
     isLock: isLock,
     create_state: create_state,
-    create_info: create_info
+    create_info: create_info,
+    verify_state: verify_state
 };
 var isTxMeta = function (meta) {
     return ['request', 'refresh'].indexOf(meta.type) != -1 && ['change', 'create'].indexOf(meta.kind) != -1 && typeof meta.version === 'number' && typeof meta.network_id === 'number' && typeof meta.chain_id === 'number' && typeof meta.timestamp === 'number' && typeof meta.address === 'string' && !meta.pub_key.some(function (pub) { return typeof pub != 'string'; }) && typeof meta.feeprice === 'number' && meta.feeprice >= 0 && typeof meta.gas === 'number' && meta.gas >= 0 && !meta.tokens.some(function (t, i) { return typeof t != 'string' || Buffer.from(t).length > con_1.constant.token_name_maxsize || i >= 5; }) && !meta.bases.some(function (base) { return typeof base != 'string' || _.address_form_check(base, con_1.constant.token_name_maxsize); }) && typeof meta.input === 'string' && !_.hash_size_check(meta.input) && typeof meta.height === 'number' && meta.height >= 0 && Number.isInteger(meta.height) && typeof meta.block_hash === 'string' && !_.hash_size_check(meta.block_hash) && typeof meta.index === 'number' && meta.index >= 0 && Number.isInteger(meta.index) && typeof meta.req_tx_hash === 'string' && !_.hash_size_check(meta.req_tx_hash) && typeof meta.success === 'boolean' && typeof meta.output === 'string' && !_.hash_size_check(meta.output) && typeof meta.nonce === 'number' && meta.nonce >= 0 && Number.isInteger(meta.nonce) && typeof meta.unit_price === 'number' && meta.unit_price >= 0 && typeof meta.log_hash === 'string' && !_.hash_size_check(meta.log_hash);
@@ -499,9 +519,9 @@ var accept_req_tx = function (req_tx, height, block_hash, index, StateData, Lock
         else if (LockData.some(function (l) { return !isLock(l); }))
             throw new Error('invalid lock data');
         var accepted = TxSet.AcceptRequestTx(req_tx, height, block_hash, index, StateData, LockData);
-        if (accepted[0].map(function (s) { return !isState(s); }))
+        if (accepted[0].some(function (s) { return !isState(s); }))
             throw new Error('invalid accepted state data');
-        else if (accepted[1].map(function (l) { return !isLock(l); }))
+        else if (accepted[1].some(function (l) { return !isLock(l); }))
             throw new Error('invalid accepted lock data');
         return accepted;
     }
@@ -520,11 +540,43 @@ var accept_ref_tx = function (ref_tx, chain, StateData, LockData) {
         else if (LockData.some(function (l) { return !isLock(l); }))
             throw new Error('invalid lock data');
         var accepted = TxSet.AcceptRefreshTx(ref_tx, chain, StateData, LockData);
-        if (accepted[0].map(function (s) { return !isState(s); }))
+        if (accepted[0].some(function (s) { return !isState(s); }))
             throw new Error('invalid accepted state data');
-        else if (accepted[1].map(function (l) { return !isLock(l); }))
+        else if (accepted[1].some(function (l) { return !isLock(l); }))
             throw new Error('invalid accepted lock data');
         return accepted;
+    }
+    catch (e) {
+        throw new Error(e);
+    }
+};
+var native_contract = function (StateData, req_tx) {
+    try {
+        if (StateData.some(function (s) { return !isState(s); }))
+            throw new Error('invalid state data');
+        else if (!isTx(req_tx) || req_tx.meta.kind != 'request')
+            throw new Error('invalid request tx');
+        var refreshed = TxSet.native_code(StateData, req_tx);
+        if (refreshed.some(function (s) { return !isState(s); }))
+            throw new Error('invalid refreshed state data');
+        return refreshed;
+    }
+    catch (e) {
+        throw new Error(e);
+    }
+};
+var unit_contract = function (StateData, req_tx, chain) {
+    try {
+        if (StateData.some(function (s) { return !isState(s); }))
+            throw new Error('invalid state data');
+        else if (!isTx(req_tx) || req_tx.meta.kind != 'request')
+            throw new Error('invalid request tx');
+        else if (chain.some(function (b) { return !isBlock(b); }))
+            throw new Error('invalid chain');
+        var refreshed = TxSet.unit_code(StateData, req_tx, chain);
+        if (refreshed.some(function (s) { return !isState(s); }))
+            throw new Error('invalid refreshed state data');
+        return refreshed;
     }
     catch (e) {
         throw new Error(e);
@@ -548,7 +600,9 @@ exports.tx = {
     create_ref_tx: create_ref_tx,
     sign_tx: sign_tx,
     accept_req_tx: accept_req_tx,
-    accept_ref_tx: accept_ref_tx
+    accept_ref_tx: accept_ref_tx,
+    native_contract: native_contract,
+    unit_contract: unit_contract
 };
 var search_key_block = function (chain) {
     try {
@@ -694,7 +748,7 @@ var create_micro_block = function (chain, stateroot, lockroot, txs, extra, priva
         throw new Error(e);
     }
 };
-var sign_block = function (block, private_key, public_key) {
+var sign_block = function (block, pub_keys, private_key, public_key) {
     try {
         if (!isBlock(block))
             throw new Error('invalid block');
@@ -702,7 +756,7 @@ var sign_block = function (block, private_key, public_key) {
             throw new Error('invalid private key');
         else if (typeof public_key != 'string')
             throw new Error('invalid public key');
-        var signed = BlockSet.SignBlock(block, private_key, public_key);
+        var signed = BlockSet.SignBlock(block, pub_keys, private_key, public_key);
         if (!isBlock(signed))
             throw new Error('invalid signed block');
         return signed;
