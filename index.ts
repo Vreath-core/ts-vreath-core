@@ -579,12 +579,12 @@ const create_micro_block = (chain:T.Block[],stateroot:string,lockroot:string,txs
     }
 }
 
-const sign_block = (block:T.Block,private_key:string,public_key:string)=>{
+const sign_block = (block:T.Block,pub_keys:string[],private_key:string,public_key:string)=>{
     try{
         if(!isBlock(block)) throw new Error('invalid block');
         else if(typeof private_key!='string') throw new Error('invalid private key');
         else if(typeof public_key!='string') throw new Error('invalid public key');
-        const signed = BlockSet.SignBlock(block,private_key,public_key);
+        const signed = BlockSet.SignBlock(block,pub_keys,private_key,public_key);
         if(!isBlock(signed)) throw new Error('invalid signed block');
         return signed;
     }
