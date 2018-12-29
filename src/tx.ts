@@ -520,7 +520,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
 export const CreateRequestTx = (pub_key:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log:string)=>{
   const address = CryptoSet.GenereateAddress(tokens[0],_.reduce_pub(pub_key));
   const date = new Date();
-  const timestamp = date.getTime();
+  const timestamp = Math.floor(date.getTime()/1000);
   const input = _.ObjectHash(input_raw);
   const log_hash = _.toHash(log);
   const empty = empty_tx();
@@ -573,7 +573,7 @@ export const CreateRefreshTx = (pub_key:string[],feeprice:number,unit_price:numb
   const token = req_tx.meta.tokens[0];
   const address = CryptoSet.GenereateAddress(token,_.reduce_pub(pub_key));
   const date = new Date();
-  const timestamp = date.getTime();
+  const timestamp = Math.floor(date.getTime()/1000);
   const output = _.ObjectHash(output_raw);
   const log_hash = _.toHash(log_raw);
   const empty = empty_tx_pure();

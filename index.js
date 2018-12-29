@@ -425,7 +425,7 @@ var verify_ref_tx = function (ref_tx, chain, refresh_mode, StateData, LockData) 
         throw new Error(e);
     }
 };
-var create_req_tx = function (pub_keys, type, tokens, bases, feeprice, gas, input_raw, log_raw) {
+var create_req_tx = function (pub_keys, type, tokens, bases, feeprice, gas, input_raw, log_raw, private_key, public_key) {
     try {
         if (pub_keys.some(function (key) { return typeof key != 'string'; }))
             throw new Error('invalid public keys');
@@ -446,13 +446,14 @@ var create_req_tx = function (pub_keys, type, tokens, bases, feeprice, gas, inpu
         var req_tx = TxSet.CreateRequestTx(pub_keys, type, tokens, bases, feeprice, gas, input_raw, log_raw);
         if (!isTx(req_tx) || req_tx.meta.kind != 'request')
             throw new Error('invalid req_tx');
-        return req_tx;
+        var signed = TxSet.SignTx(req_tx, private_key, public_key);
+        return signed;
     }
     catch (e) {
         throw new Error(e);
     }
 };
-var create_ref_tx = function (pub_keys, feeprice, unit_price, height, block_hash, index, req_tx_hash, success, nonce, output_raw, log_raw, chain) {
+var create_ref_tx = function (pub_keys, feeprice, unit_price, height, block_hash, index, req_tx_hash, success, nonce, output_raw, log_raw, chain, private_key, public_key) {
     try {
         if (pub_keys.some(function (key) { return typeof key != 'string'; }))
             throw new Error('invalid public keys');
@@ -481,7 +482,8 @@ var create_ref_tx = function (pub_keys, feeprice, unit_price, height, block_hash
         var ref_tx = TxSet.CreateRefreshTx(pub_keys, feeprice, unit_price, height, block_hash, index, req_tx_hash, success, nonce, output_raw, log_raw, chain);
         if (!isTx(ref_tx))
             throw new Error('invalid ref_tx');
-        return ref_tx;
+        var signed = TxSet.SignTx(ref_tx, private_key, public_key);
+        return signed;
     }
     catch (e) {
         throw new Error(e);

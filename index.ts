@@ -373,7 +373,7 @@ const verify_ref_tx = (ref_tx:T.Tx,chain:T.Block[],refresh_mode:boolean,StateDat
     }
 }
 
-const create_req_tx = (pub_keys:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log_raw:string)=>{
+const create_req_tx = (pub_keys:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log_raw:string,private_key:string,public_key:string)=>{
     try{
         if(pub_keys.some(key=>typeof key!='string')) throw new Error('invalid public keys');
         else if(["change","create"].indexOf(type)===-1) throw new Error('invalid type');
@@ -385,14 +385,15 @@ const create_req_tx = (pub_keys:string[],type:T.TxType,tokens:string[],bases:str
         else if(typeof log_raw!='string') throw new Error('invalid log');
         const req_tx = TxSet.CreateRequestTx(pub_keys,type,tokens,bases,feeprice,gas,input_raw,log_raw);
         if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid req_tx');
-        return req_tx;
+        const signed = TxSet.SignTx(req_tx,private_key,public_key);
+        return signed;
     }
     catch(e){
         throw new Error(e);
     }
 }
 
-const create_ref_tx = (pub_keys:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string,chain:T.Block[])=>{
+const create_ref_tx = (pub_keys:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string,chain:T.Block[],private_key:string,public_key:string)=>{
     try{
         if(pub_keys.some(key=>typeof key!='string')) throw new Error('invalid public keys');
         else if(typeof feeprice!='number'||feeprice<0) throw new Error('invalid feeprice');
@@ -408,7 +409,8 @@ const create_ref_tx = (pub_keys:string[],feeprice:number,unit_price:number,heigh
         else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
         const ref_tx = TxSet.CreateRefreshTx(pub_keys,feeprice,unit_price,height,block_hash,index,req_tx_hash,success,nonce,output_raw,log_raw,chain);
         if(!isTx(ref_tx)) throw new Error('invalid ref_tx');
-        return ref_tx;
+        const signed = TxSet.SignTx(ref_tx,private_key,public_key);
+        return signed;
     }
     catch(e){
         throw new Error(e);
