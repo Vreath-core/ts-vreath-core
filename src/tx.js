@@ -17,26 +17,26 @@ exports.empty_tx = function () {
         network_id: con_1.constant.my_net_id,
         chain_id: con_1.constant.my_chain_id,
         timestamp: 0,
-        address: '',
+        address: CryptoSet.GenereateAddress('', ''),
         pub_key: [],
         feeprice: 0,
         gas: 0,
         tokens: [],
         bases: [],
-        input: '',
+        input: _.toHash(''),
         height: 0,
-        block_hash: '',
+        block_hash: _.toHash(''),
         index: 0,
-        req_tx_hash: '',
+        req_tx_hash: _.toHash(''),
         success: false,
-        output: '',
+        output: _.toHash(''),
         nonce: 0,
         unit_price: 0,
-        log_hash: ''
+        log_hash: _.toHash('')
     };
     var add = {
         height: 0,
-        hash: '',
+        hash: _.toHash(''),
         index: 0
     };
     var raw = {
