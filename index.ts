@@ -373,7 +373,7 @@ const verify_ref_tx = (ref_tx:T.Tx,chain:T.Block[],refresh_mode:boolean,StateDat
     }
 }
 
-const create_req_tx = (pub_keys:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log:string)=>{
+const create_req_tx = (pub_keys:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log_raw:string)=>{
     try{
         if(pub_keys.some(key=>typeof key!='string')) throw new Error('invalid public keys');
         else if(["change","create"].indexOf(type)===-1) throw new Error('invalid type');
@@ -382,8 +382,8 @@ const create_req_tx = (pub_keys:string[],type:T.TxType,tokens:string[],bases:str
         else if(typeof feeprice!='number'||feeprice<0) throw new Error('invalid feeprice');
         else if(typeof gas!='number'||gas<0) throw new Error('invalid gas');
         else if(input_raw.some(raw=>typeof raw!='string')) throw new Error('invalid input_raw');
-        else if(typeof log!='string'||_.hash_size_check(log)) throw new Error('invalid log');
-        const req_tx = TxSet.CreateRequestTx(pub_keys,type,tokens,bases,feeprice,gas,input_raw,log);
+        else if(typeof log_raw!='string') throw new Error('invalid log');
+        const req_tx = TxSet.CreateRequestTx(pub_keys,type,tokens,bases,feeprice,gas,input_raw,log_raw);
         if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid req_tx');
         return req_tx;
     }

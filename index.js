@@ -425,7 +425,7 @@ var verify_ref_tx = function (ref_tx, chain, refresh_mode, StateData, LockData) 
         throw new Error(e);
     }
 };
-var create_req_tx = function (pub_keys, type, tokens, bases, feeprice, gas, input_raw, log) {
+var create_req_tx = function (pub_keys, type, tokens, bases, feeprice, gas, input_raw, log_raw) {
     try {
         if (pub_keys.some(function (key) { return typeof key != 'string'; }))
             throw new Error('invalid public keys');
@@ -441,9 +441,9 @@ var create_req_tx = function (pub_keys, type, tokens, bases, feeprice, gas, inpu
             throw new Error('invalid gas');
         else if (input_raw.some(function (raw) { return typeof raw != 'string'; }))
             throw new Error('invalid input_raw');
-        else if (typeof log != 'string' || _.hash_size_check(log))
+        else if (typeof log_raw != 'string')
             throw new Error('invalid log');
-        var req_tx = TxSet.CreateRequestTx(pub_keys, type, tokens, bases, feeprice, gas, input_raw, log);
+        var req_tx = TxSet.CreateRequestTx(pub_keys, type, tokens, bases, feeprice, gas, input_raw, log_raw);
         if (!isTx(req_tx) || req_tx.meta.kind != 'request')
             throw new Error('invalid req_tx');
         return req_tx;
