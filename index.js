@@ -796,7 +796,7 @@ var accept_micro_block = function (micro_block, chain, StateData, LockData) {
             throw new Error('invalid state data');
         else if (LockData.some(function (l) { return !isLock(l); }))
             throw new Error('invalid lock data');
-        var accepted = BlockSet.AcceptKeyBlock(micro_block, chain, StateData, LockData);
+        var accepted = BlockSet.AcceptMicroBlock(micro_block, chain, StateData, LockData);
         if (accepted[0].some(function (s) { return !isState(s); }))
             throw new Error('invalid accepted state data');
         else if (accepted[1].some(function (l) { return !isLock(l); }))

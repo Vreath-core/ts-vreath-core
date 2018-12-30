@@ -666,7 +666,7 @@ const accept_micro_block = (micro_block:T.Block,chain:T.Block[],StateData:T.Stat
         else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
         else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
         else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        const accepted = BlockSet.AcceptKeyBlock(micro_block,chain,StateData,LockData);
+        const accepted = BlockSet.AcceptMicroBlock(micro_block,chain,StateData,LockData);
         if(accepted[0].some(s=>!isState(s))) throw new Error('invalid accepted state data');
         else if(accepted[1].some(l=>!isLock(l))) throw new Error('invalid accepted lock data');
         return accepted;
