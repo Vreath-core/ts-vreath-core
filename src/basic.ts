@@ -52,6 +52,7 @@ export const get_unicode = (str:string):number[]=>{
 
 export const reduce_pub = (pubs:string[])=>{
   if(pubs.length===0) return toHash('');
+  else if(pubs.length===1) return toHash(pubs[0]);
   return pubs.slice().sort().reduce((res:string,pub:string)=>{
     return toHash(pub+res);
   }) || toHash('');

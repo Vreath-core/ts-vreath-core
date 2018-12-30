@@ -228,7 +228,7 @@ const ValidTxBasic = (tx:T.Tx)=>{
     //console.log("different chain id");
     return false;
   }
-  else if(_.address_check(address,_.reduce_pub(pub_key),tokens[0])){
+  else if(_.address_check(address,_.reduce_pub(pub_key),constant.native)){
     //console.log("invalid address");
     return false;
   }
@@ -323,6 +323,7 @@ export const ValidRefreshTx = (tx:T.Tx,chain:T.Block[],refresh_mode:boolean,Stat
   const block = chain[height] || BlockSet.empty_block();
   const pow_target = constant.pow_target;
   const req_tx = find_req_tx(tx,chain);
+  const fee = tx_fee(tx);
 
   const native = constant.native;
   const refresher = CryptoSet.GenereateAddress(native,_.reduce_pub(pub_key));
@@ -331,7 +332,6 @@ export const ValidRefreshTx = (tx:T.Tx,chain:T.Block[],refresh_mode:boolean,Stat
   const unit = constant.unit;
   const unit_add = CryptoSet.GenereateAddress(unit,_.reduce_pub(pub_key));
 
-  const fee = tx_fee(tx);
 
   const block_tx_hashes = block.txs.map(tx=>tx.hash);
 
@@ -518,7 +518,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
 }
 
 export const CreateRequestTx = (pub_key:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log:string)=>{
-  const address = CryptoSet.GenereateAddress(tokens[0],_.reduce_pub(pub_key));
+  const address = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(pub_key));
   const date = new Date();
   const timestamp = Math.floor(date.getTime()/1000);
   const input = _.ObjectHash(input_raw);
@@ -568,10 +568,8 @@ export const CreateRequestTx = (pub_key:string[],type:T.TxType,tokens:string[],b
 
 
 
-export const CreateRefreshTx = (pub_key:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string,chain:T.Block[])=>{
-  const req_tx= chain[height].txs[index];
-  const token = req_tx.meta.tokens[0];
-  const address = CryptoSet.GenereateAddress(token,_.reduce_pub(pub_key));
+export const CreateRefreshTx = (pub_key:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string)=>{
+  const address = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(pub_key));
   const date = new Date();
   const timestamp = Math.floor(date.getTime()/1000);
   const output = _.ObjectHash(output_raw);

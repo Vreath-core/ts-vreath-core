@@ -393,7 +393,7 @@ const create_req_tx = (pub_keys:string[],type:T.TxType,tokens:string[],bases:str
     }
 }
 
-const create_ref_tx = (pub_keys:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string,chain:T.Block[],private_key:string,public_key:string)=>{
+const create_ref_tx = (pub_keys:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string,private_key:string,public_key:string)=>{
     try{
         if(pub_keys.some(key=>typeof key!='string')) throw new Error('invalid public keys');
         else if(typeof feeprice!='number'||feeprice<0) throw new Error('invalid feeprice');
@@ -406,8 +406,7 @@ const create_ref_tx = (pub_keys:string[],feeprice:number,unit_price:number,heigh
         else if(typeof nonce!='number'||nonce<0||!Number.isInteger(nonce)) throw new Error('invalid nonce');
         else if(output_raw.some(raw=>typeof raw!='string')) throw new Error('invalid output raw');
         else if(typeof log_raw!='string') throw new Error('invalid log raw');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        const ref_tx = TxSet.CreateRefreshTx(pub_keys,feeprice,unit_price,height,block_hash,index,req_tx_hash,success,nonce,output_raw,log_raw,chain);
+        const ref_tx = TxSet.CreateRefreshTx(pub_keys,feeprice,unit_price,height,block_hash,index,req_tx_hash,success,nonce,output_raw,log_raw);
         if(!isTx(ref_tx)) throw new Error('invalid ref_tx');
         const signed = TxSet.SignTx(ref_tx,private_key,public_key);
         return signed;

@@ -212,7 +212,7 @@ var ValidTxBasic = function (tx) {
         //console.log("different chain id");
         return false;
     }
-    else if (_.address_check(address, _.reduce_pub(pub_key), tokens[0])) {
+    else if (_.address_check(address, _.reduce_pub(pub_key), con_1.constant.native)) {
         //console.log("invalid address");
         return false;
     }
@@ -300,12 +300,12 @@ exports.ValidRefreshTx = function (tx, chain, refresh_mode, StateData, LockData)
     var block = chain[height] || BlockSet.empty_block();
     var pow_target = con_1.constant.pow_target;
     var req_tx = exports.find_req_tx(tx, chain);
+    var fee = exports.tx_fee(tx);
     var native = con_1.constant.native;
     var refresher = CryptoSet.GenereateAddress(native, _.reduce_pub(pub_key));
     var refresher_state = StateData.filter(function (s) { return s.kind === "state" && s.owner === refresher && s.token === native && math.chain(s.amount).add(req_tx.meta.gas).subtract(fee).largerEq(0).done(); })[0];
     var unit = con_1.constant.unit;
     var unit_add = CryptoSet.GenereateAddress(unit, _.reduce_pub(pub_key));
-    var fee = exports.tx_fee(tx);
     var block_tx_hashes = block.txs.map(function (tx) { return tx.hash; });
     var bases = req_tx.meta.bases;
     var output_states = raw.raw.map(function (s) { return JSON.parse(s); });
@@ -480,7 +480,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
     return unit_commit;
 };
 exports.CreateRequestTx = function (pub_key, type, tokens, bases, feeprice, gas, input_raw, log) {
-    var address = CryptoSet.GenereateAddress(tokens[0], _.reduce_pub(pub_key));
+    var address = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(pub_key));
     var date = new Date();
     var timestamp = Math.floor(date.getTime() / 1000);
     var input = _.ObjectHash(input_raw);
@@ -523,10 +523,8 @@ exports.CreateRequestTx = function (pub_key, type, tokens, bases, feeprice, gas,
     };
     return tx;
 };
-exports.CreateRefreshTx = function (pub_key, feeprice, unit_price, height, block_hash, index, req_tx_hash, success, nonce, output_raw, log_raw, chain) {
-    var req_tx = chain[height].txs[index];
-    var token = req_tx.meta.tokens[0];
-    var address = CryptoSet.GenereateAddress(token, _.reduce_pub(pub_key));
+exports.CreateRefreshTx = function (pub_key, feeprice, unit_price, height, block_hash, index, req_tx_hash, success, nonce, output_raw, log_raw) {
+    var address = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(pub_key));
     var date = new Date();
     var timestamp = Math.floor(date.getTime() / 1000);
     var output = _.ObjectHash(output_raw);
