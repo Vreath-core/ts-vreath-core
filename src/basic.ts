@@ -51,9 +51,10 @@ export const get_unicode = (str:string):number[]=>{
 }
 
 export const reduce_pub = (pubs:string[])=>{
+  if(pubs.length===0) return toHash('');
   return pubs.slice().sort().reduce((res:string,pub:string)=>{
     return toHash(pub+res);
-  }) || '';
+  }) || toHash('');
 }
 
 export const get_string = (uni:number[]):string=>{
