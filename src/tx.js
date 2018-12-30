@@ -68,7 +68,8 @@ exports.tx_to_pure = function (tx) {
     };
 };
 exports.pure_to_tx = function (pure, block) {
-    if (pure.additional.height != block.meta.height || pure.additional.hash != block.txs[pure.additional.index].hash)
+    var txs_hash = block.txs.map(function (tx) { return tx.hash; });
+    if (pure.additional.height != block.meta.height || pure.additional.hash != block.hash || pure.additional.index != txs_hash.indexOf(pure.hash))
         return exports.empty_tx();
     var raw = block.raws[pure.additional.index];
     return {

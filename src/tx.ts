@@ -78,7 +78,8 @@ export const tx_to_pure = (tx:T.Tx):T.TxPure=>{
 }
 
 export const pure_to_tx = (pure:T.TxPure,block:T.Block):T.Tx=>{
-  if(pure.additional.height!=block.meta.height||pure.additional.hash!=block.txs[pure.additional.index].hash) return empty_tx();
+  const txs_hash = block.txs.map(tx=>tx.hash);
+  if(pure.additional.height!=block.meta.height||pure.additional.hash!=block.hash||pure.additional.index!=txs_hash.indexOf(pure.hash)) return empty_tx();
   const raw = block.raws[pure.additional.index];
   return {
       hash:pure.hash,

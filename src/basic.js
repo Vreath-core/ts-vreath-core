@@ -46,7 +46,7 @@ exports.reduce_pub = function (pubs) {
     if (pubs.length === 0)
         return exports.toHash('');
     else if (pubs.length === 1)
-        return exports.toHash(pubs[0]);
+        return pubs[0];
     return pubs.slice().sort().reduce(function (res, pub) {
         return exports.toHash(pub + res);
     }) || exports.toHash('');
