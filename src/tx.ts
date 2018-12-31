@@ -393,7 +393,7 @@ export const native_code = (StateData:T.State[],req_tx:T.Tx)=>{
     case "remit":
       const remiter = base[0];
       const remiter_state = StateData.filter(s=>s.kind==="state"&&s.token===native&&s.owner===remiter)[0];
-      const receivers = base.slice(1);
+      const receivers = base;
       const amounts:number[] = JSON.parse(req_tx.raw.raw[1]||"[]").map((str:string)=>Number(str));
       const sum = amounts.reduce((s,a)=>s+a,0);
       const fee = Number(remiter_state.data.fee||"0");
@@ -452,13 +452,14 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
     })();
     const unit_owner_state = StateData.filter(s=>s.kind==="state"&&s.token===unit&&s.owner===u.address)[0] || StateSet.CreateState(0,u.address,unit,0,{used:"[]"});
     const used_units = JSON.parse(unit_owner_state.data.used || "[]");
-    return unit_ref_tx.meta.output!=u.output||(math.larger(unit_hash(u.request,u.height,u.block_hash,u.nonce,u.address,u.output,u.unit_price),constant.pow_target) as boolean)||unit_base.indexOf(u.address)!=-1||used_units.indexOf(_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString()))!=-1
+    return unit_ref_tx.meta.output!=u.output||(math.larger(unit_hash(u.request,u.height,u.block_hash,u.nonce,u.address,u.output,u.unit_price),constant.pow_target) as boolean)||unit_base.indexOf(u.address)===-1||used_units.indexOf(_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString()))!=-1
   });
   if(unit_check) return StateData;
 
   const hashes = units.map(u=>_.toHash(_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString())));
   if(hashes.some((v,i,arr)=>arr.indexOf(v)!=i)) return StateData;
-  const unit_price_map = units.reduce((res:{[key:string]:number},unit)=>{
+
+  const unit_price_map:{[key:string]:number} = units.reduce((res:{[key:string]:number},unit)=>{
     if(res[unit.address]==null){
       res[unit.address] = unit.unit_price;
       return res;
@@ -471,19 +472,9 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   const unit_sum = units.length;
 
   const price_sum = units.reduce((sum,u)=>sum+u.unit_price,0);
-  const native_amounts:number[] = JSON.parse(req_tx.raw.raw[2]||"[]").map((str:string)=>Number(str));
-  const native_price_map = native_base.reduce((res:{[key:string]:number},add,i)=>{
-    if(res[add]==null){
-      res[add] = native_amounts[i];
-      return res;
-    }
-    else{
-      res[add] = math.chain(res[add]).add(native_amounts[i]).done();
-      return res;
-    }
-  },{});
+  const native_amounts:number[] = unit_base.map(key=>unit_price_map[key]||0);
   const native_sum = native_amounts.reduce((s,a)=>s+a,0);
-  if(_.ObjectHash(unit_price_map)!=_.ObjectHash(native_price_map)||!(math.equal(price_sum,native_sum))) return StateData;
+  if(!(math.equal(price_sum,native_sum))) return StateData;
 
   const unit_reduce = math.pow(constant.unit_rate,chain.length-req_tx.additional.height)
   const unit_bought = StateData.map(s=>{

@@ -362,7 +362,7 @@ exports.native_code = function (StateData, req_tx) {
         case "remit":
             var remiter_1 = base[0];
             var remiter_state = StateData.filter(function (s) { return s.kind === "state" && s.token === native && s.owner === remiter_1; })[0];
-            var receivers_1 = base.slice(1);
+            var receivers_1 = base;
             var amounts_1 = JSON.parse(req_tx.raw.raw[1] || "[]").map(function (str) { return Number(str); });
             var sum_1 = amounts_1.reduce(function (s, a) { return s + a; }, 0);
             var fee = Number(remiter_state.data.fee || "0");
@@ -419,7 +419,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
         })();
         var unit_owner_state = StateData.filter(function (s) { return s.kind === "state" && s.token === unit && s.owner === u.address; })[0] || StateSet.CreateState(0, u.address, unit, 0, { used: "[]" });
         var used_units = JSON.parse(unit_owner_state.data.used || "[]");
-        return unit_ref_tx.meta.output != u.output || math.larger(exports.unit_hash(u.request, u.height, u.block_hash, u.nonce, u.address, u.output, u.unit_price), con_1.constant.pow_target) || unit_base.indexOf(u.address) != -1 || used_units.indexOf(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())) != -1;
+        return unit_ref_tx.meta.output != u.output || math.larger(exports.unit_hash(u.request, u.height, u.block_hash, u.nonce, u.address, u.output, u.unit_price), con_1.constant.pow_target) || unit_base.indexOf(u.address) === -1 || used_units.indexOf(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())) != -1;
     });
     if (unit_check)
         return StateData;
@@ -438,19 +438,9 @@ exports.unit_code = function (StateData, req_tx, chain) {
     }, {});
     var unit_sum = units.length;
     var price_sum = units.reduce(function (sum, u) { return sum + u.unit_price; }, 0);
-    var native_amounts = JSON.parse(req_tx.raw.raw[2] || "[]").map(function (str) { return Number(str); });
-    var native_price_map = native_base.reduce(function (res, add, i) {
-        if (res[add] == null) {
-            res[add] = native_amounts[i];
-            return res;
-        }
-        else {
-            res[add] = math.chain(res[add]).add(native_amounts[i]).done();
-            return res;
-        }
-    }, {});
+    var native_amounts = unit_base.map(function (key) { return unit_price_map[key] || 0; });
     var native_sum = native_amounts.reduce(function (s, a) { return s + a; }, 0);
-    if (_.ObjectHash(unit_price_map) != _.ObjectHash(native_price_map) || !(math.equal(price_sum, native_sum)))
+    if (!(math.equal(price_sum, native_sum)))
         return StateData;
     var unit_reduce = math.pow(con_1.constant.unit_rate, chain.length - req_tx.additional.height);
     var unit_bought = StateData.map(function (s) {
