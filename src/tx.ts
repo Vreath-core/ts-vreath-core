@@ -398,7 +398,7 @@ export const native_code = (StateData:T.State[],req_tx:T.Tx)=>{
       const sum = amounts.reduce((s,a)=>s+a,0);
       const fee = Number(remiter_state.data.fee||"0");
       const gas = Number(remiter_state.data.gas||"0");
-      if(remiter_state==null||amounts.some(n=>math.smaller(n,0) as boolean)||math.chain(remiter_state.amount).subtract(sum).subtract(fee).subtract(gas).smaller(0).done()) return StateData;
+      if(remiter_state==null||amounts.some(n=>math.smaller(n,0) as boolean)||math.chain(remiter_state.amount).subtract(sum).subtract(fee).subtract(gas).smaller(0).done()||receivers.length!=amounts.length) return StateData;
 
       const remited = StateData.map(s=>{
         if(s.kind!="state"||s.token!=native||s.owner!=remiter) return s;
@@ -436,9 +436,8 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   const native = constant.native;
   const unit_base = req_tx.meta.bases.filter(str=>str.split(':')[1]===unit);
   const native_base = req_tx.meta.bases.filter(str=>str.split(':')[1]===native);
-  if(req_tx.meta.tokens[0]!=unit||req_tx.meta.type!="change"||req_tx.raw.raw[0]!="buy") return StateData;
+  if(req_tx.meta.tokens[0]!=unit||req_tx.meta.type!="change"||req_tx.raw.raw[0]!="buy"||req_tx.meta.tokens[1]!=native||unit_base.length!=native_base.length||unit_base[0].split(':')[2]!=native_base[0].split(':')[2]||_.ObjectHash(native_base.map(add=>add.split(":")[2]))!=_.ObjectHash(unit_base.map(add=>add.split(":")[2]))) return StateData;
   const inputs = req_tx.raw.raw;
-  const remiter = req_tx.meta.address;
   const units:T.Unit[] = JSON.parse(inputs[1]);
   const unit_check = units.some(u=>{
     const unit_ref_tx = (()=>{
@@ -455,7 +454,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
     const used_units = JSON.parse(unit_owner_state.data.used || "[]");
     return unit_ref_tx.meta.output!=u.output||(math.larger(unit_hash(u.request,u.height,u.block_hash,u.nonce,u.address,u.output,u.unit_price),constant.pow_target) as boolean)||unit_base.indexOf(u.address)!=-1||used_units.indexOf(_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString()))!=-1
   });
-  if(unit_check||_.ObjectHash(native_base.map(add=>add.split(":")[2]))!=_.ObjectHash(unit_base.map(add=>add.split(":")[2]))) return StateData;
+  if(unit_check) return StateData;
 
   const hashes = units.map(u=>_.toHash(_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString())));
   if(hashes.some((v,i,arr)=>arr.indexOf(v)!=i)) return StateData;
@@ -487,7 +486,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   if(_.ObjectHash(unit_price_map)!=_.ObjectHash(native_price_map)||!(math.equal(price_sum,native_sum))) return StateData;
 
   const unit_bought = StateData.map(s=>{
-    if(s.kind==="state"&&s.token===unit&&s.owner===remiter){
+    if(s.kind==="state"&&s.token===unit&&s.owner===unit_base[0]){
       const reduce = Number(s.data.reduce||"1");
       if((math.chain(s.amount).add(unit_sum)).multiply(reduce).smaller(0)) return s;
       return _.new_obj(
@@ -517,8 +516,35 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
     }
     else return s;
   });
-  return unit_commit;
-
+  const remited = unit_commit.map(s=>{
+    if(s.kind==="state"&&s.token===native&&s.owner===native_base[0]){
+      const income = Number(s.data.income||"0");
+      return _.new_obj(
+        s,
+        (s)=>{
+          s.nonce ++;
+          s.amount = math.chain(s.amount).subtract(income).subtract(native_sum).done();
+          return s;
+        }
+      )
+    }
+    else return s;
+  });
+  const receivers = native_base.slice(1);
+  const recieved = remited.map(s=>{
+    const index = receivers.indexOf(s.owner);
+    if(s.kind!="state"||s.token!=native||index===-1) return s;
+    const income = Number(s.data.income||"0");
+    return _.new_obj(
+      s,
+      s=>{
+        s.nonce ++;
+        s.amount = math.chain(s.amount).subtract(income).add(native_amounts[index]).done();
+        return s;
+      }
+    )
+  });
+  return recieved;
 }
 
 export const CreateRequestTx = (pub_key:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log:string)=>{

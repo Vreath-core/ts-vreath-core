@@ -367,7 +367,7 @@ exports.native_code = function (StateData, req_tx) {
             var sum_1 = amounts_1.reduce(function (s, a) { return s + a; }, 0);
             var fee = Number(remiter_state.data.fee || "0");
             var gas = Number(remiter_state.data.gas || "0");
-            if (remiter_state == null || amounts_1.some(function (n) { return math.smaller(n, 0); }) || math.chain(remiter_state.amount).subtract(sum_1).subtract(fee).subtract(gas).smaller(0).done())
+            if (remiter_state == null || amounts_1.some(function (n) { return math.smaller(n, 0); }) || math.chain(remiter_state.amount).subtract(sum_1).subtract(fee).subtract(gas).smaller(0).done() || receivers_1.length != amounts_1.length)
                 return StateData;
             var remited = StateData.map(function (s) {
                 if (s.kind != "state" || s.token != native || s.owner != remiter_1)
@@ -399,10 +399,9 @@ exports.unit_code = function (StateData, req_tx, chain) {
     var native = con_1.constant.native;
     var unit_base = req_tx.meta.bases.filter(function (str) { return str.split(':')[1] === unit; });
     var native_base = req_tx.meta.bases.filter(function (str) { return str.split(':')[1] === native; });
-    if (req_tx.meta.tokens[0] != unit || req_tx.meta.type != "change" || req_tx.raw.raw[0] != "buy")
+    if (req_tx.meta.tokens[0] != unit || req_tx.meta.type != "change" || req_tx.raw.raw[0] != "buy" || req_tx.meta.tokens[1] != native || unit_base.length != native_base.length || unit_base[0].split(':')[2] != native_base[0].split(':')[2] || _.ObjectHash(native_base.map(function (add) { return add.split(":")[2]; })) != _.ObjectHash(unit_base.map(function (add) { return add.split(":")[2]; })))
         return StateData;
     var inputs = req_tx.raw.raw;
-    var remiter = req_tx.meta.address;
     var units = JSON.parse(inputs[1]);
     var unit_check = units.some(function (u) {
         var unit_ref_tx = (function () {
@@ -422,7 +421,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
         var used_units = JSON.parse(unit_owner_state.data.used || "[]");
         return unit_ref_tx.meta.output != u.output || math.larger(exports.unit_hash(u.request, u.height, u.block_hash, u.nonce, u.address, u.output, u.unit_price), con_1.constant.pow_target) || unit_base.indexOf(u.address) != -1 || used_units.indexOf(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())) != -1;
     });
-    if (unit_check || _.ObjectHash(native_base.map(function (add) { return add.split(":")[2]; })) != _.ObjectHash(unit_base.map(function (add) { return add.split(":")[2]; })))
+    if (unit_check)
         return StateData;
     var hashes = units.map(function (u) { return _.toHash(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())); });
     if (hashes.some(function (v, i, arr) { return arr.indexOf(v) != i; }))
@@ -454,7 +453,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
     if (_.ObjectHash(unit_price_map) != _.ObjectHash(native_price_map) || !(math.equal(price_sum, native_sum)))
         return StateData;
     var unit_bought = StateData.map(function (s) {
-        if (s.kind === "state" && s.token === unit && s.owner === remiter) {
+        if (s.kind === "state" && s.token === unit && s.owner === unit_base[0]) {
             var reduce_1 = Number(s.data.reduce || "1");
             if ((math.chain(s.amount).add(unit_sum)).multiply(reduce_1).smaller(0))
                 return s;
@@ -481,7 +480,31 @@ exports.unit_code = function (StateData, req_tx, chain) {
         else
             return s;
     });
-    return unit_commit;
+    var remited = unit_commit.map(function (s) {
+        if (s.kind === "state" && s.token === native && s.owner === native_base[0]) {
+            var income_1 = Number(s.data.income || "0");
+            return _.new_obj(s, function (s) {
+                s.nonce++;
+                s.amount = math.chain(s.amount).subtract(income_1).subtract(native_sum).done();
+                return s;
+            });
+        }
+        else
+            return s;
+    });
+    var receivers = native_base.slice(1);
+    var recieved = remited.map(function (s) {
+        var index = receivers.indexOf(s.owner);
+        if (s.kind != "state" || s.token != native || index === -1)
+            return s;
+        var income = Number(s.data.income || "0");
+        return _.new_obj(s, function (s) {
+            s.nonce++;
+            s.amount = math.chain(s.amount).subtract(income).add(native_amounts[index]).done();
+            return s;
+        });
+    });
+    return recieved;
 };
 exports.CreateRequestTx = function (pub_key, type, tokens, bases, feeprice, gas, input_raw, log) {
     var address = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(pub_key));
