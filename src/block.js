@@ -161,7 +161,7 @@ exports.ValidKeyBlock = function (block, chain, right_stateroot, right_lockroot,
     var native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
     var unit_validator = CryptoSet.GenereateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
     var unit_validator_state = StateData.filter(function (s) { return s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit; })[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
-    if (_.object_hash_check(hash, meta) || math.chain(Math.pow(2, 256)).multiply(unit_validator_state.amount).divide(right_diff).largerEq(exports.pos_hash(last.hash, unit_validator, timestamp))) {
+    if (_.object_hash_check(hash, meta) || math.chain(Math.pow(2, 256)).multiply(unit_validator_state.amount).divide(right_diff).smaller(exports.pos_hash(last.hash, unit_validator, timestamp))) {
         //console.log("invalid hash");
         return false;
     }

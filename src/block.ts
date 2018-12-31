@@ -168,7 +168,7 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
     const unit_validator_state:T.State = StateData.filter(s=>s.kind==="state"&&s.owner===unit_validator&&s.token===constant.unit)[0] || StateSet.CreateState(0,unit_validator,constant.unit,0);
 
 
-    if(_.object_hash_check(hash,meta)||math.chain(2**256).multiply(unit_validator_state.amount).divide(right_diff).largerEq(pos_hash(last.hash,unit_validator,timestamp))){
+    if(_.object_hash_check(hash,meta)||math.chain(2**256).multiply(unit_validator_state.amount).divide(right_diff).smaller(pos_hash(last.hash,unit_validator,timestamp))){
         //console.log("invalid hash");
         return false;
     }
