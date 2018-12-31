@@ -225,7 +225,7 @@ exports.ValidKeyBlock = function (block, chain, right_stateroot, right_lockroot,
         //console.log("invalid raws");
         return false;
     }
-    else if (math.chain(Buffer.from(_.Object2string(meta) + _.Object2string(block.txs) + _.Object2string(block.raws) + _.Object2string(block.validatorSign)).length).larger(con_1.constant.block_size)) {
+    else if (math.chain(Buffer.from(_.Object2string(meta) + _.Object2string(block.txs) + _.Object2string(block.raws) + _.Object2string(block.validatorSign)).length).larger(con_1.constant.block_size).done()) {
         //console.log("too big block");
         return false;
     }

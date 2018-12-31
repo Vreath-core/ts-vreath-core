@@ -232,7 +232,7 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
         //console.log("invalid raws");
         return false;
     }
-    else if(math.chain(Buffer.from(_.Object2string(meta)+_.Object2string(block.txs)+_.Object2string(block.raws)+_.Object2string(block.validatorSign)).length).larger(constant.block_size)){
+    else if(math.chain(Buffer.from(_.Object2string(meta)+_.Object2string(block.txs)+_.Object2string(block.raws)+_.Object2string(block.validatorSign)).length).larger(constant.block_size).done() as boolean){
         //console.log("too big block");
         return false;
     }
