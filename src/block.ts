@@ -168,7 +168,7 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
     const unit_validator_state:T.State = StateData.filter(s=>s.kind==="state"&&s.owner===unit_validator&&s.token===constant.unit)[0] || StateSet.CreateState(0,unit_validator,constant.unit,0);
 
 
-    if(_.object_hash_check(hash,meta)||math.chain(2**256).multiply(unit_validator_state.amount).divide(right_diff).smaller(pos_hash(last.hash,unit_validator,timestamp))){
+    if(_.object_hash_check(hash,meta)||math.chain(2**256).multiply(unit_validator_state.amount).divide(right_diff).smaller(pos_hash(last.hash,unit_validator,timestamp)).done() as boolean){
         //console.log("invalid hash");
         return false;
     }
@@ -232,7 +232,7 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
         //console.log("invalid raws");
         return false;
     }
-    else if(math.chain(Buffer.from(_.Object2string(meta)+_.Object2string(block.txs)+_.Object2string(block.raws)+_.Object2string(block.validatorSign)).length).larger(constant.max_blocks)){
+    else if(math.chain(Buffer.from(_.Object2string(meta)+_.Object2string(block.txs)+_.Object2string(block.raws)+_.Object2string(block.validatorSign)).length).larger(constant.block_size)){
         //console.log("too big block");
         return false;
     }

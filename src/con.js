@@ -13,7 +13,7 @@ exports.constant = {
     token_name_maxsize: 256,
     block_time: 1,
     max_blocks: 60,
-    block_size: 10000000,
+    block_size: Math.pow(10, 6),
     all_issue: Math.pow(10, 8),
     cycle: 126144000,
     gas_limit: 25,
