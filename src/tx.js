@@ -452,14 +452,14 @@ exports.unit_code = function (StateData, req_tx, chain) {
     var native_sum = native_amounts.reduce(function (s, a) { return s + a; }, 0);
     if (_.ObjectHash(unit_price_map) != _.ObjectHash(native_price_map) || !(math.equal(price_sum, native_sum)))
         return StateData;
+    var unit_reduce = math.pow(con_1.constant.unit_rate, chain.length - req_tx.additional.height);
     var unit_bought = StateData.map(function (s) {
         if (s.kind === "state" && s.token === unit && s.owner === unit_base[0]) {
-            var reduce_1 = Number(s.data.reduce || "1");
-            if ((math.chain(s.amount).add(unit_sum)).multiply(reduce_1).smaller(0))
+            if ((math.chain(s.amount).add(unit_sum)).multiply(unit_reduce).smaller(0))
                 return s;
             return _.new_obj(s, function (s) {
                 s.nonce++;
-                s.amount = math.chain(s.amount).divide(reduce_1).add(unit_sum).done();
+                s.amount = math.chain(s.amount).divide(unit_reduce).add(unit_sum).done();
                 return s;
             });
         }
@@ -655,6 +655,7 @@ exports.AcceptRefreshTx = function (ref_tx, chain, StateData, LockData) {
     var refresher = CryptoSet.GenereateAddress(native, _.reduce_pub(ref_tx.meta.pub_key));
     var fee = exports.tx_fee(ref_tx);
     var gas = req_tx.meta.gas;
+    var unit_reduce = math.pow(con_1.constant.unit_rate, chain.length - ref_tx.meta.height);
     var added = LockData.map(function (l) {
         var index = req_tx.meta.bases.indexOf(l.address);
         if (index != -1) {
@@ -705,7 +706,15 @@ exports.AcceptRefreshTx = function (ref_tx, chain, StateData, LockData) {
                 return s;
             });
         });
-        return [gained, added];
+        var reduced = gained.map(function (s) {
+            if (s.kind != "state" || s.token != con_1.constant.unit)
+                return s;
+            return _.new_obj(s, function (s) {
+                s.amount = math.chain(s.amount).multiply(unit_reduce).done();
+                return s;
+            });
+        });
+        return [reduced, added];
     }
     else {
         var output_states_1 = ref_tx.raw.raw.map(function (s) { return JSON.parse(s || JSON.stringify(StateSet.CreateState())); });
@@ -750,6 +759,14 @@ exports.AcceptRefreshTx = function (ref_tx, chain, StateData, LockData) {
                 return s;
             });
         });
+        var reduced = gained.map(function (s) {
+            if (s.kind != "state" || s.token != con_1.constant.unit)
+                return s;
+            return _.new_obj(s, function (s) {
+                s.amount = math.chain(s.amount).multiply(unit_reduce).done();
+                return s;
+            });
+        });
         var added_1 = LockData.map(function (l) {
             var index = req_tx.meta.bases.indexOf(l.address);
             if (index != -1) {
@@ -761,6 +778,6 @@ exports.AcceptRefreshTx = function (ref_tx, chain, StateData, LockData) {
             else
                 return l;
         });
-        return [gained, added_1];
+        return [reduced, added_1];
     }
 };

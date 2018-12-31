@@ -478,10 +478,8 @@ exports.AcceptKeyBlock = function (block, chain, StateData, LockData) {
     var reduced = gained.map(function (s) {
         if (s.kind != "state" || s.token != con_1.constant.unit)
             return s;
-        var reduce = Number(s.data.reduce || "1");
         return _.new_obj(s, function (s) {
-            s.amount = math.chain(s.amount).multiply(reduce).done();
-            s.data.reduce = "1";
+            s.amount = math.chain(s.amount).multiply(con_1.constant.unit_rate).done();
             return s;
         });
     });
@@ -501,10 +499,8 @@ exports.AcceptMicroBlock = function (block, chain, StateData, LockData) {
     var reduced = txed[0].map(function (s) {
         if (s.kind != "state" || s.token != con_1.constant.unit)
             return s;
-        var reduce = Number(s.data.reduce || "1");
         return _.new_obj(s, function (s) {
-            s.amount = math.chain(s.amount).multiply(reduce).done();
-            s.data.reduce = "1";
+            s.amount = math.chain(s.amount).multiply(con_1.constant.unit_rate).done();
             return s;
         });
     });

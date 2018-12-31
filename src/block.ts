@@ -500,16 +500,14 @@ export const AcceptKeyBlock = (block:T.Block,chain:T.Block[],StateData:T.State[]
     });
     const reduced = gained.map(s=>{
         if(s.kind!="state"||s.token!=constant.unit) return s;
-        const reduce = Number(s.data.reduce||"1");
         return _.new_obj(
           s,
           s=>{
-            s.amount = math.chain(s.amount).multiply(reduce).done();
-            s.data.reduce = "1"
+            s.amount = math.chain(s.amount).multiply(constant.unit_rate).done();
             return s;
           }
         )
-      });
+    });
     return [reduced,LockData];
 }
 
@@ -523,12 +521,10 @@ export const AcceptMicroBlock = (block:T.Block,chain:T.Block[],StateData:T.State
     },first_data);
     const reduced = txed[0].map(s=>{
         if(s.kind!="state"||s.token!=constant.unit) return s;
-        const reduce = Number(s.data.reduce||"1");
         return _.new_obj(
           s,
           s=>{
-            s.amount = math.chain(s.amount).multiply(reduce).done();
-            s.data.reduce = "1"
+            s.amount = math.chain(s.amount).multiply(constant.unit_rate).done();
             return s;
           }
         )

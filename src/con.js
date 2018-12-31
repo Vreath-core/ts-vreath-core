@@ -20,6 +20,7 @@ exports.constant = {
     rate: 0.99,
     pow_target: Math.pow(2, 256),
     def_pos_diff: 1,
+    unit_rate: 0.8,
     compatible_version: compatible_version
 };
 exports.change_config = function (config) {

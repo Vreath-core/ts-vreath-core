@@ -485,15 +485,15 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   const native_sum = native_amounts.reduce((s,a)=>s+a,0);
   if(_.ObjectHash(unit_price_map)!=_.ObjectHash(native_price_map)||!(math.equal(price_sum,native_sum))) return StateData;
 
+  const unit_reduce = math.pow(constant.unit_rate,chain.length-req_tx.additional.height)
   const unit_bought = StateData.map(s=>{
     if(s.kind==="state"&&s.token===unit&&s.owner===unit_base[0]){
-      const reduce = Number(s.data.reduce||"1");
-      if((math.chain(s.amount).add(unit_sum)).multiply(reduce).smaller(0)) return s;
+      if((math.chain(s.amount).add(unit_sum)).multiply(unit_reduce).smaller(0)) return s;
       return _.new_obj(
         s,
         (s)=>{
           s.nonce ++;
-          s.amount = math.chain(s.amount).divide(reduce).add(unit_sum).done();
+          s.amount = math.chain(s.amount).divide(unit_reduce).add(unit_sum).done();
           return s;
         }
       )
@@ -684,7 +684,7 @@ export const AcceptRequestTx = (tx:T.Tx,height:number,block_hash:string,index:nu
         return s;
       }
     )
-  })
+  });
 
   const bases = tx.meta.bases;
   const added = LockData.map(l=>{
@@ -714,6 +714,7 @@ export const AcceptRefreshTx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],
   const refresher = CryptoSet.GenereateAddress(native,_.reduce_pub(ref_tx.meta.pub_key));
   const fee = tx_fee(ref_tx);
   const gas = req_tx.meta.gas;
+  const unit_reduce = math.pow(constant.unit_rate,chain.length-ref_tx.meta.height);
 
   const added = LockData.map(l=>{
     const index = req_tx.meta.bases.indexOf(l.address);
@@ -770,7 +771,17 @@ export const AcceptRefreshTx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],
         }
       )
     });
-    return [gained,added]
+    const reduced = gained.map(s=>{
+      if(s.kind!="state"||s.token!=constant.unit) return s;
+      return _.new_obj(
+        s,
+        s=>{
+          s.amount = math.chain(s.amount).multiply(unit_reduce).done();
+          return s;
+        }
+      )
+    });
+    return [reduced,added]
   }
   else{
     const output_states:T.State[] = ref_tx.raw.raw.map(s=>JSON.parse(s||JSON.stringify(StateSet.CreateState())));
@@ -816,6 +827,16 @@ export const AcceptRefreshTx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],
         }
       )
     });
+    const reduced = gained.map(s=>{
+      if(s.kind!="state"||s.token!=constant.unit) return s;
+      return _.new_obj(
+        s,
+        s=>{
+          s.amount = math.chain(s.amount).multiply(unit_reduce).done();
+          return s;
+        }
+      )
+    });
 
     const added = LockData.map(l=>{
       const index = req_tx.meta.bases.indexOf(l.address);
@@ -830,7 +851,7 @@ export const AcceptRefreshTx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],
       }
       else return l;
     });
-    return [gained,added]
+    return [reduced,added]
   }
 }
 
