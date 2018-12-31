@@ -366,7 +366,7 @@ export const ValidRefreshTx = (tx:T.Tx,chain:T.Block[],refresh_mode:boolean,Stat
     //console.log("base states are already refreshed");
     return false;
   }
-  else if(refresher_state==null||hashed_pub_check(refresher_state,pub_key)||requested_check([refresher_state],LockData)){
+  else if(refresher_state==null||hashed_pub_check(refresher_state,pub_key)){
     //console.log("invalid refresher");
     return false;
   }

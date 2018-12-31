@@ -336,7 +336,7 @@ exports.ValidRefreshTx = function (tx, chain, refresh_mode, StateData, LockData)
         //console.log("base states are already refreshed");
         return false;
     }
-    else if (refresher_state == null || hashed_pub_check(refresher_state, pub_key) || exports.requested_check([refresher_state], LockData)) {
+    else if (refresher_state == null || hashed_pub_check(refresher_state, pub_key)) {
         //console.log("invalid refresher");
         return false;
     }
