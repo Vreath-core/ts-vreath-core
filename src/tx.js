@@ -309,7 +309,10 @@ exports.ValidRefreshTx = function (tx, chain, refresh_mode, StateData, LockData)
     var unit_add = CryptoSet.GenereateAddress(unit, _.reduce_pub(pub_key));
     var block_tx_hashes = block.txs.map(function (tx) { return tx.hash; });
     var bases = req_tx.meta.bases;
-    var output_states = raw.raw.map(function (s) { return JSON.parse(s); });
+    var base_states = bases.map(function (key) {
+        return StateData.filter(function (s) { return s.kind === "state" && req_tx.meta.tokens.indexOf(s.token) != -1 && s.owner === key; })[0] || StateSet.CreateState();
+    });
+    var output_states = output_raw.map(function (s) { return JSON.parse(s); });
     if (!ValidTxBasic(tx)) {
         return false;
     }
@@ -337,11 +340,11 @@ exports.ValidRefreshTx = function (tx, chain, refresh_mode, StateData, LockData)
         //console.log("invalid refresher");
         return false;
     }
-    else if (output != _.ObjectHash(output_raw)) {
+    else if (output != _.ObjectHash(output_states)) {
         //console.log("invalid output hash");
         return false;
     }
-    else if (refresh_mode && (!success || (type == "change" && output_change_check(bases, output_states, StateData)) || (type === "create" && output_create_check(JSON.parse(raw.raw[0]), raw.raw[1], StateData)))) {
+    else if ((success && ((type == "change" && output_change_check(bases, output_states, StateData)) || (type === "create" && output_create_check(JSON.parse(raw.raw[0]), raw.raw[1], StateData)))) || (!success && _.ObjectHash(base_states) != output)) {
         //console.log("invalid output");
         return false;
     }
@@ -528,7 +531,7 @@ exports.CreateRefreshTx = function (pub_key, feeprice, unit_price, height, block
     var address = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(pub_key));
     var date = new Date();
     var timestamp = Math.floor(date.getTime() / 1000);
-    var output = _.ObjectHash(output_raw);
+    var output = _.ObjectHash(output_raw.map(function (o) { return JSON.parse(o); }));
     var log_hash = _.toHash(log_raw);
     var empty = exports.empty_tx_pure();
     var meta = {

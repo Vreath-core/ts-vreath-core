@@ -337,7 +337,10 @@ export const ValidRefreshTx = (tx:T.Tx,chain:T.Block[],refresh_mode:boolean,Stat
   const block_tx_hashes = block.txs.map(tx=>tx.hash);
 
   const bases = req_tx.meta.bases;
-  const output_states:T.State[] = raw.raw.map(s=>JSON.parse(s));
+  const base_states = bases.map(key=>{
+    return StateData.filter(s=>s.kind==="state"&&req_tx.meta.tokens.indexOf(s.token)!=-1&&s.owner===key)[0] || StateSet.CreateState();
+  });
+  const output_states:T.State[] = output_raw.map(s=>JSON.parse(s));
 
 
   if(!ValidTxBasic(tx)){
@@ -367,12 +370,12 @@ export const ValidRefreshTx = (tx:T.Tx,chain:T.Block[],refresh_mode:boolean,Stat
     //console.log("invalid refresher");
     return false;
   }
-  else if(output!=_.ObjectHash(output_raw)){
+  else if(output!=_.ObjectHash(output_states)){
     //console.log("invalid output hash");
     return false;
   }
-  else if(refresh_mode&&(!success||(type=="change"&&output_change_check(bases,output_states,StateData))||(type==="create"&&output_create_check(JSON.parse(raw.raw[0]),raw.raw[1],StateData)))){
-   //console.log("invalid output");
+  else if((success&&((type=="change"&&output_change_check(bases,output_states,StateData))||(type==="create"&&output_create_check(JSON.parse(raw.raw[0]),raw.raw[1],StateData))))||(!success&&_.ObjectHash(base_states)!=output)){
+    //console.log("invalid output");
     return false;
   }
   else{
@@ -573,7 +576,7 @@ export const CreateRefreshTx = (pub_key:string[],feeprice:number,unit_price:numb
   const address = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(pub_key));
   const date = new Date();
   const timestamp = Math.floor(date.getTime()/1000);
-  const output = _.ObjectHash(output_raw);
+  const output = _.ObjectHash(output_raw.map(o=>JSON.parse(o)));
   const log_hash = _.toHash(log_raw);
   const empty = empty_tx_pure();
 
