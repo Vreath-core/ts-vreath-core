@@ -463,7 +463,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
             var items_1 = own_units.map(function (u) { return _.toHash(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())); });
             return _.new_obj(s, function (s) {
                 s.nonce++;
-                s.data.used = used_1.concat(items_1);
+                s.data.used = JSON.stringify(used_1.concat(items_1));
                 return s;
             });
         }

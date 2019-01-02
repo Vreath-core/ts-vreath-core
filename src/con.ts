@@ -23,10 +23,9 @@ export const constant = {
     all_issue:Math.pow(10,8),
     cycle:126144000,
     gas_limit:25,
-    rate:0.99,
     pow_target:Math.pow(2,256),
     def_pos_diff:1,
-    unit_rate:0.8,
+    unit_rate:0.99,
     compatible_version:compatible_version
 }
 

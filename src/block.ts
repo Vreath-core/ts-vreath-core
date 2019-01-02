@@ -456,7 +456,7 @@ const compute_issue = (height:number)=>{
     const new_amount:number = math.chain(all_issue).multiply(math.pow(0.5,n+1)).done();
     const pre_amount:number = math.chain(all_issue).multiply(math.pow(0.5,n)).done();
     const issue:number = math.chain(pre_amount).subtract(new_amount).divide(cycle).done();
-    if(math.chain(issue).smallerEq(math.pow(10,-18))) return 0;
+    if(math.chain(issue).smallerEq(math.pow(10,-18)).done() as boolean) return 0;
     else return issue;
 }
 

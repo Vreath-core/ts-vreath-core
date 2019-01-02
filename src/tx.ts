@@ -500,7 +500,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
         s,
         s=>{
           s.nonce ++;
-          s.data.used = used.concat(items);
+          s.data.used = JSON.stringify(used.concat(items));
           return s;
         }
       )

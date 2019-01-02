@@ -433,7 +433,7 @@ var compute_issue = function (height) {
     var new_amount = math.chain(all_issue).multiply(math.pow(0.5, n + 1)).done();
     var pre_amount = math.chain(all_issue).multiply(math.pow(0.5, n)).done();
     var issue = math.chain(pre_amount).subtract(new_amount).divide(cycle).done();
-    if (math.chain(issue).smallerEq(math.pow(10, -18)))
+    if (math.chain(issue).smallerEq(math.pow(10, -18)).done())
         return 0;
     else
         return issue;
