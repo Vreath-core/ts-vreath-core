@@ -122,7 +122,7 @@ exports.refreshed_check = function (base, height, block_hash, index, tx_hash, Lo
 };
 exports.state_check = function (state) {
     return _.address_form_check(state.owner, con_1.constant.token_name_maxsize) || state.owner.split(":")[1] != state.token || state.nonce < 0 || math.smaller(state.amount, 0) ||
-        math.smaller(state.issued, 0) || Buffer.from(state.code).length <= Buffer.from(_.toHash('')).length;
+        math.smaller(state.issued, 0) || Buffer.from(state.code).length != Buffer.from(_.toHash('')).length;
 };
 var base_declaration_check = function (target, bases, StateData) {
     var getted = StateData.filter(function (s) { return s.owner === target.owner; })[0];
@@ -419,11 +419,12 @@ exports.unit_code = function (StateData, req_tx, chain) {
         })();
         var unit_owner_state = StateData.filter(function (s) { return s.kind === "state" && s.token === unit && s.owner === u.address; })[0] || StateSet.CreateState(0, u.address, unit, 0, { used: "[]" });
         var used_units = JSON.parse(unit_owner_state.data.used || "[]");
-        return unit_ref_tx.meta.output != u.output || math.larger(exports.unit_hash(u.request, u.height, u.block_hash, u.nonce, u.address, u.output, u.unit_price), con_1.constant.pow_target) || unit_base.indexOf(u.address) === -1 || used_units.indexOf(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())) != -1;
+        var unit_iden_hash = _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString(16));
+        return unit_ref_tx.meta.output != u.output || math.larger(exports.unit_hash(u.request, u.height, u.block_hash, u.nonce, u.address, u.output, u.unit_price), con_1.constant.pow_target) || unit_base.indexOf(u.address) === -1 || used_units.indexOf(unit_iden_hash) != -1;
     });
     if (unit_check)
         return StateData;
-    var hashes = units.map(function (u) { return _.toHash(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())); });
+    var hashes = units.map(function (u) { return _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString(16)); });
     if (hashes.some(function (v, i, arr) { return arr.indexOf(v) != i; }))
         return StateData;
     var unit_price_map = units.reduce(function (res, unit) {
@@ -460,7 +461,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
         if (s.kind === "state" && s.token === unit && unit_base.indexOf(s.owner) != -1) {
             var used_1 = JSON.parse(s.data.used || "[]");
             var own_units = units.filter(function (u) { return u.address === s.owner; });
-            var items_1 = own_units.map(function (u) { return _.toHash(_.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString())); });
+            var items_1 = own_units.map(function (u) { return _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString(16)); });
             return _.new_obj(s, function (s) {
                 s.nonce++;
                 s.data.used = JSON.stringify(used_1.concat(items_1));
