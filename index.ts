@@ -78,6 +78,16 @@ const genereate_address = (token:string,public_key:string)=>{
     }
 }
 
+const hex2number = (str:string)=>{
+    try{
+        if(str==null || typeof str != 'string') throw new Error('str must be string!');
+        return _.Hex_to_Num(str);
+    }
+    catch(e){
+        throw new Error(e);
+    }
+}
+
 const hash = (data:string)=>{
     try{
         if(data==null || typeof data != 'string') throw new Error('data must be string!');
@@ -161,6 +171,7 @@ export const crypto = {
     sign:sign,
     verify:verify,
     genereate_address:genereate_address,
+    hex2number:hex2number,
     hash:hash,
     hash_number:hash_number,
     object_hash:object_hash,

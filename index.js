@@ -98,6 +98,16 @@ var genereate_address = function (token, public_key) {
         throw new Error(e);
     }
 };
+var hex2number = function (str) {
+    try {
+        if (str == null || typeof str != 'string')
+            throw new Error('str must be string!');
+        return _.Hex_to_Num(str);
+    }
+    catch (e) {
+        throw new Error(e);
+    }
+};
 var hash = function (data) {
     try {
         if (data == null || typeof data != 'string')
@@ -180,6 +190,7 @@ exports.crypto = {
     sign: sign,
     verify: verify,
     genereate_address: genereate_address,
+    hex2number: hex2number,
     hash: hash,
     hash_number: hash_number,
     object_hash: object_hash,
