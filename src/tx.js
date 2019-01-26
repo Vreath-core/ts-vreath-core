@@ -424,7 +424,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
     });
     if (unit_check)
         return StateData;
-    var hashes = units.map(function (u) { return _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString(16)); });
+    var hashes = units.map(function (u) { return _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash) + _.toHashNum(u.address)).toString(16)); });
     if (hashes.some(function (v, i, arr) { return arr.indexOf(v) != i; }))
         return StateData;
     var unit_addresses = units.map(function (u) { return u.address; }).filter(function (val, i, arr) { return arr.indexOf(val) === i; });

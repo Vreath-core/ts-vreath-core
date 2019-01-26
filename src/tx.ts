@@ -459,7 +459,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   });
   if(unit_check) return StateData;
 
-  const hashes = units.map(u=>_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString(16)));
+  const hashes = units.map(u=>_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)+_.toHashNum(u.address)).toString(16)));
   if(hashes.some((v,i,arr)=>arr.indexOf(v)!=i)) return StateData;
 
   const unit_addresses = units.map(u=>u.address).filter((val,i,arr)=>arr.indexOf(val)===i);
