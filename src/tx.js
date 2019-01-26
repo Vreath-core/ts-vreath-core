@@ -427,6 +427,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
     var hashes = units.map(function (u) { return _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString(16)); });
     if (hashes.some(function (v, i, arr) { return arr.indexOf(v) != i; }))
         return StateData;
+    var unit_addresses = units.map(function (u) { return u.address; }).filter(function (val, i, arr) { return arr.indexOf(val) === i; });
     var unit_price_map = units.reduce(function (res, unit) {
         if (res[unit.address] == null) {
             res[unit.address] = unit.unit_price;
@@ -438,11 +439,8 @@ exports.unit_code = function (StateData, req_tx, chain) {
         }
     }, {});
     var unit_sum = units.length;
-    var price_sum = units.reduce(function (sum, u) { return sum + u.unit_price; }, 0);
-    var native_amounts = unit_base.map(function (key) { return unit_price_map[key] || 0; });
-    var native_sum = native_amounts.reduce(function (s, a) { return s + a; }, 0);
-    if (!(math.equal(price_sum, native_sum)))
-        return StateData;
+    var native_amounts = unit_addresses.map(function (key) { return unit_price_map[key] || 0; });
+    var native_sum = native_amounts.reduce(function (s, a) { return math.chain(s).add(a).done(); }, 0);
     var unit_reduce = math.pow(con_1.constant.unit_rate, chain.length - req_tx.additional.height);
     var unit_bought = StateData.map(function (s) {
         if (s.kind === "state" && s.token === unit && s.owner === unit_base[0]) {

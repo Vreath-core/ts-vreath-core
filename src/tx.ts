@@ -437,7 +437,6 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   const native = constant.native;
   const unit_base = req_tx.meta.bases.filter(str=>str.split(':')[1]===unit);
   const native_base = req_tx.meta.bases.filter(str=>str.split(':')[1]===native);
-
   if(req_tx.meta.tokens[0]!=unit||req_tx.meta.type!="change"||req_tx.raw.raw[0]!="buy"||req_tx.meta.tokens[1]!=native||unit_base.length!=native_base.length||unit_base[0].split(':')[2]!=native_base[0].split(':')[2]||_.ObjectHash(native_base.map(add=>add.split(":")[2]))!=_.ObjectHash(unit_base.map(add=>add.split(":")[2]))) return StateData;
 
   const inputs = req_tx.raw.raw;
@@ -463,6 +462,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   const hashes = units.map(u=>_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString(16)));
   if(hashes.some((v,i,arr)=>arr.indexOf(v)!=i)) return StateData;
 
+  const unit_addresses = units.map(u=>u.address).filter((val,i,arr)=>arr.indexOf(val)===i);
   const unit_price_map:{[key:string]:number} = units.reduce((res:{[key:string]:number},unit)=>{
     if(res[unit.address]==null){
       res[unit.address] = unit.unit_price;
@@ -475,10 +475,8 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   },{});
   const unit_sum = units.length;
 
-  const price_sum = units.reduce((sum,u)=>sum+u.unit_price,0);
-  const native_amounts:number[] = unit_base.map(key=>unit_price_map[key]||0);
-  const native_sum = native_amounts.reduce((s,a)=>s+a,0);
-  if(!(math.equal(price_sum,native_sum))) return StateData;
+  const native_amounts:number[] = unit_addresses.map(key=>unit_price_map[key]||0);
+  const native_sum = native_amounts.reduce((s,a)=>math.chain(s).add(a).done(),0);
 
   const unit_reduce = math.pow(constant.unit_rate,chain.length-req_tx.additional.height)
   const unit_bought = StateData.map(s=>{
@@ -495,6 +493,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
     }
     else return s;
   });
+
   const unit_commit = unit_bought.map(s=>{
     if(s.kind==="state"&&s.token===unit&&unit_base.indexOf(s.owner)!=-1){
       const used = JSON.parse(s.data.used || "[]");
