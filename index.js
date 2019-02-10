@@ -5,7 +5,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -84,7 +84,7 @@ var verify = function (data, sign, public_key) {
         throw new Error(e);
     }
 };
-var genereate_address = function (token, public_key) {
+var generate_address = function (token, public_key) {
     try {
         if (token == null || typeof token != 'string')
             throw new Error('token must be string!');
@@ -92,7 +92,7 @@ var genereate_address = function (token, public_key) {
             throw new Error('public_key must be string!');
         else if (Buffer.from(token).length > con_1.constant.token_name_maxsize)
             throw new Error('too long token name!');
-        return CryptoSet.GenereateAddress(token, public_key);
+        return CryptoSet.GenerateAddress(token, public_key);
     }
     catch (e) {
         throw new Error(e);
@@ -168,7 +168,7 @@ var verify_address = function (address) {
     try {
         if (address == null || typeof address != 'string')
             throw new Error('address must be string!');
-        return _.address_form_check(address, con_1.constant.token_name_maxsize);
+        return !_.address_form_check(address, con_1.constant.token_name_maxsize);
     }
     catch (e) {
         throw new Error(e);
@@ -176,7 +176,7 @@ var verify_address = function (address) {
 };
 var verify_hash_size = function (hash) {
     try {
-        return typeof hash != 'string' || _.hash_size_check(hash);
+        return typeof hash === 'string' && !_.hash_size_check(hash);
     }
     catch (e) {
         throw new Error(e);
@@ -189,7 +189,7 @@ exports.crypto = {
     decrypt: decrypt,
     sign: sign,
     verify: verify,
-    genereate_address: genereate_address,
+    generate_address: generate_address,
     hex2number: hex2number,
     hash: hash,
     hash_number: hash_number,
@@ -242,7 +242,7 @@ var isLock = function (lock) {
 };
 var create_state = function (nonce, owner, token, amount, data) {
     if (nonce === void 0) { nonce = 0; }
-    if (owner === void 0) { owner = CryptoSet.GenereateAddress("", _.toHash("")); }
+    if (owner === void 0) { owner = CryptoSet.GenerateAddress("", _.toHash("")); }
     if (token === void 0) { token = ""; }
     if (amount === void 0) { amount = 0; }
     if (data === void 0) { data = {}; }
@@ -293,7 +293,7 @@ var verify_state = function (state) {
     try {
         if (!isState(state))
             throw new Error('invalid state');
-        return TxSet.state_check(state);
+        return !TxSet.state_check(state);
     }
     catch (e) {
         throw new Error(e);

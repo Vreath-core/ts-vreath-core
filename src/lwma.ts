@@ -3,17 +3,25 @@ math.config({
     number: 'BigNumber'
 });
 
-const get_lwma = (times:number[]):number=>{
-    const n = times.length;
-    const denominator:number = math.chain(n).multiply(n+1).divide(2).done();
-    const numerator = times.reduce((res:number,time:number,i:number)=>{
-        return math.chain(n-i).multiply(time).add(res).done();
-    },0);
-    return math.chain(numerator).divide(denominator).done();
-}
+const size = 300;
+const def_diff = 1;
 
 export const get_diff = (diffs:number[],target_time:number,solvetimes:number[]):number=>{
-    const average = math.divide(diffs.reduce((sum:number,diff)=>math.chain(sum).add(diff).done(),0),diffs.length);
-    const lwma = get_lwma(solvetimes);
-    return math.chain(average).multiply(target_time).divide(lwma).done();
+    if(diffs.length!=size+1 || solvetimes.length!=size+1) return def_diff;
+    let pre_time:number = math.chain(solvetimes[0]).subtract(target_time).done();
+    let this_time:number = 0;
+    let L:number = 0;
+    let i:number;
+    for(i=1; i<=size; i++){
+        if(math.chain(solvetimes[i]).larger(pre_time).done() as boolean) this_time = solvetimes[i];
+        else this_time = math.chain(pre_time).add(1).done();
+        L = math.chain(L).add(math.min(math.multiply(6,solvetimes),math.subtract(this_time,pre_time))).done();
+        pre_time = this_time;
+    }
+    if(math.chain(size).multiply(size).multiply(target_time).divide(20).larger(L).done() as boolean) L = math.chain(size).multiply(size).multiply(target_time).divide(20).done();
+    let avg_D:number = math.chain(diffs[size]).subtract(diffs[0]).divide(size).done();
+    let next_D:number = 0;
+    if(math.chain(2000000).multiply(size).multiply(size).multiply(target_time).smaller(avg_D)) next_D = math.chain(avg_D).divide(200).divide(L).multiply(size).multiply(size+1).multiply(target_time).multiply(99).done();
+    else next_D = math.chain(avg_D).multiply(size).multiply(size).multiply(size+1).multiply(target_time).multiply(99).divide(200).divide(L).done();
+    return next_D;
 }

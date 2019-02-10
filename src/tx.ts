@@ -19,7 +19,7 @@ export const empty_tx = ():T.Tx=>{
     network_id:constant.my_net_id,
     chain_id:constant.my_chain_id,
     timestamp:0,
-    address:CryptoSet.GenereateAddress('',''),
+    address:CryptoSet.GenerateAddress('',''),
     pub_key:[],
     feeprice:0,
     gas:0,
@@ -261,7 +261,7 @@ export const ValidRequestTx = (tx:T.Tx,request_mode:boolean,StateData:T.State[],
   const raw_data = tx.raw.raw;
 
   const native = constant.native;
-  const requester = CryptoSet.GenereateAddress(native,_.reduce_pub(pub_key));
+  const requester = CryptoSet.GenerateAddress(native,_.reduce_pub(pub_key));
   const requester_state:T.State = StateData.filter(s=>{
     return s.kind==="state"&&s.token===native&&s.owner===requester&&(math.chain(s.amount).subtract(tx_fee(tx)).subtract(gas).largerEq(0).done() as boolean);
   })[0];
@@ -327,11 +327,11 @@ export const ValidRefreshTx = (tx:T.Tx,chain:T.Block[],refresh_mode:boolean,Stat
   const fee = tx_fee(tx);
 
   const native = constant.native;
-  const refresher = CryptoSet.GenereateAddress(native,_.reduce_pub(pub_key));
+  const refresher = CryptoSet.GenerateAddress(native,_.reduce_pub(pub_key));
   const refresher_state:T.State = StateData.filter(s=>s.kind==="state"&&s.owner===refresher&&s.token===native&&(math.chain(s.amount).add(req_tx.meta.gas).subtract(fee).largerEq(0).done() as boolean))[0];
 
   const unit = constant.unit;
-  const unit_add = CryptoSet.GenereateAddress(unit,_.reduce_pub(pub_key));
+  const unit_add = CryptoSet.GenerateAddress(unit,_.reduce_pub(pub_key));
 
 
   const block_tx_hashes = block.txs.map(tx=>tx.hash);
@@ -543,7 +543,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
 }
 
 export const CreateRequestTx = (pub_key:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log:string)=>{
-  const address = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(pub_key));
+  const address = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(pub_key));
   const date = new Date();
   const timestamp = Math.floor(date.getTime()/1000);
   const input = _.ObjectHash(input_raw);
@@ -594,7 +594,7 @@ export const CreateRequestTx = (pub_key:string[],type:T.TxType,tokens:string[],b
 
 
 export const CreateRefreshTx = (pub_key:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string)=>{
-  const address = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(pub_key));
+  const address = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(pub_key));
   const date = new Date();
   const timestamp = Math.floor(date.getTime()/1000);
   const output = _.ObjectHash(output_raw.map(o=>JSON.parse(o)));
@@ -654,7 +654,7 @@ export const SignTx = (tx:T.Tx,my_private:string,my_pub:string)=>{
 }
 
 export const AcceptRequestTx = (tx:T.Tx,height:number,block_hash:string,index:number,StateData:T.State[],LockData:T.Lock[]):[T.State[],T.Lock[]]=>{
-  const requester = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(tx.meta.pub_key));
+  const requester = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(tx.meta.pub_key));
   const fee = tx_fee(tx);
   const gas = tx.meta.gas;
   const reqed = StateData.map(s=>{
@@ -705,8 +705,8 @@ export const AcceptRefreshTx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],
   const native = constant.native;
   const unit = constant.unit;
   const req_tx = find_req_tx(ref_tx,chain);
-  const requester = CryptoSet.GenereateAddress(native,_.reduce_pub(req_tx.meta.pub_key));
-  const refresher = CryptoSet.GenereateAddress(native,_.reduce_pub(ref_tx.meta.pub_key));
+  const requester = CryptoSet.GenerateAddress(native,_.reduce_pub(req_tx.meta.pub_key));
+  const refresher = CryptoSet.GenerateAddress(native,_.reduce_pub(ref_tx.meta.pub_key));
   const fee = tx_fee(ref_tx);
   const gas = req_tx.meta.gas;
   const unit_reduce = math.pow(constant.unit_rate,chain.length-ref_tx.meta.height);

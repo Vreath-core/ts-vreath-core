@@ -158,8 +158,8 @@ exports.ValidKeyBlock = function (block, chain, right_stateroot, right_lockroot,
         return res;
     }, { times: [], diffs: [] });
     var right_diff = lwma_1.get_diff(lwma_infos.diffs, con_1.constant.block_time * con_1.constant.max_blocks, lwma_infos.times);
-    var native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
-    var unit_validator = CryptoSet.GenereateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
+    var native_validator = CryptoSet.GenerateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
+    var unit_validator = CryptoSet.GenerateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
     var unit_validator_state = StateData.filter(function (s) { return s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit; })[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
     if (_.object_hash_check(hash, meta) || math.chain(Math.pow(2, 256)).multiply(unit_validator_state.amount).divide(right_diff).smaller(exports.pos_hash(last.hash, unit_validator, timestamp)).done()) {
         //console.log("invalid hash");
@@ -343,7 +343,7 @@ exports.CreateKeyBlock = function (chain, validatorPub, stateroot, lockroot, ext
     var empty = exports.empty_block();
     var last = chain[chain.length - 1] || empty;
     var previoushash = last.hash;
-    var native_validator = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
+    var native_validator = CryptoSet.GenerateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
     var genesis_time = chain[0].meta.timestamp;
     var lwma_infos = chain.reduce(function (res, block) {
         res.times = res.times.concat(math.chain(block.meta.timestamp).subtract(genesis_time).done());

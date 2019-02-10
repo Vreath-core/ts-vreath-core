@@ -163,8 +163,8 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
     },{times:[],diffs:[]});
     const right_diff = get_diff(lwma_infos.diffs,constant.block_time*constant.max_blocks,lwma_infos.times);
 
-    const native_validator = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(validatorPub));
-    const unit_validator = CryptoSet.GenereateAddress(constant.unit,_.reduce_pub(validatorPub));
+    const native_validator = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(validatorPub));
+    const unit_validator = CryptoSet.GenerateAddress(constant.unit,_.reduce_pub(validatorPub));
     const unit_validator_state:T.State = StateData.filter(s=>s.kind==="state"&&s.owner===unit_validator&&s.token===constant.unit)[0] || StateSet.CreateState(0,unit_validator,constant.unit,0);
 
 
@@ -358,7 +358,7 @@ export const CreateKeyBlock = (chain:T.Block[],validatorPub:string[],stateroot:s
     const empty = empty_block();
     const last = chain[chain.length-1] || empty;
     const previoushash = last.hash
-    const native_validator = CryptoSet.GenereateAddress(constant.native,_.reduce_pub(validatorPub));
+    const native_validator = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(validatorPub));
 
     const genesis_time = chain[0].meta.timestamp;
     const lwma_infos = chain.reduce((res:{times:number[],diffs:number[]},block)=>{

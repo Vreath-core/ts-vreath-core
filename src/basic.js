@@ -64,7 +64,7 @@ exports.sign_check = function (hash, signature, pub_key) {
     return CryptoSet.verifyData(hash, signature, pub_key) == false;
 };
 exports.address_check = function (address, Public, token) {
-    return address != CryptoSet.GenereateAddress(token, Public);
+    return address != CryptoSet.GenerateAddress(token, Public);
 };
 exports.time_check = function (timestamp) {
     var date = new Date();

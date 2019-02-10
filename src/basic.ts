@@ -75,7 +75,7 @@ export const sign_check = (hash:string,signature:string,pub_key:string)=>{
 }
 
 export const address_check = (address:string,Public:string,token:string)=>{
-  return address!=CryptoSet.GenereateAddress(token,Public);
+  return address!=CryptoSet.GenerateAddress(token,Public);
 }
 
 export const time_check = (timestamp:number)=>{

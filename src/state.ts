@@ -2,7 +2,7 @@ import * as _ from './basic'
 import * as T from './types'
 import * as CryptoSet from './crypto_set'
 
-export const CreateState = (nonce:number=0,owner:string=CryptoSet.GenereateAddress("",_.toHash("")),token:string="",amount:number=0,data:{[key:string]:string}={}):T.State=>{
+export const CreateState = (nonce:number=0,owner:string=CryptoSet.GenerateAddress("",_.toHash("")),token:string="",amount:number=0,data:{[key:string]:string}={}):T.State=>{
   return {
     kind:"state",
     nonce:nonce,

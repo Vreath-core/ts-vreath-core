@@ -53,7 +53,7 @@ export const verifyData = (data:string,sign:string,Public:string):boolean=>{
   return verify
 }
 
-export const GenereateAddress = (id:string,Public:string)=>{
+export const GenerateAddress = (id:string,Public:string)=>{
     return "Vr:"+id+":"+HashFromPass(Public);
 }
 

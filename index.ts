@@ -66,12 +66,12 @@ const verify = (data:string,sign:string,public_key:string)=>{
     }
 }
 
-const genereate_address = (token:string,public_key:string)=>{
+const generate_address = (token:string,public_key:string)=>{
     try{
         if(token==null || typeof token != 'string') throw new Error('token must be string!');
         else if(public_key==null || typeof public_key != 'string') throw new Error('public_key must be string!');
         else if(Buffer.from(token).length>constant.token_name_maxsize) throw new Error('too long token name!');
-        return CryptoSet.GenereateAddress(token,public_key);
+        return CryptoSet.GenerateAddress(token,public_key);
     }
     catch(e){
         throw new Error(e);
@@ -147,7 +147,7 @@ const merge_pub_keys = (public_keys:string[])=>{
 const verify_address = (address:string)=>{
     try{
         if(address==null || typeof address != 'string') throw new Error('address must be string!');
-        return _.address_form_check(address,constant.token_name_maxsize);
+        return !_.address_form_check(address,constant.token_name_maxsize);
     }
     catch(e){
         throw new Error(e);
@@ -156,7 +156,7 @@ const verify_address = (address:string)=>{
 
 const verify_hash_size = (hash:string)=>{
     try{
-        return typeof hash!='string' || _.hash_size_check(hash);
+        return typeof hash==='string' && !_.hash_size_check(hash);
     }
     catch(e){
         throw new Error(e);
@@ -170,7 +170,7 @@ export const crypto = {
     decrypt:decrypt,
     sign:sign,
     verify:verify,
-    genereate_address:genereate_address,
+    generate_address:generate_address,
     hex2number:hex2number,
     hash:hash,
     hash_number:hash_number,
@@ -215,7 +215,7 @@ const isLock = (lock:T.Lock):lock is T.Lock =>{
     return typeof lock.address==='string' && !_.address_form_check(lock.address,constant.token_name_maxsize) && ['yet','already'].indexOf(lock.state)!=-1 && typeof lock.height==='number' && lock.height>=0 && Number.isInteger(lock.height) && typeof lock.block_hash==='string' && !_.hash_size_check(lock.block_hash) && typeof lock.index==='number' && lock.index>=0 && Number.isInteger(lock.index) && typeof lock.tx_hash==='string' && !_.hash_size_check(lock.tx_hash);
 }
 
-const create_state = (nonce:number=0,owner:string=CryptoSet.GenereateAddress("",_.toHash("")),token:string="",amount:number=0,data:{[key:string]:string}={})=>{
+const create_state = (nonce:number=0,owner:string=CryptoSet.GenerateAddress("",_.toHash("")),token:string="",amount:number=0,data:{[key:string]:string}={})=>{
     try{
         if(typeof nonce != 'number' || nonce<0 || !Number.isInteger(nonce)) throw new Error('invalid nonce');
         else if(typeof owner != 'string' || _.address_form_check(owner,constant.token_name_maxsize)) throw new Error('invalid owner');
@@ -249,7 +249,7 @@ const create_info = (nonce=0,token="",issued=0,code=_.toHash(''))=>{
 const verify_state = (state:T.State)=>{
     try{
         if(!isState(state)) throw new Error('invalid state');
-        return TxSet.state_check(state);
+        return !TxSet.state_check(state);
     }
     catch(e){
         throw new Error(e);

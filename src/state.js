@@ -4,7 +4,7 @@ var _ = require("./basic");
 var CryptoSet = require("./crypto_set");
 exports.CreateState = function (nonce, owner, token, amount, data) {
     if (nonce === void 0) { nonce = 0; }
-    if (owner === void 0) { owner = CryptoSet.GenereateAddress("", _.toHash("")); }
+    if (owner === void 0) { owner = CryptoSet.GenerateAddress("", _.toHash("")); }
     if (token === void 0) { token = ""; }
     if (amount === void 0) { amount = 0; }
     if (data === void 0) { data = {}; }

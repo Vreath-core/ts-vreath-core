@@ -45,6 +45,6 @@ exports.verifyData = function (data, sign, Public) {
     var verify = secp256k1.verify(Buffer.from(hash), Buffer.from(sign, 'hex'), Buffer.from(Public, 'hex'));
     return verify;
 };
-exports.GenereateAddress = function (id, Public) {
+exports.GenerateAddress = function (id, Public) {
     return "Vr:" + id + ":" + exports.HashFromPass(Public);
 };

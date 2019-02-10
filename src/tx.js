@@ -17,7 +17,7 @@ exports.empty_tx = function () {
         network_id: con_1.constant.my_net_id,
         chain_id: con_1.constant.my_chain_id,
         timestamp: 0,
-        address: CryptoSet.GenereateAddress('', ''),
+        address: CryptoSet.GenerateAddress('', ''),
         pub_key: [],
         feeprice: 0,
         gas: 0,
@@ -243,7 +243,7 @@ exports.ValidRequestTx = function (tx, request_mode, StateData, LockData) {
     var input = tx.meta.input;
     var raw_data = tx.raw.raw;
     var native = con_1.constant.native;
-    var requester = CryptoSet.GenereateAddress(native, _.reduce_pub(pub_key));
+    var requester = CryptoSet.GenerateAddress(native, _.reduce_pub(pub_key));
     var requester_state = StateData.filter(function (s) {
         return s.kind === "state" && s.token === native && s.owner === requester && math.chain(s.amount).subtract(exports.tx_fee(tx)).subtract(gas).largerEq(0).done();
     })[0];
@@ -303,10 +303,10 @@ exports.ValidRefreshTx = function (tx, chain, refresh_mode, StateData, LockData)
     var req_tx = exports.find_req_tx(tx, chain);
     var fee = exports.tx_fee(tx);
     var native = con_1.constant.native;
-    var refresher = CryptoSet.GenereateAddress(native, _.reduce_pub(pub_key));
+    var refresher = CryptoSet.GenerateAddress(native, _.reduce_pub(pub_key));
     var refresher_state = StateData.filter(function (s) { return s.kind === "state" && s.owner === refresher && s.token === native && math.chain(s.amount).add(req_tx.meta.gas).subtract(fee).largerEq(0).done(); })[0];
     var unit = con_1.constant.unit;
-    var unit_add = CryptoSet.GenereateAddress(unit, _.reduce_pub(pub_key));
+    var unit_add = CryptoSet.GenerateAddress(unit, _.reduce_pub(pub_key));
     var block_tx_hashes = block.txs.map(function (tx) { return tx.hash; });
     var bases = req_tx.meta.bases;
     var base_states = bases.map(function (key) {
@@ -496,7 +496,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
     return recieved;
 };
 exports.CreateRequestTx = function (pub_key, type, tokens, bases, feeprice, gas, input_raw, log) {
-    var address = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(pub_key));
+    var address = CryptoSet.GenerateAddress(con_1.constant.native, _.reduce_pub(pub_key));
     var date = new Date();
     var timestamp = Math.floor(date.getTime() / 1000);
     var input = _.ObjectHash(input_raw);
@@ -540,7 +540,7 @@ exports.CreateRequestTx = function (pub_key, type, tokens, bases, feeprice, gas,
     return tx;
 };
 exports.CreateRefreshTx = function (pub_key, feeprice, unit_price, height, block_hash, index, req_tx_hash, success, nonce, output_raw, log_raw) {
-    var address = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(pub_key));
+    var address = CryptoSet.GenerateAddress(con_1.constant.native, _.reduce_pub(pub_key));
     var date = new Date();
     var timestamp = Math.floor(date.getTime() / 1000);
     var output = _.ObjectHash(output_raw.map(function (o) { return JSON.parse(o); }));
@@ -596,7 +596,7 @@ exports.SignTx = function (tx, my_private, my_pub) {
     });
 };
 exports.AcceptRequestTx = function (tx, height, block_hash, index, StateData, LockData) {
-    var requester = CryptoSet.GenereateAddress(con_1.constant.native, _.reduce_pub(tx.meta.pub_key));
+    var requester = CryptoSet.GenerateAddress(con_1.constant.native, _.reduce_pub(tx.meta.pub_key));
     var fee = exports.tx_fee(tx);
     var gas = tx.meta.gas;
     var reqed = StateData.map(function (s) {
@@ -640,8 +640,8 @@ exports.AcceptRefreshTx = function (ref_tx, chain, StateData, LockData) {
     var native = con_1.constant.native;
     var unit = con_1.constant.unit;
     var req_tx = exports.find_req_tx(ref_tx, chain);
-    var requester = CryptoSet.GenereateAddress(native, _.reduce_pub(req_tx.meta.pub_key));
-    var refresher = CryptoSet.GenereateAddress(native, _.reduce_pub(ref_tx.meta.pub_key));
+    var requester = CryptoSet.GenerateAddress(native, _.reduce_pub(req_tx.meta.pub_key));
+    var refresher = CryptoSet.GenerateAddress(native, _.reduce_pub(ref_tx.meta.pub_key));
     var fee = exports.tx_fee(ref_tx);
     var gas = req_tx.meta.gas;
     var unit_reduce = math.pow(con_1.constant.unit_rate, chain.length - ref_tx.meta.height);
