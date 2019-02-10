@@ -5,7 +5,7 @@ math.config({
     number: 'BigNumber'
 });
 var size = 100;
-var def_diff = 1;
+var def_diff = 0.1;
 exports.get_diff = function (diffs, target_time, solvetimes) {
     if (diffs.length != size + 1 || solvetimes.length != size + 1)
         return def_diff;
