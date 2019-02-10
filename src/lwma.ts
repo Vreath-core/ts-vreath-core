@@ -3,8 +3,8 @@ math.config({
     number: 'BigNumber'
 });
 
-const size = 150;
-const def_diff = 0.5;
+const size = 100;
+const def_diff = 1;
 
 export const get_diff = (diffs:number[],target_time:number,solvetimes:number[]):number=>{
     if(diffs.length!=size+1 || solvetimes.length!=size+1) return def_diff;
