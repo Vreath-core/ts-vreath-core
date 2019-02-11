@@ -1,10 +1,11 @@
 import * as math from 'mathjs'
+import * as con from './con'
 math.config({
     number: 'BigNumber'
 });
 
-const size = 100;
-const def_diff = 0.1;
+const size = con.constant.lwma_size;
+const def_diff = con.constant.def_pos_diff;
 
 export const get_diff = (diffs:number[],target_time:number,solvetimes:number[]):number=>{
     if(diffs.length!=size+1 || solvetimes.length!=size+1) return def_diff;

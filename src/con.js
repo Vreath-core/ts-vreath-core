@@ -12,13 +12,14 @@ exports.constant = {
     unit: "unit",
     token_name_maxsize: 256,
     block_time: 1,
-    max_blocks: 60,
+    max_blocks: 59,
     block_size: Math.pow(10, 6),
     all_issue: Math.pow(10, 8),
     cycle: 126144000,
     gas_limit: 25,
     pow_target: Math.pow(2, 256),
     def_pos_diff: 0.1,
+    lwma_size: 8,
     unit_rate: 0.99,
     compatible_version: compatible_version
 };

@@ -155,13 +155,12 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
     const last = chain[chain.length-1] || empty_block();
     const right_previoushash = last.hash;
 
-    const genesis_time = chain[0].meta.timestamp;
-    const lwma_infos = chain.reduce((res:{times:number[],diffs:number[]},block)=>{
-        res.times = res.times.concat(math.chain(block.meta.timestamp).subtract(genesis_time).done());
+    const lwma_infos = chain.slice(-1*constant.lwma_size*(1+constant.max_blocks)).filter(block=>block.meta.kind==='key').reduce((res:{times:number[],diffs:number[]},block)=>{
+        res.times = res.times.concat(block.meta.timestamp);
         res.diffs = res.diffs.concat(block.meta.pos_diff);
         return res;
     },{times:[],diffs:[]});
-    const right_diff = get_diff(lwma_infos.diffs,constant.block_time*constant.max_blocks,lwma_infos.times);
+    const right_diff = get_diff(lwma_infos.diffs,constant.block_time*(constant.max_blocks+1),lwma_infos.times);
 
     const native_validator = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(validatorPub));
     const unit_validator = CryptoSet.GenerateAddress(constant.unit,_.reduce_pub(validatorPub));
@@ -360,9 +359,8 @@ export const CreateKeyBlock = (chain:T.Block[],validatorPub:string[],stateroot:s
     const previoushash = last.hash
     const native_validator = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(validatorPub));
 
-    const genesis_time = chain[0].meta.timestamp;
-    const lwma_infos = chain.reduce((res:{times:number[],diffs:number[]},block)=>{
-        res.times = res.times.concat(math.chain(block.meta.timestamp).subtract(genesis_time).done());
+    const lwma_infos = chain.slice(-1*constant.lwma_size*(1+constant.max_blocks)).filter(block=>block.meta.kind==='key').reduce((res:{times:number[],diffs:number[]},block)=>{
+        res.times = res.times.concat(block.meta.timestamp);
         res.diffs = res.diffs.concat(block.meta.pos_diff);
         return res;
     },{times:[],diffs:[]});

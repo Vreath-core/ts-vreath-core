@@ -1,11 +1,12 @@
 "use strict";
 exports.__esModule = true;
 var math = require("mathjs");
+var con = require("./con");
 math.config({
     number: 'BigNumber'
 });
-var size = 100;
-var def_diff = 0.1;
+var size = con.constant.lwma_size;
+var def_diff = con.constant.def_pos_diff;
 exports.get_diff = function (diffs, target_time, solvetimes) {
     if (diffs.length != size + 1 || solvetimes.length != size + 1)
         return def_diff;
