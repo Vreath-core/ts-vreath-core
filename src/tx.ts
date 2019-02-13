@@ -437,7 +437,21 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   const native = constant.native;
   const unit_base = req_tx.meta.bases.filter(str=>str.split(':')[1]===unit);
   const native_base = req_tx.meta.bases.filter(str=>str.split(':')[1]===native);
-  if(req_tx.meta.tokens[0]!=unit||req_tx.meta.type!="change"||req_tx.raw.raw[0]!="buy"||req_tx.meta.tokens[1]!=native||unit_base.length!=native_base.length||unit_base[0].split(':')[2]!=native_base[0].split(':')[2]||_.ObjectHash(native_base.map(add=>add.split(":")[2]))!=_.ObjectHash(unit_base.map(add=>add.split(":")[2]))) return StateData;
+  const unit_reduce = math.pow(constant.unit_rate,chain.length-req_tx.additional.height)
+  const def_states = StateData.map(s=>{
+    if(s.kind==="state"&&s.token===unit&&s.owner===unit_base[0]){
+      return _.new_obj(
+        s,
+        s=>{
+          s.amount = math.chain(s.amount).divide(unit_reduce).done();
+          return s;
+        }
+      )
+    }
+    else return s;
+  });
+
+  if(req_tx.meta.tokens[0]!=unit||req_tx.meta.type!="change"||req_tx.raw.raw[0]!="buy"||req_tx.meta.tokens[1]!=native||unit_base.length!=native_base.length||unit_base[0].split(':')[2]!=native_base[0].split(':')[2]||_.ObjectHash(native_base.map(add=>add.split(":")[2]))!=_.ObjectHash(unit_base.map(add=>add.split(":")[2]))) return def_states;
 
   const inputs = req_tx.raw.raw;
   const units:T.Unit[] = JSON.parse(inputs[1]);
@@ -457,10 +471,10 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
     const unit_iden_hash = _.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString(16));
     return unit_ref_tx.meta.output!=u.output||(math.larger(unit_hash(u.request,u.height,u.block_hash,u.nonce,u.address,u.output,u.unit_price),constant.pow_target) as boolean)||unit_base.indexOf(u.address)===-1||used_units.indexOf(unit_iden_hash)!=-1
   });
-  if(unit_check) return StateData;
+  if(unit_check) return def_states;
 
   const hashes = units.map(u=>_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)+_.toHashNum(u.address)).toString(16)));
-  if(hashes.some((v,i,arr)=>arr.indexOf(v)!=i)) return StateData;
+  if(hashes.some((v,i,arr)=>arr.indexOf(v)!=i)) return def_states;
 
   const unit_addresses = units.map(u=>u.address).filter((val,i,arr)=>arr.indexOf(val)===i);
   const unit_price_map:{[key:string]:number} = units.reduce((res:{[key:string]:number},unit)=>{
@@ -478,7 +492,6 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   const native_amounts:number[] = unit_addresses.map(key=>unit_price_map[key]||0);
   const native_sum = native_amounts.reduce((s,a)=>math.chain(s).add(a).done(),0);
 
-  const unit_reduce = math.pow(constant.unit_rate,chain.length-req_tx.additional.height)
   const unit_bought = StateData.map(s=>{
     if(s.kind==="state"&&s.token===unit&&s.owner===unit_base[0]){
       if(math.chain(math.add(s.amount,unit_sum)).multiply(unit_reduce).smaller(0).done() as boolean){
