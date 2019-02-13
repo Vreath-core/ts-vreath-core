@@ -481,7 +481,15 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
   const unit_reduce = math.pow(constant.unit_rate,chain.length-req_tx.additional.height)
   const unit_bought = StateData.map(s=>{
     if(s.kind==="state"&&s.token===unit&&s.owner===unit_base[0]){
-      if((math.chain(s.amount).add(unit_sum)).multiply(unit_reduce).smaller(0)) return s;
+      if(math.chain(math.add(s.amount,unit_sum)).multiply(unit_reduce).smaller(0).done() as boolean){
+        return _.new_obj(
+          s,
+          s=>{
+            s.amount = math.chain(s.amount).divide(unit_reduce).done();
+            return s;
+          }
+        )
+      }
       return _.new_obj(
         s,
         (s)=>{
@@ -767,7 +775,7 @@ export const AcceptRefreshTx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],
       )
     });
     const reduced = gained.map(s=>{
-      if(s.kind!="state"||s.token!=constant.unit) return s;
+      if(s.kind!="state"||s.token!=constant.unit||req_tx.meta.bases.indexOf(s.owner)===-1) return s;
       return _.new_obj(
         s,
         s=>{
@@ -823,7 +831,7 @@ export const AcceptRefreshTx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],
       )
     });
     const reduced = gained.map(s=>{
-      if(s.kind!="state"||s.token!=constant.unit) return s;
+      if(s.kind!="state"||s.token!=constant.unit||req_tx.meta.bases.indexOf(s.owner)===-1) return s;
       return _.new_obj(
         s,
         s=>{

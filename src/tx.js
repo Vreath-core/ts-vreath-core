@@ -444,8 +444,12 @@ exports.unit_code = function (StateData, req_tx, chain) {
     var unit_reduce = math.pow(con_1.constant.unit_rate, chain.length - req_tx.additional.height);
     var unit_bought = StateData.map(function (s) {
         if (s.kind === "state" && s.token === unit && s.owner === unit_base[0]) {
-            if ((math.chain(s.amount).add(unit_sum)).multiply(unit_reduce).smaller(0))
-                return s;
+            if (math.chain(math.add(s.amount, unit_sum)).multiply(unit_reduce).smaller(0).done()) {
+                return _.new_obj(s, function (s) {
+                    s.amount = math.chain(s.amount).divide(unit_reduce).done();
+                    return s;
+                });
+            }
             return _.new_obj(s, function (s) {
                 s.nonce++;
                 s.amount = math.chain(s.amount).divide(unit_reduce).add(unit_sum).done();
@@ -696,7 +700,7 @@ exports.AcceptRefreshTx = function (ref_tx, chain, StateData, LockData) {
             });
         });
         var reduced = gained.map(function (s) {
-            if (s.kind != "state" || s.token != con_1.constant.unit)
+            if (s.kind != "state" || s.token != con_1.constant.unit || req_tx.meta.bases.indexOf(s.owner) === -1)
                 return s;
             return _.new_obj(s, function (s) {
                 s.amount = math.chain(s.amount).multiply(unit_reduce).done();
@@ -749,7 +753,7 @@ exports.AcceptRefreshTx = function (ref_tx, chain, StateData, LockData) {
             });
         });
         var reduced = gained.map(function (s) {
-            if (s.kind != "state" || s.token != con_1.constant.unit)
+            if (s.kind != "state" || s.token != con_1.constant.unit || req_tx.meta.bases.indexOf(s.owner) === -1)
                 return s;
             return _.new_obj(s, function (s) {
                 s.amount = math.chain(s.amount).multiply(unit_reduce).done();
