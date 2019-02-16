@@ -495,14 +495,15 @@ exports.unit_code = function (StateData, req_tx, chain) {
         else
             return s;
     });
+    var remiter = unit_addresses.map(function (add) { return "Vr:" + con_1.constant.native + ":" + add.split(':')[2]; });
     var recieved = remited.map(function (s) {
-        var index = unit_addresses.indexOf(s.owner);
+        var index = remiter.indexOf(s.owner);
         if (s.kind != "state" || s.token != native || index === -1)
             return s;
         var income = Number(s.data.income || "0");
         return _.new_obj(s, function (s) {
             s.nonce++;
-            s.amount = math.chain(s.amount).subtract(income).add(unit_price_map[s.owner]).done();
+            s.amount = math.chain(s.amount).subtract(income).add(unit_price_map["Vr:" + con_1.constant.unit + ":" + s.owner.split(':')[2]]).done();
             return s;
         });
     });

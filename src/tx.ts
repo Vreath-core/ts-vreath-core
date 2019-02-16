@@ -546,15 +546,16 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
     }
     else return s;
   });
+  const remiter = unit_addresses.map(add=>`Vr:${constant.native}:${add.split(':')[2]}`)
   const recieved = remited.map(s=>{
-    const index = unit_addresses.indexOf(s.owner);
+    const index = remiter.indexOf(s.owner);
     if(s.kind!="state"||s.token!=native||index===-1) return s;
     const income = Number(s.data.income||"0");
     return _.new_obj(
       s,
       s=>{
         s.nonce ++;
-        s.amount = math.chain(s.amount).subtract(income).add(unit_price_map[s.owner]).done();
+        s.amount = math.chain(s.amount).subtract(income).add(unit_price_map[`Vr:${constant.unit}:${s.owner.split(':')[2]}`]).done();
         return s;
       }
     )
