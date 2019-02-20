@@ -334,6 +334,10 @@ exports.ValidMicroBlock = function (block, chain, right_stateroot, right_lockroo
         //console.log("invalid txs");
         return false;
     }
+    else if ((height % 10 === 0 && txs.some(function (tx) { return tx.meta.kind === 'request' && _.ObjectHash(tx.meta.tokens) != _.ObjectHash([con_1.constant.unit, con_1.constant.native]); })) || (height % 10 != 0 && txs.some(function (tx) { return tx.meta.kind === 'request' && _.ObjectHash(tx.meta.tokens) === _.ObjectHash([con_1.constant.unit, con_1.constant.native]); }))) {
+        //console.log("invalid kind of txs")
+        return false;
+    }
     else {
         return true;
     }

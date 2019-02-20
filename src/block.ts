@@ -348,6 +348,10 @@ export const ValidMicroBlock = (block:T.Block,chain:T.Block[],right_stateroot:st
         //console.log("invalid txs");
         return false;
     }
+    else if((height%10===0&&txs.some(tx=>tx.meta.kind==='request'&&_.ObjectHash(tx.meta.tokens)!=_.ObjectHash([constant.unit,constant.native])))||(height%10!=0&&txs.some(tx=>tx.meta.kind==='request'&&_.ObjectHash(tx.meta.tokens)===_.ObjectHash([constant.unit,constant.native])))){
+        //console.log("invalid kind of txs")
+        return false;
+    }
     else{
         return true;
     }
