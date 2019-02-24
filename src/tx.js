@@ -139,19 +139,7 @@ exports.tx_fee = function (tx) {
     return math.chain(price).multiply(Buffer.from(target).length).done();
 };
 exports.unit_hash = function (request, height, block_hash, nonce, refresher, output, unit_price) {
-    return _.toHashNum(math.chain(_.Hex_to_Num(request)).add(height).add(_.Hex_to_Num(block_hash)).add(nonce).add(_.toHashNum(refresher)).add(_.Hex_to_Num(output)).add(unit_price).toString());
-};
-var mining = function (request, height, block_hash, refresher, output, unit_price) {
-    var nonce = -1;
-    var num = 0;
-    var i = 0;
-    do {
-        i++;
-        //if(i>1000000) break;
-        nonce++;
-        num = exports.unit_hash(request, height, block_hash, nonce, refresher, output, unit_price);
-    } while (math.larger(num, con_1.constant.pow_target));
-    return nonce;
+    return _.toHashNum(request + height.toString(16) + block_hash + nonce.toString(16) + refresher + output + unit_price.toString(16));
 };
 exports.find_req_tx = function (ref_tx, chain) {
     var height = ref_tx.meta.height || 0;
@@ -430,12 +418,12 @@ exports.unit_code = function (StateData, req_tx, chain) {
         })();
         var unit_owner_state = StateData.filter(function (s) { return s.kind === "state" && s.token === unit && s.owner === u.address; })[0] || StateSet.CreateState(0, u.address, unit, 0, { used: "[]" });
         var used_units = JSON.parse(unit_owner_state.data.used || "[]");
-        var unit_iden_hash = _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString(16));
+        var unit_iden_hash = _.toHash(u.request + u.height.toString(16) + u.block_hash);
         return unit_ref_tx.meta.output != u.output || math.larger(exports.unit_hash(u.request, u.height, u.block_hash, u.nonce, u.address, u.output, u.unit_price), con_1.constant.pow_target) || unit_base.indexOf(u.address) === -1 || used_units.indexOf(unit_iden_hash) != -1;
     });
     if (unit_check)
         return def_states;
-    var hashes = units.map(function (u) { return _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash) + _.toHashNum(u.address)).toString(16)); });
+    var hashes = units.map(function (u) { return _.toHash(u.request + u.height.toString(16) + u.block_hash + u.address); });
     if (hashes.some(function (v, i, arr) { return arr.indexOf(v) != i; }))
         return def_states;
     var unit_addresses = units.map(function (u) { return u.address; }).filter(function (val, i, arr) { return arr.indexOf(val) === i; });
@@ -473,7 +461,7 @@ exports.unit_code = function (StateData, req_tx, chain) {
         if (s.kind === "state" && s.token === unit && unit_base.indexOf(s.owner) != -1) {
             var used_1 = JSON.parse(s.data.used || "[]");
             var own_units = units.filter(function (u) { return u.address === s.owner; });
-            var items_1 = own_units.map(function (u) { return _.toHash((_.Hex_to_Num(u.request) + u.height + _.Hex_to_Num(u.block_hash)).toString(16)); });
+            var items_1 = own_units.map(function (u) { return _.toHash(u.request + u.height.toString(16) + u.block_hash); });
             return _.new_obj(s, function (s) {
                 s.nonce++;
                 s.data.used = JSON.stringify(used_1.concat(items_1));

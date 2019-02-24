@@ -87,7 +87,7 @@ var tx_fee_sum = function (pure_txs, raws) {
     return txs.reduce(function (sum, tx) { return math.chain(sum).add(TxSet.tx_fee(tx)).done(); }, 0);
 };
 exports.pos_hash = function (previoushash, address, timestamp) {
-    return _.toHashNum(math.chain(_.Hex_to_Num(previoushash)).add(_.toHashNum(address)).add(timestamp).done().toString());
+    return _.toHashNum(previoushash + address + timestamp.toString());
 };
 /*const PoS_mining = (previoushash:string,address:string,balance:number,difficulty:number)=>{
     let date;

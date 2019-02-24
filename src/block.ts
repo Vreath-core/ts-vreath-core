@@ -85,7 +85,7 @@ const tx_fee_sum = (pure_txs:T.TxPure[],raws:T.TxRaw[]):number=>{
 };
 
 export const pos_hash = (previoushash:string,address:string,timestamp:number)=>{
-    return _.toHashNum(math.chain(_.Hex_to_Num(previoushash)).add(_.toHashNum(address)).add(timestamp).done().toString());
+    return _.toHashNum(previoushash+address+timestamp.toString());
 }
 
 /*const PoS_mining = (previoushash:string,address:string,balance:number,difficulty:number)=>{

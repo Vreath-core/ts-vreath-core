@@ -152,20 +152,7 @@ export const tx_fee = (tx:T.Tx):number=>{
 
 
 export const unit_hash = (request:string,height:number,block_hash:string,nonce:number,refresher:string,output:string,unit_price:number)=>{
-  return  _.toHashNum(math.chain(_.Hex_to_Num(request)).add(height).add(_.Hex_to_Num(block_hash)).add(nonce).add(_.toHashNum(refresher)).add(_.Hex_to_Num(output)).add(unit_price).toString());
-}
-
-const mining = (request:string,height:number,block_hash:string,refresher:string,output:string,unit_price:number)=>{
-  let nonce:number = -1;
-  let num:number = 0;
-  let i:number = 0;
-  do{
-    i ++;
-    //if(i>1000000) break;
-    nonce ++;
-    num = unit_hash(request,height,block_hash,nonce,refresher,output,unit_price);
-  }while(math.larger(num,constant.pow_target) as boolean);
-  return nonce;
+  return  _.toHashNum(request+height.toString(16)+block_hash+nonce.toString(16)+refresher+output+unit_price.toString(16));
 }
 
 export const find_req_tx = (ref_tx:T.Tx,chain:T.Block[]):T.Tx=>{
@@ -468,12 +455,12 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
     })();
     const unit_owner_state = StateData.filter(s=>s.kind==="state"&&s.token===unit&&s.owner===u.address)[0] || StateSet.CreateState(0,u.address,unit,0,{used:"[]"});
     const used_units = JSON.parse(unit_owner_state.data.used || "[]");
-    const unit_iden_hash = _.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString(16));
+    const unit_iden_hash = _.toHash(u.request+u.height.toString(16)+u.block_hash);
     return unit_ref_tx.meta.output!=u.output||(math.larger(unit_hash(u.request,u.height,u.block_hash,u.nonce,u.address,u.output,u.unit_price),constant.pow_target) as boolean)||unit_base.indexOf(u.address)===-1||used_units.indexOf(unit_iden_hash)!=-1
   });
   if(unit_check) return def_states;
 
-  const hashes = units.map(u=>_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)+_.toHashNum(u.address)).toString(16)));
+  const hashes = units.map(u=>_.toHash(u.request+u.height.toString(16)+u.block_hash+u.address));
   if(hashes.some((v,i,arr)=>arr.indexOf(v)!=i)) return def_states;
 
   const unit_addresses = units.map(u=>u.address).filter((val,i,arr)=>arr.indexOf(val)===i);
@@ -519,7 +506,7 @@ export const unit_code = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
     if(s.kind==="state"&&s.token===unit&&unit_base.indexOf(s.owner)!=-1){
       const used = JSON.parse(s.data.used || "[]");
       const own_units = units.filter(u=>u.address===s.owner);
-      const items = own_units.map(u=>_.toHash((_.Hex_to_Num(u.request)+u.height+_.Hex_to_Num(u.block_hash)).toString(16)));
+      const items = own_units.map(u=>_.toHash(u.request+u.height.toString(16)+u.block_hash));
       return _.new_obj(
         s,
         s=>{
