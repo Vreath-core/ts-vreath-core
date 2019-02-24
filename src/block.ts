@@ -155,12 +155,12 @@ export const ValidKeyBlock = (block:T.Block,chain:T.Block[],right_stateroot:stri
     const last = chain[chain.length-1] || empty_block();
     const right_previoushash = last.hash;
 
-    const lwma_infos = chain.slice(-1*constant.lwma_size*(1+constant.max_blocks)).filter(block=>block.meta.kind==='key').reduce((res:{times:number[],diffs:number[]},block)=>{
+    const lwma_infos = chain.slice(-1*(constant.lwma_size+1)*(1+constant.max_blocks)).filter(block=>block.meta.kind==='key').reduce((res:{times:number[],cumulative_diffs:number[]},block,i)=>{
         res.times = res.times.concat(block.meta.timestamp);
-        res.diffs = res.diffs.concat(block.meta.pos_diff);
+        res.cumulative_diffs = res.cumulative_diffs.concat(math.chain(res.cumulative_diffs[i-1]||0).add(block.meta.pos_diff).done())
         return res;
-    },{times:[],diffs:[]});
-    const right_diff = get_diff(lwma_infos.diffs,constant.block_time*(constant.max_blocks+1),lwma_infos.times);
+    },{times:[],cumulative_diffs:[]});
+    const right_diff = get_diff(lwma_infos.cumulative_diffs,constant.block_time*(constant.max_blocks+1),lwma_infos.times);
 
     const native_validator = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(validatorPub));
     const unit_validator = CryptoSet.GenerateAddress(constant.unit,_.reduce_pub(validatorPub));
@@ -363,12 +363,12 @@ export const CreateKeyBlock = (chain:T.Block[],validatorPub:string[],stateroot:s
     const previoushash = last.hash
     const native_validator = CryptoSet.GenerateAddress(constant.native,_.reduce_pub(validatorPub));
 
-    const lwma_infos = chain.slice(-1*constant.lwma_size*(1+constant.max_blocks)).filter(block=>block.meta.kind==='key').reduce((res:{times:number[],diffs:number[]},block)=>{
+    const lwma_infos = chain.slice(-1*(constant.lwma_size+1)*(1+constant.max_blocks)).filter(block=>block.meta.kind==='key').reduce((res:{times:number[],cumulative_diffs:number[]},block,i)=>{
         res.times = res.times.concat(block.meta.timestamp);
-        res.diffs = res.diffs.concat(block.meta.pos_diff);
+        res.cumulative_diffs = res.cumulative_diffs.concat(math.chain(res.cumulative_diffs[i-1]||0).add(block.meta.pos_diff).done())
         return res;
-    },{times:[],diffs:[]});
-    const pos_diff = get_diff(lwma_infos.diffs,constant.block_time*constant.max_blocks,lwma_infos.times);
+    },{times:[],cumulative_diffs:[]});
+    const pos_diff = get_diff(lwma_infos.cumulative_diffs,constant.block_time*(constant.max_blocks+1),lwma_infos.times);
     const date = new Date();
     const timestamp = Math.floor(date.getTime()/1000);
 

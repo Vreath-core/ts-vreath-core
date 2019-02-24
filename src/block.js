@@ -151,12 +151,12 @@ exports.ValidKeyBlock = function (block, chain, right_stateroot, right_lockroot,
     var raws = block.raws;
     var last = chain[chain.length - 1] || exports.empty_block();
     var right_previoushash = last.hash;
-    var lwma_infos = chain.slice(-1 * con_1.constant.lwma_size * (1 + con_1.constant.max_blocks)).filter(function (block) { return block.meta.kind === 'key'; }).reduce(function (res, block) {
+    var lwma_infos = chain.slice(-1 * (con_1.constant.lwma_size + 1) * (1 + con_1.constant.max_blocks)).filter(function (block) { return block.meta.kind === 'key'; }).reduce(function (res, block, i) {
         res.times = res.times.concat(block.meta.timestamp);
-        res.diffs = res.diffs.concat(block.meta.pos_diff);
+        res.cumulative_diffs = res.cumulative_diffs.concat(math.chain(res.cumulative_diffs[i - 1] || 0).add(block.meta.pos_diff).done());
         return res;
-    }, { times: [], diffs: [] });
-    var right_diff = lwma_1.get_diff(lwma_infos.diffs, con_1.constant.block_time * (con_1.constant.max_blocks + 1), lwma_infos.times);
+    }, { times: [], cumulative_diffs: [] });
+    var right_diff = lwma_1.get_diff(lwma_infos.cumulative_diffs, con_1.constant.block_time * (con_1.constant.max_blocks + 1), lwma_infos.times);
     var native_validator = CryptoSet.GenerateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
     var unit_validator = CryptoSet.GenerateAddress(con_1.constant.unit, _.reduce_pub(validatorPub));
     var unit_validator_state = StateData.filter(function (s) { return s.kind === "state" && s.owner === unit_validator && s.token === con_1.constant.unit; })[0] || StateSet.CreateState(0, unit_validator, con_1.constant.unit, 0);
@@ -347,12 +347,12 @@ exports.CreateKeyBlock = function (chain, validatorPub, stateroot, lockroot, ext
     var last = chain[chain.length - 1] || empty;
     var previoushash = last.hash;
     var native_validator = CryptoSet.GenerateAddress(con_1.constant.native, _.reduce_pub(validatorPub));
-    var lwma_infos = chain.slice(-1 * con_1.constant.lwma_size * (1 + con_1.constant.max_blocks)).filter(function (block) { return block.meta.kind === 'key'; }).reduce(function (res, block) {
+    var lwma_infos = chain.slice(-1 * (con_1.constant.lwma_size + 1) * (1 + con_1.constant.max_blocks)).filter(function (block) { return block.meta.kind === 'key'; }).reduce(function (res, block, i) {
         res.times = res.times.concat(block.meta.timestamp);
-        res.diffs = res.diffs.concat(block.meta.pos_diff);
+        res.cumulative_diffs = res.cumulative_diffs.concat(math.chain(res.cumulative_diffs[i - 1] || 0).add(block.meta.pos_diff).done());
         return res;
-    }, { times: [], diffs: [] });
-    var pos_diff = lwma_1.get_diff(lwma_infos.diffs, con_1.constant.block_time * con_1.constant.max_blocks, lwma_infos.times);
+    }, { times: [], cumulative_diffs: [] });
+    var pos_diff = lwma_1.get_diff(lwma_infos.cumulative_diffs, con_1.constant.block_time * (con_1.constant.max_blocks + 1), lwma_infos.times);
     var date = new Date();
     var timestamp = Math.floor(date.getTime() / 1000);
     var meta = {

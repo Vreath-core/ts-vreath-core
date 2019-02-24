@@ -18,7 +18,7 @@ exports.constant = {
     cycle: 126144000,
     gas_limit: 25,
     pow_target: Math.pow(2, 256),
-    def_pos_diff: 24,
+    def_pos_diff: 30,
     lwma_size: 8,
     unit_rate: 0.9,
     compatible_version: compatible_version
