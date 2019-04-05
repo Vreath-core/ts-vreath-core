@@ -1,8 +1,7 @@
-import * as Merkle from 'merkle-patricia-tree/secure'
+const Merkle = require('merkle-patricia-tree/secure');
 import * as rlp from 'rlp'
 import {promisify} from 'util'
-import levelup from 'levelup'
-import leveldown from 'leveldown'
+import {DB} from './db';
 
 export const en_key = (key:string):string=>{
   return rlp.encode(key).toString('hex');
@@ -24,7 +23,7 @@ export const de_value = (value:string)=>{
 
 export class Trie {
   private trie:any;
-  constructor(db:any,root:string=""){
+  constructor(db:DB,root:string=""){
     if(root==="") this.trie = new Merkle(db);
     else this.trie = new Merkle(db,Buffer.from(root,'hex'));
   }
@@ -54,15 +53,15 @@ export class Trie {
     return this.trie;
   }
 
-  async filter<T>(check:(value:T)=>boolean=(value:T)=>true){
+  async filter<T>(check:(value:T)=>Promise<boolean>|boolean=(value:T)=>true){
     let result:T[] = [];
     const stream = this.trie.createReadStream();
     return new Promise<T[]>((resolve,reject)=>{
       try{
-        stream.on('data',(data:{key:Buffer,value:Buffer})=>{
+        stream.on('data',async (data:{key:Buffer,value:Buffer})=>{
           if(data.value==null) return result;
           const value:T = JSON.parse(data.value.toString());
-          if(check(value)) result.push(value);
+          if(await check(value)) result.push(value);
         });
 
         stream.on('end',(data:{key:string,value:any})=>{

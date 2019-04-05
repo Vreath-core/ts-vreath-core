@@ -1,5 +1,5 @@
 import * as math from 'mathjs'
-import * as con from './con'
+import * as con from './constant'
 math.config({
     number: 'BigNumber'
 });

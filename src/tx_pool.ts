@@ -1,6 +1,6 @@
 import * as TxSet from './tx'
 import * as T from './types'
-import * as _ from './basic'
+import * as _ from './util'
 
 
 const check_tx = (tx:T.Tx,chain:T.Block[],StateData:T.State[],LockData:T.Lock[])=>{

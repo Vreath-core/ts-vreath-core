@@ -1,28 +1,21 @@
-import * as _ from './basic'
+import * as _ from './util'
 import * as T from './types'
-import * as CryptoSet from './crypto_set'
+import * as crypto_set from './crypto_set'
 
-export const CreateState = (nonce:number=0,owner:string=CryptoSet.GenerateAddress("",_.toHash("")),token:string="",amount:number=0,data:{[key:string]:string}={}):T.State=>{
+export const CreateState = (nonce:string="0x0",token:string="0x0",owner:string=crypto_set.generate_address("",""),amount:string="0x0",data:string[]=[]):T.State=>{
   return {
-    kind:"state",
     nonce:nonce,
     token:token,
     owner:owner,
     amount:amount,
-    data:data,
-    issued:0,
-    code:_.toHash('')
+    data:data
   }
 }
 
-export const CreateInfo = (nonce=0,token="",issued=0,code=_.toHash('')):T.State=>{
+export const CreateToken = (nonce:string="0x0",name:string="0x0",issued:string="0x0",code:string=crypto_set.get_sha256("")):T.Token=>{
   return {
-    kind:"info",
     nonce:nonce,
-    token:token,
-    owner:'',
-    amount:0,
-    data:{},
+    name:name,
     issued:issued,
     code:code
   }

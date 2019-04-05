@@ -1,11 +1,11 @@
-import * as _ from './basic'
+import * as _ from './util'
 import * as CryptoSet from './crypto_set'
 import * as T from './types'
 import * as StateSet from './state'
 import * as TxSet from './tx'
 import {get_diff} from './lwma'
 import * as math from 'mathjs'
-import { constant } from './con';
+import { constant } from './constant';
 math.config({
     number: 'BigNumber'
 });
@@ -465,19 +465,19 @@ const compute_issue = (height:number)=>{
 export const AcceptKeyBlock = (block:T.Block,chain:T.Block[],StateData:T.State[],LockData:T.Lock[]):[T.State[],T.Lock[]]=>{
     const last_key = search_key_block(chain);
     const last_micros = search_micro_block(chain,last_key);
-    const fees:number = last_micros.reduce((sum,b)=>math.chain(sum).add(b.meta.fee_sum).done(),0);
+    const fees:BigInteger = last_micros.reduce((sum,b)=>bigInt(sum).add(b.meta.fee_sum).done(),BigInt(0));
     const issues = last_micros.concat(last_key).reduce((sum,b)=>math.chain(sum).add(compute_issue(b.meta.height)).done() as number,0);
     const fee_sum:number = math.chain(fees).add(issues).done();
     const pre_fee:number = math.multiply(fee_sum,0.4);
     const next_fee:number = math.multiply(fee_sum,0.6);
     const paid = StateData.map(s=>{
-        const fee = Number(s.data.fee||"0");
+        const fee = Number(s.data.fee||"0x0");
         if(fee===0) return s;
         return _.new_obj(
             s,
             s=>{
                 s.amount = math.chain(s.amount).subtract(fee).done();
-                s.data.fee = "0";
+                s.data.fee = "0x0";
                 return s;
             }
         )
@@ -495,7 +495,7 @@ export const AcceptKeyBlock = (block:T.Block,chain:T.Block[],StateData:T.State[]
             s,
             s=>{
                 s.amount = math.chain(s.amount).add(gain).done();
-                s.data.income = math.chain(Number(s.data.income||"0")).add(gain).done().toFixed(18);
+                s.data.income = math.chain(Number(s.data.income||"0x0")).add(gain).done().toFixed(18);
                 return s;
             }
         )

@@ -1,50 +1,77 @@
 "use strict";
-exports.__esModule = true;
-var crypto = require("crypto");
-var secp256k1 = require("secp256k1");
-exports.HashFromPass = function (password) {
-    var sha256 = crypto.createHash('sha256');
-    sha256.update(password);
-    var pre = sha256.digest('hex');
-    var sha256_2 = crypto.createHash('sha256');
-    sha256_2.update(pre);
-    var hash = sha256_2.digest('hex');
-    return hash;
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
 };
-exports.GenerateKeys = function () {
-    var Private;
-    do {
-        Private = crypto.randomBytes(32);
-    } while (!secp256k1.privateKeyVerify(Private));
-    return Private.toString('hex');
+Object.defineProperty(exports, "__esModule", { value: true });
+const wasm = __importStar(require("wasm-vreath"));
+const crypto = __importStar(require("crypto"));
+const cryptonight = require('node-cryptonight-lite').asyncHash;
+exports.hex2u8_array = (hex) => {
+    return Uint8Array.from(Buffer.from(hex, 'hex'));
 };
-exports.PublicFromPrivate = function (Private) {
-    return secp256k1.publicKeyCreate(Buffer.from(Private, 'hex')).toString('hex');
+exports.u8_array2hex = (u8_array) => {
+    return Buffer.from(u8_array).toString('hex');
 };
-exports.EncryptData = function (data, Private, Public) {
-    var secret = secp256k1.ecdh(Buffer.from(Public, 'hex'), Private);
-    var cipher = crypto.createCipher('aes-256-cbc', secret);
-    var crypted = cipher.update(data, 'utf-8', 'hex');
+exports.get_sha256 = (hex) => {
+    let input = exports.hex2u8_array(hex);
+    return wasm.wasm_get_sha256(input);
+};
+exports.generate_key = () => {
+    return wasm.wasm_generate_key();
+};
+exports.private2public = (private_key) => {
+    const private_array = exports.hex2u8_array(private_key);
+    return wasm.wasm_private2public(private_array);
+};
+exports.get_shared_secret = (private_key, public_key) => {
+    const private_array = exports.hex2u8_array(private_key);
+    const public_array = exports.hex2u8_array(public_key);
+    return wasm.wasm_get_shared_secret(private_array, public_array);
+};
+exports.encrypt = (data, secret) => {
+    const cipher = crypto.createCipher('aes-256-cbc', secret);
+    let crypted = cipher.update(data, 'utf8', 'hex');
     crypted += cipher.final('hex');
     return crypted;
 };
-exports.DecryptData = function (data, Private, Public) {
-    var secret = secp256k1.ecdh(Buffer.from(Public, 'hex'), Private);
-    var decipher = crypto.createDecipher('aes-256-cbc', secret);
-    var dec = decipher.update(data, 'hex', 'utf-8');
+exports.decrypt = (data, secret) => {
+    const decipher = crypto.createDecipher('aes-256-cbc', secret);
+    let dec = decipher.update(data, 'hex', 'utf8');
     dec += decipher.final('utf-8');
     return dec;
 };
-exports.SignData = function (data, Private) {
-    var hash = crypto.createHash("sha256").update(data).digest();
-    var sign = secp256k1.sign(Buffer.from(hash), Buffer.from(Private, 'hex'));
-    return sign.signature.toString('hex');
+exports.sign = (data, private_key) => {
+    const data_array = exports.hex2u8_array(data);
+    const private_array = exports.hex2u8_array(private_key);
+    const signed = wasm.wasm_recoverable_sign(private_array, data_array);
+    const splited = signed.split('_');
+    const recover_id = Number(splited[0]);
+    const sign = splited[1];
+    return [recover_id, sign];
 };
-exports.verifyData = function (data, sign, Public) {
-    var hash = crypto.createHash("sha256").update(data).digest();
-    var verify = secp256k1.verify(Buffer.from(hash), Buffer.from(sign, 'hex'), Buffer.from(Public, 'hex'));
+exports.recover = (data, sign, recover_id) => {
+    const data_array = exports.hex2u8_array(data);
+    const sign_array = exports.hex2u8_array(sign);
+    return wasm.wasm_recover_public_key(data_array, sign_array, recover_id);
+};
+exports.verify = (data, sign, public_key) => {
+    const data_array = exports.hex2u8_array(data);
+    const sign_array = exports.hex2u8_array(sign);
+    const public_array = exports.hex2u8_array(public_key);
+    const verify = wasm.wasm_verify_sign(data_array, sign_array, public_array);
     return verify;
 };
-exports.GenerateAddress = function (id, Public) {
-    return "Vr:" + id + ":" + exports.HashFromPass(Public);
+exports.generate_address = (token, public_key) => {
+    const token_part = ("0000000000" + token).slice(-12);
+    const hash = exports.get_sha256(exports.get_sha256(public_key));
+    const key_part = ("00000000000000000000" + hash).slice(-20);
+    return "0x" + token_part + key_part;
+};
+exports.compute_cryptonight = async (data) => {
+    const hash = await cryptonight(Buffer.from(data, 'hex'));
+    return '0x' + hash.toString('hex');
 };

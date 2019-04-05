@@ -14,8 +14,8 @@ export const constant = {
     my_version:my_version,
     my_net_id:my_net_id,
     my_chain_id:my_chain_id,
-    native:"native",
-    unit:"unit",
+    native:"0x1",
+    unit:"0x2",
     token_name_maxsize:256,
     block_time:1,
     max_blocks:59,
@@ -26,7 +26,7 @@ export const constant = {
     pow_target:Math.pow(2,256),
     def_pos_diff:24,
     lwma_size:8,
-    unit_rate:0.9,
+    unit_rate:90,
     compatible_version:compatible_version
 }
 
