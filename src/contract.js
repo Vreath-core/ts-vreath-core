@@ -93,7 +93,7 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
         default: return false;
     }
 };
-exports.unit_prove_code = async (bases, base_state, input_data, chain, last_height) => {
+exports.unit_prove = async (bases, base_state, input_data, block_db, last_height) => {
     const unit_base = bases.filter(str => '0x' + _.slice_token_part(str) === constant_1.constant.unit);
     const native_base = bases.filter(str => '0x' + _.slice_token_part(str) === constant_1.constant.native);
     const unit_states = base_state.filter(s => s.token === constant_1.constant.unit);
@@ -115,14 +115,14 @@ exports.unit_prove_code = async (bases, base_state, input_data, chain, last_heig
             if (unit_base.length != units.length + 1 || _.slice_hash_part(unit_validator) != _.slice_hash_part(native_validator) || unit_miners.some(add => '0x' + _.slice_token_part(add) != constant_1.constant.unit || native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add)) === -1))
                 return base_state;
             const unit_verify = P.some(units, async (unit, i) => {
-                const ref_block = chain[unit[0]];
+                const ref_block = await block_db.read_obj(unit[0]);
                 if (ref_block == null)
                     return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if (ref_tx == null)
                     return true;
                 const height = ref_tx.meta.refresh.height || "0x0";
-                const req_block = chain[height];
+                const req_block = await block_db.read_obj(height);
                 if (req_block == null)
                     return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
@@ -193,7 +193,7 @@ exports.unit_prove_code = async (bases, base_state, input_data, chain, last_heig
         default: return base_state;
     }
 };
-exports.unit_verify_code = async (bases, base_state, input_data, output_state, chain, last_height) => {
+exports.unit_verify = async (bases, base_state, input_data, output_state, block_db, last_height) => {
     const unit_base = bases.filter(str => '0x' + _.slice_token_part(str) === constant_1.constant.unit);
     const native_base = bases.filter(str => '0x' + _.slice_token_part(str) === constant_1.constant.native);
     const unit_states = base_state.filter(s => s.token === constant_1.constant.unit);
@@ -215,14 +215,14 @@ exports.unit_verify_code = async (bases, base_state, input_data, output_state, c
             if (unit_base.length != units.length + 1 || _.slice_hash_part(unit_validator) != _.slice_hash_part(native_validator) || unit_miners.some(add => '0x' + _.slice_token_part(add) != constant_1.constant.unit || native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add)) === -1))
                 return false;
             const unit_verify = P.some(units, async (unit, i) => {
-                const ref_block = chain[unit[0]];
+                const ref_block = await block_db.read_obj(unit[0]);
                 if (ref_block == null)
                     return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if (ref_tx == null)
                     return true;
                 const height = ref_tx.meta.refresh.height || "0x0";
-                const req_block = chain[height];
+                const req_block = await block_db.read_obj(height);
                 if (req_block == null)
                     return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
@@ -310,6 +310,7 @@ exports.req_tx_change = (base_state, requester, fee, gas) => {
     });
     return gained;
 };
+//requester, refresher, bases
 exports.ref_tx_change = async (bases, base_state, requester, refresher, fee, gas, last_height) => {
     const reqed = base_state.map(s => {
         if (s.owner != requester)

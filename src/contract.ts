@@ -7,6 +7,7 @@ import * as block_set from './block'
 import {constant} from './constant'
 import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
+import { DB } from './db';
 
 export const native_prove = (bases:string[],base_state:T.State[],input_data:string[],):T.State[]=>{
     const native = constant.native;
@@ -88,7 +89,7 @@ export const native_verify = (bases:string[],base_state:T.State[],input_data:str
     }
 }
 
-export const unit_prove_code = async (bases:string[],base_state:T.State[],input_data:string[],chain:{[key:string]:T.Block},last_height:string)=>{
+export const unit_prove = async (bases:string[],base_state:T.State[],input_data:string[],block_db:DB,last_height:string)=>{
     const unit_base = bases.filter(str=>'0x'+_.slice_token_part(str)===constant.unit);
     const native_base = bases.filter(str=>'0x'+_.slice_token_part(str)===constant.native);
     const unit_states = base_state.filter(s=>s.token===constant.unit);
@@ -109,12 +110,12 @@ export const unit_prove_code = async (bases:string[],base_state:T.State[],input_
             const native_base_hash_parts = native_base.map(add=>_.slice_hash_part(add));
             if(unit_base.length!=units.length+1||_.slice_hash_part(unit_validator)!=_.slice_hash_part(native_validator)||unit_miners.some(add=>'0x'+_.slice_token_part(add)!=constant.unit||native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add))===-1)) return base_state;
             const unit_verify = P.some(units,async (unit,i)=>{
-                const ref_block = chain[unit[0]];
+                const ref_block:T.Block = await block_db.read_obj(unit[0]);
                 if(ref_block==null) return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if(ref_tx==null) return true;
                 const height = ref_tx.meta.refresh.height || "0x0";
-                const req_block = chain[height];
+                const req_block:T.Block = await block_db.read_obj(height);
                 if(req_block==null) return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
                 if(req_tx==null) return true;
@@ -183,7 +184,7 @@ export const unit_prove_code = async (bases:string[],base_state:T.State[],input_
     }
 }
 
-export const unit_verify_code = async (bases:string[],base_state:T.State[],input_data:string[],output_state:T.State[],chain:{[key:string]:T.Block},last_height:string)=>{
+export const unit_verify = async (bases:string[],base_state:T.State[],input_data:string[],output_state:T.State[],block_db:DB,last_height:string)=>{
     const unit_base = bases.filter(str=>'0x'+_.slice_token_part(str)===constant.unit);
     const native_base = bases.filter(str=>'0x'+_.slice_token_part(str)===constant.native);
     const unit_states = base_state.filter(s=>s.token===constant.unit);
@@ -204,12 +205,12 @@ export const unit_verify_code = async (bases:string[],base_state:T.State[],input
             const native_base_hash_parts = native_base.map(add=>_.slice_hash_part(add));
             if(unit_base.length!=units.length+1||_.slice_hash_part(unit_validator)!=_.slice_hash_part(native_validator)||unit_miners.some(add=>'0x'+_.slice_token_part(add)!=constant.unit||native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add))===-1)) return false;
             const unit_verify = P.some(units,async (unit,i)=>{
-                const ref_block = chain[unit[0]];
+                const ref_block:T.Block = await block_db.read_obj(unit[0]);
                 if(ref_block==null) return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if(ref_tx==null) return true;
                 const height = ref_tx.meta.refresh.height || "0x0";
-                const req_block = chain[height];
+                const req_block:T.Block = await block_db.read_obj(height);
                 if(req_block==null) return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
                 if(req_tx==null) return true;
@@ -292,6 +293,7 @@ export const req_tx_change = (base_state:T.State[],requester:string,fee:string,g
     return gained;
 }
 
+//requester, refresher, bases
 export const ref_tx_change = async (bases:string[],base_state:T.State[],requester:string,refresher:string,fee:string,gas:string,last_height:string)=>{
     const reqed = base_state.map(s=>{
         if(s.owner!=requester) return s;
