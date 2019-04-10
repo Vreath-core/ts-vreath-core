@@ -1,6 +1,6 @@
 import * as wasm from 'wasm-vreath'
 import * as crypto from 'crypto'
-const cryptonight = require('node-cryptonight-lite').asyncHash;
+const cryptonight = require('node-cryptonight-lite').hash;
 
 export const hex2u8_array = (hex:string):Uint8Array=>{
   return Uint8Array.from(Buffer.from(hex,'hex'));
@@ -16,7 +16,12 @@ export const get_sha256 = (hex:string):string=>{
 }
 
 export const generate_key = ():string=>{
-  return wasm.wasm_generate_key();
+  let randoms:number[] = [];
+  let i:number;
+  for(i=0;i<32;i++){
+    randoms[i] = Math.floor(Math.random()*256);
+  }
+  return wasm.wasm_generate_key(Uint8Array.from(randoms));
 }
 
 export const private2public = (private_key:string):string=>{
@@ -74,10 +79,11 @@ export const generate_address = (token:string,public_key:string)=>{
     const token_part = ("0000000000"+token).slice(-12);
     const hash = get_sha256(get_sha256(public_key));
     const key_part = ("00000000000000000000"+hash).slice(-20);
-    return "0x"+token_part+key_part;
+    return token_part+key_part;
 }
 
-export const compute_cryptonight = async (data:string):Promise<string>=>{
-  const hash = await cryptonight(Buffer.from(data,'hex'));
-  return '0x'+hash.toString('hex');
+export const compute_cryptonight = (data:string):string=>{
+  const hash = cryptonight(Buffer.from(data,'hex'));
+  return hash.toString('hex');
 }
+

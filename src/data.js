@@ -35,7 +35,7 @@ exports.write_state_hash = async (db, state) => {
     return hash;
 };
 exports.write_lock_hash = async (db, lock) => {
-    const hash = crypto_set.get_sha256(_.hex_sum([lock.address, '0x' + lock.index.toString(16), lock.height, '0x' + lock.index.toString(16), lock.tx_hash]));
+    const hash = crypto_set.get_sha256(_.hex_sum([lock.address, lock.index.toString(16), lock.height, lock.index.toString(16), lock.tx_hash]));
     await db.write_obj(hash, lock);
     return hash;
 };

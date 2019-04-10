@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /*
-  height:10 byte,
+  height:8 byte,
   index:1 byte,
-  nonce,10 byte,
-  address:42 byte,
-  unit_price:12 byte
+  nonce,8 byte,
+  address:40 byte,
+  unit_price:10 byte
 */

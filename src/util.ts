@@ -47,26 +47,27 @@ export const get_unicode = (str:string):number[]=>{
 
 export const hex_sum = (hexes:string[]):string=>{
   const sum_hex = hexes.reduce((sum:BigInteger,hex:string)=>{
-    return sum.add(hex);
+    return sum.add(bigInt(hex,16));
   },bigInt(0));
-  return '0x'+sum_hex.toString(16);
+  return sum_hex.toString(16);
+}
+
+export const array2hash = (array:string[]):string=>{
+  const concated = array.reduce((res:string,str)=>{
+    return res+str;
+  },'');
+  return crypto_set.get_sha256(concated);
 }
 
 export const reduce_pub = (pubs:string[])=>{
   if(pubs.length===0) return crypto_set.get_sha256('');
   else if(pubs.length===1) return pubs[0];
-  return pubs.slice().sort().reduce((res:string,pub:string)=>{
-    return crypto_set.get_sha256(hex_sum([]));
-  }) || crypto_set.get_sha256('');
+  else return array2hash(pubs);
 }
 
 export const get_string = (uni:number[]):string=>{
   return String.fromCharCode.apply({},uni);
 }
-
-/*export const object_hash_check = (hash:string,obj:{[key:string]:any}|any[])=>{
-  return hash!=object2hash(obj);
-}*/
 
 export const hash_size_check = (hash:string)=>{
   return Buffer.from(hash).length!=Buffer.from(crypto_set.get_sha256('')).length;
@@ -77,7 +78,7 @@ export const sign_check = (hash:string,signature:string,public_key:string)=>{
 }
 
 export const hashed_pub_check = (address:string,pubs:string[])=>{
-    return address.slice(12,32)!=crypto_set.get_sha256(reduce_pub(pubs));
+    return address.slice(16,80)!=crypto_set.get_sha256(reduce_pub(pubs));
 }
 
 export const address_check = (address:string,public_key:string,token:string)=>{
@@ -85,7 +86,7 @@ export const address_check = (address:string,public_key:string,token:string)=>{
 }
 
 export const address_form_check = (address:string)=>{
-    return isNaN(parseInt(address,16)) || Buffer.from(address).length!=32;
+    return Buffer.from(address,'hex').length*2!=address.length || Buffer.from(address).length!=80;
 }
 
 
@@ -95,11 +96,11 @@ export const time_check = (timestamp:number)=>{
 }
 
 export const slice_token_part = (address:string)=>{
-  return address.slice(2,10);
+  return address.slice(0,16);
 }
 
 export const slice_hash_part = (address:string)=>{
-  return address.slice(10,32);
+  return address.slice(16,80);
 }
 
 export const slice_tokens = (addresses:string[])=>{

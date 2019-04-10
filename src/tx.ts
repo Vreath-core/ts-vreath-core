@@ -71,15 +71,14 @@ export const refreshed_check = async (base:string[],trie:Trie,lock_db:DB)=>{
 }
 
 export const state_check = (state:T.State):boolean=>{
-  return _.address_form_check(state.owner) || '0x'+_.slice_token_part(state.owner)!=state.token
+  return _.address_form_check(state.owner) || _.slice_token_part(state.owner)!=state.token
 }
 
 const tx_meta2array = (meta:T.TxMeta):string[]=>{
   const req = meta.request;
   const ref = meta.refresh;
   return [meta.kind,req.type,req.gas,req.log,ref.height,ref.index,ref.success,ref.nonce,ref.gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness).map(item=>{
-    if(typeof item != 'string') return '0x'+item.toString(16);
-    else if(item.slice(0,2)!='0x') return '0x'+item;
+    if(typeof item != 'string' || Buffer.from(item,'hex').length*2!=item.length) return item.toString(16);
     else return item;
   });
 }
@@ -91,12 +90,12 @@ export const tx_fee = (tx:T.Tx):string=>{
   const size_sum = array.reduce((sum:BigInteger,item:string)=>{
     return sum.add(Math.ceil(Buffer.from(item,'hex').length))
   },bigInt(0));
-  return '0x'+size_sum.multiply(price).toString(16);
+  return size_sum.multiply(price).toString(16);
 }
 
 
 export const unit_hash = async (request:string,height:string,block_hash:string,nonce:string,refresher:string,output:string,unit_price:string):Promise<string>=>{
-  return await crypto_set.compute_cryptonight('0x'+bigInt(request).add(height).add('0x'+block_hash).add(nonce).add(refresher).add('0x'+output).add(unit_price).toString(16));
+  return await crypto_set.compute_cryptonight(_.array2hash([request,height,block_hash,nonce,refresher,output,unit_price]));
 }
 
 /*export const find_req_tx = (ref_tx:T.Tx,chain:T.Block[]):T.Tx=>{
@@ -149,13 +148,13 @@ const get_info_from_tx = (tx:T.Tx):[string,string[],number[],string[],string]=>{
   const chain_ids = sign.map((s,i)=>{
     return (s.v-8-(28-recover_ids[i]))/2;
   });
-  const data_array = meta_array.concat('0x'+chain_ids[0].toString(16));
-  const meta_hash = crypto_set.get_sha256(_.hex_sum(data_array));
+  const data_array = meta_array.concat(chain_ids[0].toString(16));
+  const meta_hash = _.array2hash(data_array);
   const pub_keys = sign_data.map((s,i)=>{
     return crypto_set.recover(meta_hash,s,recover_ids[i]);
   });
   const address = crypto_set.generate_address(constant.native,_.reduce_pub(pub_keys));
-  const all_array = meta_array.concat(sign.map(s=>'0x'+s.v.toString(16)));
+  const all_array = meta_array.concat(sign.map(s=>s.v.toString(16)));
   return [meta_hash,all_array,chain_ids,pub_keys,address];
 }
 
@@ -170,7 +169,7 @@ export const contract_check = async (token:string,bases:string[],base_state:T.St
 }
 
 const verify_tx_basic = (hash:string,sign:T.Sign[],meta_hash:string,infos:string[],chain_ids:number[],pub_keys:string[],address:string)=>{
-  if(hash!=crypto_set.get_sha256(_.hex_sum(infos))){
+  if(hash!=_.array2hash(infos)){
     //console.log("invalid hash");
     return false;
   }
@@ -214,10 +213,10 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
   const sender = crypto_set.generate_address(tokens[0],_.reduce_pub(pub_keys));
   const bases = [sender].concat(other_bases);
 
-  const requester_state:T.State = await data.read_from_trie(trie,state_db,requester,0,state_set.CreateState("0x0",constant.native,requester,"0x0",[]));
+  const requester_state:T.State = await data.read_from_trie(trie,state_db,requester,0,state_set.CreateState("0",constant.native,requester,"0",[]));
 
   const base_states:T.State[] = await P.map(bases,async key=>{
-    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0x0",'0x'+_.slice_token_part(key),key,"0x0",[]));
+    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0",_.slice_token_part(key),key,"0",[]));
   });
 
   const empty_ref = empty_tx().meta.refresh;
@@ -229,7 +228,7 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
     //console.log("invalid kind");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(2)!=-1)||requester_state==null||_.hashed_pub_check(requester,pub_keys)||requester_state.token!='0x'+constant.native||bigInt(requester_state.amount).subtract(tx_fee(tx)).subtract(gas).lesser(0)||await requested_check([requester],trie,lock_db)){
+  else if((disabling!=null&&disabling.indexOf(2)!=-1)||requester_state==null||_.hashed_pub_check(requester,pub_keys)||requester_state.token!=constant.native||bigInt(requester_state.amount,16).subtract(bigInt(tx_fee(tx),16)).subtract(bigInt(gas,16)).lesser(0)||await requested_check([requester],trie,lock_db)){
     //console.log("invalid requester");
     return false;
   }
@@ -272,8 +271,8 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
   const block:T.Block = await block_db.read_obj(height) || block_set.empty_block();
   const pow_target = constant.pow_target;
   const req_tx = block.txs[index];
-  const gas = bigInt(req_tx.meta.request.gas).multiply(gas_share).divide(100);
-  const fee = bigInt(req_tx.meta.request.gas).subtract(gas);
+  const gas = bigInt(req_tx.meta.request.gas,16).multiply(gas_share).divide(100);
+  const fee = bigInt(req_tx.meta.request.gas,16).subtract(gas);
 
   const pulled = get_info_from_tx(tx);
   const meta_hash = pulled[0];
@@ -282,18 +281,18 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
   const pub_keys = pulled[3];
   const refresher = pulled[4];
 
-  const refresher_state:T.State = await data.read_from_trie(trie,state_db,refresher,0,state_set.CreateState("0x0",constant.native,refresher));
+  const refresher_state:T.State = await data.read_from_trie(trie,state_db,refresher,0,state_set.CreateState("0",constant.native,refresher));
 
   const unit_add = crypto_set.generate_address(constant.unit,_.reduce_pub(pub_keys));
 
   const pull_from_req = get_info_from_tx(req_tx);
   const requester = pull_from_req[4];
-  const main_token = '0x'+_.slice_token_part(req_tx.meta.request.bases[0]);
+  const main_token = _.slice_token_part(req_tx.meta.request.bases[0]);
   const bases = [main_token+_.slice_hash_part(requester)].concat(req_tx.meta.request.bases);
   const base_states:T.State[] = await P.map(bases, async key=>{
-    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0x00000000",'0x'+_.slice_token_part(key),key,"0x0000000000",[]));
+    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0",_.slice_token_part(key),key,"0",[]));
   });
-  const base_states_hashes = base_states.map(s=>crypto_set.get_sha256(_.hex_sum([s.nonce,s.token,s.owner,s.amount].concat(s.data))));
+  const base_states_hashes = base_states.map(s=>_.array2hash([s.nonce,s.token,s.owner,s.amount].concat(s.data)));
   const empty_req = empty_tx().meta.request;
 
   if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,chain_ids,pub_keys,refresher)){
@@ -307,7 +306,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
     //console.log("invalid request hash");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(3)!=-1)||!bigInt(await unit_hash(req_tx.hash,height,block.hash,nonce,unit_add,crypto_set.get_sha256(_.hex_sum(output)),unit_price)).lesserOrEquals(pow_target)){
+  else if((disabling!=null&&disabling.indexOf(3)!=-1)||!bigInt(await unit_hash(req_tx.hash,height,block.hash,nonce,unit_add,_.array2hash(output),unit_price),16).lesserOrEquals(pow_target)){
     //console.log("invalid nonce");
     return false;
   }
@@ -315,11 +314,11 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
     //console.log("base states are already refreshed");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(5)!=-1)||refresher_state==null||_.hashed_pub_check(refresher,pub_keys)||bigInt(refresher_state.amount).add(gas).subtract(fee).lesser(0)){
+  else if((disabling!=null&&disabling.indexOf(5)!=-1)||refresher_state==null||_.hashed_pub_check(refresher,pub_keys)||bigInt(refresher_state.amount,16).add(gas).subtract(fee).lesser(0)){
     //console.log("invalid refresher");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(6)!=-1)||output.some((o,i)=>o!=crypto_set.get_sha256(_.hex_sum([output_states[i].nonce,output_states[i].token,output_states[i].owner,output_states[i].amount].concat(output_states[i].data))))){
+  else if((disabling!=null&&disabling.indexOf(6)!=-1)||output.some((o,i)=>o!=_.array2hash([output_states[i].nonce,output_states[i].token,output_states[i].owner,output_states[i].amount].concat(output_states[i].data)))){
     //console.log("invalid output hash");
     return false;
   }
@@ -352,7 +351,7 @@ export const create_req_tx = (type:T.TxType,bases:string[],feeprice:string,gas:s
     refresh:empty.meta.refresh
   }
 
-  const hash = crypto_set.get_sha256(_.hex_sum(tx_meta2array(meta)));
+  const hash = _.array2hash(tx_meta2array(meta));
 
   const tx:T.Tx = {
     hash:hash,
@@ -379,7 +378,7 @@ export const create_ref_tx = (height:string,index:number,success:0|1,output:stri
       unit_price:unit_price
     }
   }
-  const hash = crypto_set.get_sha256(_.hex_sum(tx_meta2array(meta)));
+  const hash = _.array2hash(tx_meta2array(meta));
   const tx:T.Tx = {
     hash:hash,
     signature:[],
@@ -411,14 +410,14 @@ export const accept_req_tx = async (tx:T.Tx,height:string,block_hash:string,inde
   const fee = tx_fee(tx);
   const gas = tx.meta.request.gas;
 
-  const requester_state:T.State = await data.read_from_trie(trie,state_db,requester,0,state_set.CreateState("0x0",constant.native,requester,"0x0"));
+  const requester_state:T.State = await data.read_from_trie(trie,state_db,requester,0,state_set.CreateState("0",constant.native,requester,"0"));
 
   const changed_states = contracts.req_tx_change([requester_state],requester,fee,gas);
 
   const bases = tx.meta.request.bases.concat(requester).filter((val,i,array)=>array.indexOf(val)===i);
   const base_states = await P.map(bases, async key=>{
     if(key===requester) return changed_states[0];
-    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0x0",constant.native,key,"0x0"));
+    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0",constant.native,key,"0"));
   });
   const lock_states = await P.map(bases, async key=>{
     return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));
@@ -445,12 +444,12 @@ export const accept_ref_tx = async (ref_tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB
   const req_tx = await find_req_tx(ref_tx,block_db);
   const requester = get_info_from_tx(req_tx)[4];
   const refresher = get_info_from_tx(ref_tx)[4];
-  const gas = '0x'+bigInt(req_tx.meta.request.gas).multiply(ref_tx.meta.refresh.gas_share).divide(100).toString(16);
-  const fee = '0x'+bigInt(req_tx.meta.request.gas).subtract(gas).toString(16);
+  const gas = bigInt(req_tx.meta.request.gas,16).multiply(ref_tx.meta.refresh.gas_share).divide(100).toString(16);
+  const fee = bigInt(req_tx.meta.request.gas,16).subtract(bigInt(gas,16)).toString(16);
 
   const bases = [requester,refresher].concat(req_tx.meta.request.bases);
   const base_states = await P.map(bases, async key=>{
-    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0x0","0x"+_.slice_token_part(key),key,"0x0",[]));
+    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0",_.slice_token_part(key),key,"0",[]));
   });
   const changed = await contracts.ref_tx_change(bases,base_states,requester,refresher,fee,gas,last_height);
 
@@ -474,4 +473,3 @@ export const accept_ref_tx = async (ref_tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB
     await data.write2trie(trie,state_db,lock_db,changed[i],added[i]);
   });
 }
-

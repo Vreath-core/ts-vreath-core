@@ -52,25 +52,27 @@ exports.get_unicode = (str) => {
 };
 exports.hex_sum = (hexes) => {
     const sum_hex = hexes.reduce((sum, hex) => {
-        return sum.add(hex);
+        return sum.add(big_integer_1.default(hex, 16));
     }, big_integer_1.default(0));
-    return '0x' + sum_hex.toString(16);
+    return sum_hex.toString(16);
+};
+exports.array2hash = (array) => {
+    const concated = array.reduce((res, str) => {
+        return res + str;
+    }, '');
+    return crypto_set.get_sha256(concated);
 };
 exports.reduce_pub = (pubs) => {
     if (pubs.length === 0)
         return crypto_set.get_sha256('');
     else if (pubs.length === 1)
         return pubs[0];
-    return pubs.slice().sort().reduce((res, pub) => {
-        return crypto_set.get_sha256(exports.hex_sum([]));
-    }) || crypto_set.get_sha256('');
+    else
+        return exports.array2hash(pubs);
 };
 exports.get_string = (uni) => {
     return String.fromCharCode.apply({}, uni);
 };
-/*export const object_hash_check = (hash:string,obj:{[key:string]:any}|any[])=>{
-  return hash!=object2hash(obj);
-}*/
 exports.hash_size_check = (hash) => {
     return Buffer.from(hash).length != Buffer.from(crypto_set.get_sha256('')).length;
 };
@@ -78,23 +80,23 @@ exports.sign_check = (hash, signature, public_key) => {
     return crypto_set.verify(hash, signature, public_key) == false;
 };
 exports.hashed_pub_check = (address, pubs) => {
-    return address.slice(12, 32) != crypto_set.get_sha256(exports.reduce_pub(pubs));
+    return address.slice(16, 80) != crypto_set.get_sha256(exports.reduce_pub(pubs));
 };
 exports.address_check = (address, public_key, token) => {
     return address != crypto_set.generate_address(token, public_key);
 };
 exports.address_form_check = (address) => {
-    return isNaN(parseInt(address, 16)) || Buffer.from(address).length != 32;
+    return Buffer.from(address, 'hex').length * 2 != address.length || Buffer.from(address).length != 80;
 };
 exports.time_check = (timestamp) => {
     const date = new Date();
     return timestamp > Math.floor(date.getTime() / 1000);
 };
 exports.slice_token_part = (address) => {
-    return address.slice(2, 10);
+    return address.slice(0, 16);
 };
 exports.slice_hash_part = (address) => {
-    return address.slice(10, 32);
+    return address.slice(16, 80);
 };
 exports.slice_tokens = (addresses) => {
     return addresses.reduce((res, add) => {
