@@ -74,10 +74,10 @@ export const state_check = (state:T.State):boolean=>{
   return _.address_form_check(state.owner) || _.slice_token_part(state.owner)!=state.token
 }
 
-const tx_meta2array = (meta:T.TxMeta):string[]=>{
+export const tx_meta2array = (meta:T.TxMeta):string[]=>{
   const req = meta.request;
   const ref = meta.refresh;
-  return [meta.kind,req.type,req.gas,req.log,ref.height,ref.index,ref.success,ref.nonce,ref.gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness).map(item=>{
+  return [meta.kind,req.type,req.feeprice,req.gas,req.log,ref.height,ref.index,ref.success,ref.nonce,ref.gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness).map(item=>{
     if(typeof item != 'string' || Buffer.from(item,'hex').length*2!=item.length) return item.toString(16);
     else return item;
   });
@@ -86,7 +86,8 @@ const tx_meta2array = (meta:T.TxMeta):string[]=>{
 export const tx_fee = (tx:T.Tx):string=>{
   const price = tx.meta.request.feeprice;
   const meta = tx.meta;
-  const array = tx_meta2array(meta);
+  const sign = tx.signature.map(s=>s.data+s.v);
+  const array = tx_meta2array(meta).splice(2,1).concat(tx.hash).concat(sign);
   const size_sum = array.reduce((sum:BigInteger,item:string)=>{
     return sum.add(Math.ceil(Buffer.from(item,'hex').length))
   },bigInt(0));
@@ -137,25 +138,25 @@ export const find_req_tx = async (ref_tx:T.Tx,block_db:DB)=>{
   return req_tx;
 }
 
-const get_info_from_tx = (tx:T.Tx):[string,string[],number[],string[],string]=>{
+export const get_info_from_tx = (tx:T.Tx):[string,string[],string[],string[],string]=>{
   const sign = tx.signature;
   const meta = tx.meta;
   const sign_data = sign.map(s=>s.data);
   const meta_array = tx_meta2array(meta);
   const recover_ids = sign.map(s=>{
-    return s.v%2;
+    return bigInt(s.v,16).mod(2).toJSNumber();
   });
-  const chain_ids = sign.map((s,i)=>{
-    return (s.v-8-(28-recover_ids[i]))/2;
+  const ids = sign.map((s,i)=>{
+    return bigInt(bigInt(s.v,16).minus(9).minus(28-recover_ids[i])).divide(2).toString(16);
   });
-  const data_array = meta_array.concat(chain_ids[0].toString(16));
+  const data_array = meta_array.concat(ids[0]);
   const meta_hash = _.array2hash(data_array);
   const pub_keys = sign_data.map((s,i)=>{
     return crypto_set.recover(meta_hash,s,recover_ids[i]);
   });
   const address = crypto_set.generate_address(constant.native,_.reduce_pub(pub_keys));
-  const all_array = meta_array.concat(sign.map(s=>s.v.toString(16)));
-  return [meta_hash,all_array,chain_ids,pub_keys,address];
+  const all_array = meta_array.concat(sign.map(s=>s.v));
+  return [meta_hash,all_array,ids,pub_keys,address];
 }
 
 export const contract_check = async (token:string,bases:string[],base_state:T.State[],input_data:string[],output_state:T.State[],block_db?:DB,last_height?:string)=>{
@@ -168,19 +169,30 @@ export const contract_check = async (token:string,bases:string[],base_state:T.St
   else return true;
 }
 
-const verify_tx_basic = (hash:string,sign:T.Sign[],meta_hash:string,infos:string[],chain_ids:number[],pub_keys:string[],address:string)=>{
+const verify_tx_basic = (hash:string,sign:T.Sign[],meta_hash:string,infos:string[],ids:string[],pub_keys:string[],address:string)=>{
+  const version = ids[0].slice(0,4);
+  const chain_id = ids[0].slice(4,8);
+  const net_id = ids[0].slice(8,12);
   if(hash!=_.array2hash(infos)){
     //console.log("invalid hash");
     return false;
   }
-  else if(chain_ids[0]!=constant.my_chain_id||chain_ids.some(id=>chain_ids.indexOf(id)!=0)){
+  else if(ids.some(id=>ids.indexOf(id)!=0)){
+    //console.log("invalid ids");
+    return false;
+  }
+  else if(bigInt(version,16).lesser(constant.compatible_version)){
     //console.log("different version");
     return false;
   }
-  /*else if(network_id!=constant.my_net_id){
+  else if(bigInt(chain_id,16).notEquals(constant.my_chain_id)){
+    //console.log("different chain id");
+    return false;
+  }
+  else if(bigInt(net_id,16).notEquals(constant.my_net_id)){
     //console.log("different network id");
     return false;
-  }*/
+  }
   else if(_.address_check(address,_.reduce_pub(pub_keys),constant.native)){
     //console.log("invalid address");
     return false;
@@ -205,7 +217,7 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
   const pulled = get_info_from_tx(tx);
   const meta_hash = pulled[0];
   const infos = pulled[1];
-  const chain_ids = pulled[2];
+  const ids = pulled[2];
   const pub_keys = pulled[3];
   const requester = pulled[4];
 
@@ -221,7 +233,7 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
 
   const empty_ref = empty_tx().meta.refresh;
 
-  if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,chain_ids,pub_keys,requester)){
+  if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,ids,pub_keys,requester)){
     return false;
   }
   else if((disabling!=null&&disabling.indexOf(1)!=-1)||kind!=0){
@@ -277,7 +289,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
   const pulled = get_info_from_tx(tx);
   const meta_hash = pulled[0];
   const infos = pulled[1];
-  const chain_ids = pulled[2];
+  const ids = pulled[2];
   const pub_keys = pulled[3];
   const refresher = pulled[4];
 
@@ -295,7 +307,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
   const base_states_hashes = base_states.map(s=>_.array2hash([s.nonce,s.token,s.owner,s.amount].concat(s.data)));
   const empty_req = empty_tx().meta.request;
 
-  if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,chain_ids,pub_keys,refresher)){
+  if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,ids,pub_keys,refresher)){
     return false;
   }
   else if((disabling!=null&&disabling.indexOf(1)!=-1)||kind!=1){
@@ -390,11 +402,12 @@ export const create_ref_tx = (height:string,index:number,success:0|1,output:stri
 
 export const sign_tx = (tx:T.Tx,private_key:string)=>{
   const sign = crypto_set.sign(tx.hash,private_key);
-  const recover_id = sign[0];
+  const recover_id = Number(sign[0]);
   const data = sign[1];
+  const id = bigInt(("0000"+constant.my_version).slice(-4)+("0000"+constant.my_chain_id).slice(-4)+("0000"+constant.my_net_id).slice(-4),16).toJSNumber();
   const signature:T.Sign = {
     data:data,
-    v:constant.my_chain_id*2+8+28-recover_id
+    v:(id*2+8+28-recover_id).toString(16)
   }
   return _.new_obj(
     tx,
@@ -436,11 +449,11 @@ export const accept_req_tx = async (tx:T.Tx,height:string,block_hash:string,inde
     );
   });
   await P.forEach(bases, async (key,i)=>{
-    await data.write2trie(trie,state_db,lock_db,base_states[i],added[i]);
+    await data.write_trie(trie,state_db,lock_db,base_states[i],added[i]);
   });
 }
 
-export const accept_ref_tx = async (ref_tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,block_db:DB,last_height:string,block_hash:string,tx_index:number)=>{
+export const accept_ref_tx = async (ref_tx:T.Tx,height:string,block_hash:string,index:number,trie:Trie,state_db:DB,lock_db:DB,block_db:DB)=>{
   const req_tx = await find_req_tx(ref_tx,block_db);
   const requester = get_info_from_tx(req_tx)[4];
   const refresher = get_info_from_tx(ref_tx)[4];
@@ -451,7 +464,7 @@ export const accept_ref_tx = async (ref_tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB
   const base_states = await P.map(bases, async key=>{
     return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0",_.slice_token_part(key),key,"0",[]));
   });
-  const changed = await contracts.ref_tx_change(bases,base_states,requester,refresher,fee,gas,last_height);
+  const changed = await contracts.ref_tx_change(bases,base_states,requester,refresher,fee,gas,height);
 
   const lock_states = await P.map(bases, async key=>{
     return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));
@@ -461,15 +474,15 @@ export const accept_ref_tx = async (ref_tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB
       l,
       l=>{
         l.state = 0;
-        l.height = last_height;
+        l.height = height;
         l.block_hash = block_hash;
-        l.index = tx_index;
+        l.index = index;
         l.tx_hash = ref_tx.hash
         return l;
       }
     );
   });
   await P.forEach(bases, async (key,i)=>{
-    await data.write2trie(trie,state_db,lock_db,changed[i],added[i]);
+    await data.write_trie(trie,state_db,lock_db,changed[i],added[i]);
   });
 }

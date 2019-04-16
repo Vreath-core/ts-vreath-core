@@ -1,4 +1,3 @@
-import * as P from 'p-iteration'
 import * as _ from './util'
 import * as crypto_set from './crypto_set'
 import * as T from './types'
@@ -36,7 +35,7 @@ export const write_lock_hash = async (db:DB,lock:T.Lock)=>{
     return hash;
 }
 
-export const write2trie = async (trie:Trie,state_db:DB,lock_db:DB,state:T.State,lock:T.Lock)=>{
+export const write_trie = async (trie:Trie,state_db:DB,lock_db:DB,state:T.State,lock:T.Lock)=>{
     const state_hash = await write_state_hash(state_db,state);
     const lock_hash = await write_lock_hash(lock_db,lock);
     await trie.put(state.owner,[state_hash,lock_hash]);

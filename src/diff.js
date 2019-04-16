@@ -1,13 +1,11 @@
-import * as math from 'mathjs'
-import * as con from './constant'
-math.config({
-    number: 'BigNumber'
-});
-
-const size = con.constant.lwma_size;
-const def_diff = con.constant.def_pos_diff;
-
-export const get_diff = (cumulative_diffs:number[],target_time:number,solvetimes:number[]):number=>{
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const constant_1 = require("./constant");
+const big_integer_1 = __importDefault(require("big-integer"));
+/*export const get_diff = (cumulative_diffs:number[],target_time:number,solvetimes:number[]):number=>{
     if(cumulative_diffs.length!=size+1 || solvetimes.length!=size+1) return def_diff;
     let pre_time:number = math.chain(solvetimes[0]).subtract(target_time).done();
     let this_time:number = 0;
@@ -25,5 +23,8 @@ export const get_diff = (cumulative_diffs:number[],target_time:number,solvetimes
     if(math.chain(2000000).multiply(size).multiply(size).multiply(target_time).smaller(avg_D).done() as boolean) next_D = math.chain(avg_D).divide(200).divide(L).multiply(size).multiply(size+1).multiply(target_time).multiply(99).done();
     else next_D = math.chain(avg_D).multiply(size).multiply(size+1).multiply(target_time).multiply(99).divide(200).divide(L).done();
     return next_D;
-}
-
+}*/
+const times = big_integer_1.default(constant_1.constant.block_time).multiply(constant_1.constant.max_blocks + 1);
+exports.get_diff = (amount) => {
+    return big_integer_1.default(amount, 16).multiply(times).toString(16);
+};

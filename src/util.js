@@ -11,7 +11,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto_set = __importStar(require("./crypto_set"));
-//import {en_key} from './merkle_patricia'
 const lodash_1 = require("lodash");
 const big_integer_1 = __importDefault(require("big-integer"));
 exports.copy = (data) => {
@@ -20,25 +19,6 @@ exports.copy = (data) => {
 exports.new_obj = (obj, fn) => {
     return fn(exports.copy(obj));
 };
-/*
-export const object2string = <T>(obj:{[key:string]:T}|T[]|T):string=>{
-  if(obj instanceof Array){
-    return obj.reduce((res:string,val)=>res+object2string(val),'');
-  }
-  else if(obj instanceof Object){
-    return Object.entries(obj).slice().sort((a,b)=>Number(en_key(a[0])||"0")-Number(en_key(b[0]||"0"))).reduce((res:string,item)=>{
-      const val:T = item[1];
-      return res+object2string(val);
-    },'');
-  }
-  else if(['number','string','booleam'].indexOf(typeof obj)!=-1) return String(obj);
-  else return '';
-}
-
-export const object2hash = <T>(obj:{[key:string]:T}|T[])=>{
-  const str = object2string(obj);
-  return crypto_set.get_sha256(str);
-}*/
 exports.hex2num = (str) => {
     return parseInt(str, 16);
 };

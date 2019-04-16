@@ -1,0 +1,19 @@
+[package]
+name = "ffi-vreath"
+version = "0.0.1"
+authors = ["Sora Suegami <suegamisora@gmail.com>"]
+license = "MIT"
+build = "build.rs"
+exclude = ["artifacts.json", "index.node"]
+
+[lib]
+name = "ffi_vreath"
+crate-type = ["dylib"]
+
+[build-dependencies]
+neon-build = "0.2.0"
+
+[dependencies]
+neon = "0.2.0"
+rust_vreath_core = { git = "https://github.com/Vreath-core/rust-vreath-core", version = "0.0.0"}
+rand = {version = "0.6.5", features = ["nightly"]}

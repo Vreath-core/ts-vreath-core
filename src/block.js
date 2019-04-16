@@ -6,60 +6,99 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = __importStar(require("./util"));
-const CryptoSet = __importStar(require("./crypto_set"));
-const StateSet = __importStar(require("./state"));
-const TxSet = __importStar(require("./tx"));
-const lwma_1 = require("./lwma");
-const math = __importStar(require("mathjs"));
+const crypto_set = __importStar(require("./crypto_set"));
+const state_set = __importStar(require("./state"));
+const lock_set = __importStar(require("./lock"));
+const tx_set = __importStar(require("./tx"));
+const diff_1 = require("./diff");
+const data = __importStar(require("./data"));
 const constant_1 = require("./constant");
-math.config({
-    number: 'BigNumber'
-});
+const contract = __importStar(require("./contract"));
+const big_integer_1 = __importDefault(require("big-integer"));
+const P = __importStar(require("p-iteration"));
 exports.empty_block = () => {
     const meta = {
-        kind: 'key',
-        version: 0,
-        network_id: 0,
-        chain_id: 0,
-        validator: '',
-        height: 0,
-        previoushash: '',
+        kind: 0,
+        height: "",
+        previoushash: "",
         timestamp: 0,
-        pos_diff: 0,
-        validatorPub: [],
-        stateroot: '',
-        lockroot: '',
-        tx_root: '',
-        fee_sum: 0,
-        extra: ''
+        pos_diff: "",
+        trie_root: "",
+        tx_root: "",
+        fee_sum: "",
+        extra: ""
     };
-    const hash = _.ObjectHash(meta);
+    const hash = "";
+    const sign = {
+        data: "",
+        v: ""
+    };
     return {
         hash: hash,
-        validatorSign: [],
+        signature: sign,
         meta: meta,
         txs: [],
-        raws: []
     };
 };
-exports.search_key_block = (chain) => {
-    let block;
-    for (block of chain.slice().reverse()) {
-        if (block.meta.kind === "key")
-            return block;
-    }
-    return exports.empty_block();
+exports.block_meta2array = (meta) => {
+    return [meta.kind.toString(16), meta.height, meta.previoushash, meta.timestamp.toString(16), meta.pos_diff, meta.trie_root, meta.tx_root, meta.extra];
 };
-exports.search_micro_block = (chain, key_block) => {
-    return chain.slice(key_block.meta.height).filter((block) => {
-        return block.meta.kind === "micro" && block.meta.validator === key_block.meta.validator;
-    });
+const get_info_from_block = (block) => {
+    const sign = block.signature;
+    const meta_data = exports.block_meta2array(block.meta);
+    const recover_id = big_integer_1.default(sign.v, 16).mod(2).toJSNumber();
+    const id = big_integer_1.default(big_integer_1.default(sign.v, 16).minus(9).minus(28 - recover_id)).divide(2).toString(16);
+    const raw_array = meta_data.concat(id);
+    const meta_hash = _.array2hash(raw_array);
+    const public_key = crypto_set.recover(meta_hash, sign.data, recover_id);
+    const address = crypto_set.generate_address(constant_1.constant.native, public_key);
+    const all_array = raw_array.concat(sign.v);
+    return [meta_hash, all_array, id, public_key, address];
+};
+exports.search_key_block = async (block_db, last_height) => {
+    let height = last_height;
+    let block = exports.empty_block();
+    while (1) {
+        block = await block_db.read_obj(height);
+        if (block.meta.kind === 0)
+            break;
+        else if (height === "0")
+            break;
+        else {
+            height = big_integer_1.default(height, 16).subtract(1).toString(16);
+        }
+    }
+    return block;
+};
+exports.search_micro_block = async (block_db, key_block, last_height) => {
+    const raw_block_hash = _.array2hash(exports.block_meta2array(key_block.meta));
+    const recover_id = big_integer_1.default(key_block.signature.v, 16).mod(2).toJSNumber();
+    const key_public = crypto_set.recover(raw_block_hash, key_block.signature.data, recover_id);
+    let height = key_block.meta.height;
+    let block;
+    let raw_hash;
+    let public_key;
+    let micros = [];
+    while (1) {
+        block = await block_db.read_obj(height);
+        raw_hash = _.array2hash(exports.block_meta2array(block.meta));
+        public_key = crypto_set.recover(raw_hash, block.signature.data, big_integer_1.default(block.signature.v, 16).mod(2).toJSNumber());
+        if (block.meta.kind === 1 && public_key === key_public)
+            micros.push(block);
+        if (height === last_height)
+            break;
+        height = big_integer_1.default(height, 16).add(1).toString(16);
+    }
+    return micros;
 };
 exports.GetTreeroot = (pre) => {
     if (pre.length == 0)
-        return [_.toHash("")];
+        return [crypto_set.get_sha256("")];
     else if (pre.length == 1)
         return pre;
     else {
@@ -69,11 +108,11 @@ exports.GetTreeroot = (pre) => {
                 const left = val;
                 const right = ((left, i, array) => {
                     if (array[i + 1] == null)
-                        return _.toHash("");
+                        return crypto_set.get_sha256("");
                     else
                         return array[i + 1];
                 })(left, i, array);
-                return result.concat(_.toHash(left + right));
+                return result.concat(crypto_set.get_sha256(left + right));
             }
             else
                 return result;
@@ -81,19 +120,12 @@ exports.GetTreeroot = (pre) => {
         return exports.GetTreeroot(union);
     }
 };
-const tx_fee_sum = (pure_txs, raws) => {
-    const txs = pure_txs.map((t, i) => {
-        return {
-            hash: t.hash,
-            meta: t.meta,
-            raw: raws[i],
-            additional: t.additional
-        };
-    });
-    return txs.reduce((sum, tx) => math.chain(sum).add(TxSet.tx_fee(tx)).done(), 0);
+const tx_fee_sum = (txs) => {
+    const sum = txs.reduce((sum, tx) => sum.add(big_integer_1.default(tx_set.tx_fee(tx), 16)), big_integer_1.default(0));
+    return sum.toString(16);
 };
 exports.pos_hash = (previoushash, address, timestamp) => {
-    return _.toHashNum(previoushash + address + timestamp.toString());
+    return _.array2hash([previoushash, address, timestamp.toString(16)]);
 };
 /*const PoS_mining = (previoushash:string,address:string,balance:number,difficulty:number)=>{
     let date;
@@ -116,81 +148,97 @@ exports.pos_hash = (previoushash, address, timestamp) => {
     } while(math.chain(timestamp).subtract(pre).smaller(block_time))
     return timestamp;
 }*/
-exports.txs_check = (block, chain, StateData, LocationData) => {
-    const txs = block.txs.map((tx, i) => {
-        return {
-            hash: tx.hash,
-            meta: tx.meta,
-            raw: block.raws[i],
-            additional: tx.additional
-        };
-    });
-    return txs.some((tx) => {
-        if (tx.meta.kind === "request") {
-            return !TxSet.ValidRequestTx(tx, true, StateData, LocationData);
+exports.txs_check = async (block, output_states, block_db, trie, state_db, lock_db, last_height) => {
+    const txs = block.txs;
+    const all_bases = txs.reduce((res, tx) => {
+        const address = tx_set.get_info_from_tx(tx)[4];
+        return res.concat(address).concat(tx.meta.request.bases);
+    }, []);
+    if (all_bases.some((val, i, array) => array.indexOf(val) != i))
+        return true;
+    return await P.some(txs, async (tx) => {
+        if (tx.meta.kind === 0) {
+            return await tx_set.verify_req_tx(tx, trie, state_db, lock_db) === false;
         }
-        else if (tx.meta.kind === "refresh") {
-            return !TxSet.ValidRefreshTx(tx, chain, true, StateData, LocationData);
+        else if (tx.meta.kind === 1) {
+            return await tx_set.verify_ref_tx(tx, output_states, block_db, trie, state_db, lock_db, last_height) === false;
         }
         else
             return true;
     });
 };
-exports.ValidKeyBlock = (block, chain, right_stateroot, right_lockroot, StateData) => {
+const compute_block_size = (block) => {
+    const meta_array = exports.block_meta2array(block.meta);
+    const signs = [block.signature.data, block.signature.v];
+    const txs = block.txs.reduce((res, tx) => {
+        const meta = tx.meta;
+        const sign = tx.signature.map(s => s.data + s.v);
+        const array = tx_set.tx_meta2array(meta).concat(tx.hash).concat(sign);
+        return res.concat(array);
+    }, []);
+    const all_array = meta_array.concat(block.hash).concat(signs).concat(txs);
+    const tx_fee_sum = all_array.reduce((sum, item) => sum.add(Math.ceil(Buffer.from(item, 'hex').length)), big_integer_1.default(0)).toString(16);
+    return tx_fee_sum;
+};
+exports.verify_key_block = async (block, block_db, trie, state_db, last_height) => {
     const hash = block.hash;
-    const sign = block.validatorSign;
+    const sign = block.signature;
     const meta = block.meta;
-    const version = meta.version;
-    const network_id = meta.network_id;
-    const chain_id = meta.chain_id;
-    const validator = meta.validator;
+    const kind = meta.kind;
     const height = meta.height;
     const previoushash = meta.previoushash;
     const timestamp = meta.timestamp;
     const pos_diff = meta.pos_diff;
-    const validatorPub = meta.validatorPub;
-    const stateroot = meta.stateroot;
-    const lockroot = meta.lockroot;
+    const trie_root = meta.trie_root;
     const tx_root = meta.tx_root;
     const fee_sum = meta.fee_sum;
     const txs = block.txs;
-    const raws = block.raws;
-    const last = chain[chain.length - 1] || exports.empty_block();
+    const info = get_info_from_block(block);
+    const meta_hash = info[0];
+    const all_array = info[1];
+    const id = info[2];
+    const validator_pub = info[3];
+    const unit_validator = crypto_set.generate_address(constant_1.constant.unit, validator_pub);
+    const unit_validator_state = await data.read_from_trie(trie, state_db, unit_validator, 0, state_set.CreateState("0", unit_validator, constant_1.constant.unit, "0", ["1", "0"]));
+    const pre_height = unit_validator_state.data[1];
+    const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
+    const reduced_amount = (() => {
+        const computed = big_integer_1.default(unit_validator_state.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
+        if (computed.lesser(1))
+            return big_integer_1.default("0").toString(16);
+        else
+            return computed.toString(16);
+    })();
+    const right_diff = diff_1.get_diff(reduced_amount);
+    const hash_for_pos = exports.pos_hash(previoushash, unit_validator, timestamp);
+    const last = await block_db.read_obj(last_height) || exports.empty_block();
     const right_previoushash = last.hash;
-    const lwma_infos = chain.slice(-1 * (constant_1.constant.lwma_size + 1) * (1 + constant_1.constant.max_blocks)).filter(block => block.meta.kind === 'key').reduce((res, block, i) => {
-        res.times = res.times.concat(block.meta.timestamp);
-        res.cumulative_diffs = res.cumulative_diffs.concat(math.chain(res.cumulative_diffs[i - 1] || 0).add(block.meta.pos_diff).done());
-        return res;
-    }, { times: [], cumulative_diffs: [] });
-    const right_diff = lwma_1.get_diff(lwma_infos.cumulative_diffs, constant_1.constant.block_time * (constant_1.constant.max_blocks + 1), lwma_infos.times);
-    const native_validator = CryptoSet.GenerateAddress(constant_1.constant.native, _.reduce_pub(validatorPub));
-    const unit_validator = CryptoSet.GenerateAddress(constant_1.constant.unit, _.reduce_pub(validatorPub));
-    const unit_validator_state = StateData.filter(s => s.kind === "state" && s.owner === unit_validator && s.token === constant_1.constant.unit)[0] || StateSet.CreateState(0, unit_validator, constant_1.constant.unit, 0);
-    if (_.object_hash_check(hash, meta) || math.chain(2 ** 256).multiply(unit_validator_state.amount).divide(right_diff).smaller(exports.pos_hash(last.hash, unit_validator, timestamp)).done()) {
+    const right_trie_root = trie.now_root();
+    if (hash != _.array2hash(all_array) || !big_integer_1.default(hash_for_pos, 16).lesserOrEquals(big_integer_1.default(2).pow(256).multiply(reduced_amount).divide(right_diff))) {
         //console.log("invalid hash");
         return false;
     }
-    else if (validator != native_validator || unit_validator_state.amount === 0) {
-        //console.log("invalid validator");
-        return false;
-    }
-    else if (sign.length === 0 || sign.some((s, i) => _.sign_check(hash, s, validatorPub[i]))) {
+    else if (_.sign_check(meta_hash, sign.data, validator_pub)) {
         //console.log("invalid validator signature");
         return false;
     }
-    else if (version != constant_1.constant.my_version) {
+    else if (kind != 0) {
+        //console.log("invalid kind");
+        return false;
+    }
+    else if (big_integer_1.default(id.slice(0, 4), 16).lesser(constant_1.constant.my_version)) {
         //console.log("invalid version");
         return false;
     }
-    else if (network_id != constant_1.constant.my_net_id) {
-        //console.log("invalid network id");
-        return false;
-    }
-    else if (chain_id != constant_1.constant.my_chain_id) {
+    else if (id.slice(4, 8) != constant_1.constant.my_chain_id) {
         //console.log("invalid chain id");
         return false;
     }
-    else if (height != chain.length) {
+    else if (id.slice(8, 12) != constant_1.constant.my_net_id) {
+        //console.log("invalid network id");
+        return false;
+    }
+    else if (big_integer_1.default(height, 16).notEquals(big_integer_1.default(last_height, 16).add(1))) {
         //console.log("invalid height");
         return false;
     }
@@ -206,19 +254,15 @@ exports.ValidKeyBlock = (block, chain, right_stateroot, right_lockroot, StateDat
         //console.log("invalid pos_diff");
         return false;
     }
-    else if (stateroot != right_stateroot) {
-        //console.log("invalid stateroot");
+    else if (trie_root != right_trie_root) {
+        //console.log("invalid trie_root");
         return false;
     }
-    else if (lockroot != right_lockroot) {
-        //console.log("invalid location");
-        return false;
-    }
-    else if (tx_root != _.toHash("")) {
+    else if (tx_root != crypto_set.get_sha256("")) {
         //console.log("invalid tx_root");
         return false;
     }
-    else if (fee_sum != 0) {
+    else if (fee_sum != "0") {
         //console.log("invalid fee_sum");
         return false;
     }
@@ -226,11 +270,7 @@ exports.ValidKeyBlock = (block, chain, right_stateroot, right_lockroot, StateDat
         //console.log("invalid txs");
         return false;
     }
-    else if (raws.length > 0) {
-        //console.log("invalid raws");
-        return false;
-    }
-    else if (math.chain(Buffer.from(_.Object2string(meta) + _.Object2string(block.txs) + _.Object2string(block.raws) + _.Object2string(block.validatorSign)).length).larger(constant_1.constant.block_size).done()) {
+    else if (!big_integer_1.default(compute_block_size(block), 16).lesserOrEquals(constant_1.constant.block_size)) {
         //console.log("too big block");
         return false;
     }
@@ -238,57 +278,66 @@ exports.ValidKeyBlock = (block, chain, right_stateroot, right_lockroot, StateDat
         return true;
     }
 };
-exports.ValidMicroBlock = (block, chain, right_stateroot, right_lockroot, StateData, LockData) => {
+exports.verify_micro_block = async (block, output_states, block_db, trie, state_db, lock_db, last_height) => {
     const hash = block.hash;
-    const sign = block.validatorSign;
+    const sign = block.signature;
     const meta = block.meta;
-    const version = meta.version;
-    const network_id = meta.network_id;
-    const chain_id = meta.chain_id;
-    const validator = meta.validator;
+    const kind = meta.kind;
     const height = meta.height;
     const previoushash = meta.previoushash;
     const timestamp = meta.timestamp;
     const pos_diff = meta.pos_diff;
-    const stateroot = meta.stateroot;
-    const lockroot = meta.lockroot;
+    const trie_root = meta.trie_root;
     const tx_root = meta.tx_root;
     const fee_sum = meta.fee_sum;
     const txs = block.txs;
-    const raws = block.raws;
-    const last = chain[chain.length - 1] || exports.empty_block();
-    const right_previoushash = last.hash;
-    const key_block = exports.search_key_block(chain);
-    const validatorPub = key_block.meta.validatorPub;
+    const info = get_info_from_block(block);
+    const meta_hash = info[0];
+    const all_array = info[1];
+    const id = info[2];
+    const validator_pub = info[3];
     const tx_roots = txs.map(t => t.hash);
     const date = new Date();
     const now = Math.floor(date.getTime() / 1000);
-    const already_micro = exports.search_micro_block(chain, key_block);
-    if (_.object_hash_check(hash, meta)) {
+    const key_block = await exports.search_key_block(block_db, last_height);
+    const key_block_public = get_info_from_block(key_block)[3];
+    const already_micro = await exports.search_micro_block(block_db, key_block, last_height);
+    const last = await block_db.read_obj(last_height) || exports.empty_block();
+    const right_previoushash = last.hash;
+    const right_trie_root = trie.now_root();
+    const tx_tokens = txs.map(tx => {
+        const sliced = tx.meta.request.bases.map(key => _.slice_token_part(key));
+        return sliced.filter((val, i, array) => array.indexOf(val) === i);
+    });
+    if (hash != _.array2hash(all_array)) {
         //console.log("invalid hash");
         return false;
     }
-    else if (sign.length === 0 || sign.some((s, i) => _.sign_check(hash, s, validatorPub[i]))) {
-        //console.log("invalid validator signature");
-        return false;
-    }
-    else if (version != constant_1.constant.my_version) {
-        //console.log("invalid version");
-        return false;
-    }
-    else if (network_id != constant_1.constant.my_net_id) {
-        //console.log("invalid network_id");
-        return false;
-    }
-    else if (chain_id != constant_1.constant.my_chain_id) {
-        //console.log("invalid chain id");
-        return false;
-    }
-    else if (validator != key_block.meta.validator) {
+    else if (validator_pub != key_block_public) {
         //console.log("invalid validator");
         return false;
     }
-    else if (height != chain.length) {
+    else if (_.sign_check(meta_hash, sign.data, validator_pub)) {
+        //console.log("invalid validator signature");
+        return false;
+    }
+    else if (kind != 0) {
+        //console.log("invalid kind");
+        return false;
+    }
+    else if (big_integer_1.default(id.slice(0, 4), 16).lesser(constant_1.constant.my_version)) {
+        //console.log("invalid version");
+        return false;
+    }
+    else if (id.slice(4, 8) != constant_1.constant.my_chain_id) {
+        //console.log("invalid chain id");
+        return false;
+    }
+    else if (id.slice(8, 12) != constant_1.constant.my_net_id) {
+        //console.log("invalid network id");
+        return false;
+    }
+    else if (big_integer_1.default(height, 16).notEquals(big_integer_1.default(last_height, 16).add(1))) {
         //console.log("invalid height");
         return false;
     }
@@ -296,7 +345,7 @@ exports.ValidMicroBlock = (block, chain, right_stateroot, right_lockroot, StateD
         //console.log("invalid parenthash");
         return false;
     }
-    else if (last.hash === exports.empty_block().hash || timestamp.toString().length != 10 || _.time_check(timestamp) || math.chain(now).subtract(last.meta.timestamp).smaller(constant_1.constant.block_time).done()) {
+    else if (timestamp.toString().length != 10 || _.time_check(timestamp) || now - last.meta.timestamp < constant_1.constant.block_time) {
         //console.log("invalid timestamp");
         return false;
     }
@@ -304,31 +353,19 @@ exports.ValidMicroBlock = (block, chain, right_stateroot, right_lockroot, StateD
         //console.log("invalid pos_diff");
         return false;
     }
-    else if (_.ObjectHash(block.meta.validatorPub) != _.ObjectHash([])) {
-        //console.log("invalid validator public key");
-        return false;
-    }
-    else if (stateroot != right_stateroot) {
-        //console.log("invalid stateroot");
-        return false;
-    }
-    else if (lockroot != right_lockroot) {
-        //console.log("invalid location");
+    else if (trie_root != right_trie_root) {
+        //console.log("invalid trie_root");
         return false;
     }
     else if (tx_root != exports.GetTreeroot(tx_roots)[0]) {
         //console.log("invalid tx_root");
         return false;
     }
-    else if (fee_sum != tx_fee_sum(txs, raws)) {
+    else if (fee_sum != tx_fee_sum(txs)) {
         //console.log("invalid fee_sum");
         return false;
     }
-    else if (txs.length != raws.length) {
-        //console.log("invalid raws");
-        return false;
-    }
-    else if (math.chain(Buffer.from(_.Object2string(meta) + _.Object2string(block.txs) + _.Object2string(block.raws) + _.Object2string(block.validatorSign)).length).larger(constant_1.constant.block_size).done()) {
+    else if (!big_integer_1.default(compute_block_size(block), 16).lesserOrEquals(constant_1.constant.block_size)) {
         //console.log("too big block");
         return false;
     }
@@ -336,11 +373,11 @@ exports.ValidMicroBlock = (block, chain, right_stateroot, right_lockroot, StateD
         //console.log("too many micro blocks");
         return false;
     }
-    else if (exports.txs_check(block, chain, StateData, LockData)) {
+    else if (exports.txs_check(block, output_states, block_db, trie, state_db, lock_db, last_height)) {
         //console.log("invalid txs");
         return false;
     }
-    else if ((height % 10 === 0 && txs.some(tx => tx.meta.kind === 'request' && _.ObjectHash(tx.meta.tokens) != _.ObjectHash([constant_1.constant.unit, constant_1.constant.native]))) || (height % 10 != 0 && txs.some(tx => tx.meta.kind === 'request' && _.ObjectHash(tx.meta.tokens) === _.ObjectHash([constant_1.constant.unit, constant_1.constant.native])))) {
+    else if ((big_integer_1.default(height, 16).mod(3).eq(0) && txs.some((tx, i) => tx.meta.kind === 0 && _.array2hash(tx_tokens[i]) != _.array2hash([constant_1.constant.unit, constant_1.constant.native]) || (big_integer_1.default(height, 16).mod(3).notEquals(0) && txs.some((tx, i) => tx.meta.kind === 0 && _.array2hash(tx_tokens[i]) === _.array2hash([constant_1.constant.unit, constant_1.constant.native])))))) {
         //console.log("invalid kind of txs")
         return false;
     }
@@ -348,169 +385,144 @@ exports.ValidMicroBlock = (block, chain, right_stateroot, right_lockroot, StateD
         return true;
     }
 };
-exports.CreateKeyBlock = (chain, validatorPub, stateroot, lockroot, extra) => {
+exports.create_key_block = async (private_key, block_db, last_height, trie, state_db, extra) => {
     const empty = exports.empty_block();
-    const last = chain[chain.length - 1] || empty;
+    const last = await block_db.read_obj(last_height) || empty;
     const previoushash = last.hash;
-    const native_validator = CryptoSet.GenerateAddress(constant_1.constant.native, _.reduce_pub(validatorPub));
-    const lwma_infos = chain.slice(-1 * (constant_1.constant.lwma_size + 1) * (1 + constant_1.constant.max_blocks)).filter(block => block.meta.kind === 'key').reduce((res, block, i) => {
-        res.times = res.times.concat(block.meta.timestamp);
-        res.cumulative_diffs = res.cumulative_diffs.concat(math.chain(res.cumulative_diffs[i - 1] || 0).add(block.meta.pos_diff).done());
-        return res;
-    }, { times: [], cumulative_diffs: [] });
-    const pos_diff = lwma_1.get_diff(lwma_infos.cumulative_diffs, constant_1.constant.block_time * (constant_1.constant.max_blocks + 1), lwma_infos.times);
+    const public_key = crypto_set.private2public(private_key);
+    const unit_validator = crypto_set.generate_address(constant_1.constant.unit, public_key);
+    const unit_validator_state = await data.read_from_trie(trie, state_db, unit_validator, 0, state_set.CreateState("0", unit_validator, constant_1.constant.unit, "0", ["1", "0"]));
+    const pre_height = unit_validator_state.data[1];
+    const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
+    const reduced_amount = (() => {
+        const computed = big_integer_1.default(unit_validator_state.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
+        if (computed.lesser(1))
+            return big_integer_1.default("0").toString(16);
+        else
+            return computed.toString(16);
+    })();
+    const pos_diff = diff_1.get_diff(reduced_amount);
+    const trie_root = trie.now_root();
     const date = new Date();
     const timestamp = Math.floor(date.getTime() / 1000);
     const meta = {
-        kind: 'key',
-        version: constant_1.constant.my_version,
-        network_id: constant_1.constant.my_net_id,
-        chain_id: constant_1.constant.my_chain_id,
-        validator: native_validator,
-        height: chain.length,
+        kind: 0,
+        height: last_height,
         previoushash: previoushash,
         timestamp: timestamp,
         pos_diff: pos_diff,
-        validatorPub: validatorPub,
-        stateroot: stateroot,
-        lockroot: lockroot,
-        tx_root: _.toHash(''),
-        fee_sum: 0,
+        trie_root: trie_root,
+        tx_root: crypto_set.get_sha256(''),
+        fee_sum: "0",
         extra: extra
     };
-    const hash = _.ObjectHash(meta);
+    const id = constant_1.constant.my_version + constant_1.constant.my_chain_id + constant_1.constant.my_net_id;
+    const meta_array = exports.block_meta2array(meta).concat(id);
+    const meta_hash = _.array2hash(meta_array);
+    const signed = crypto_set.sign(meta_hash, private_key);
+    const sign = {
+        data: signed[1],
+        v: signed[0]
+    };
+    const all_array = meta_array.concat(sign.v);
+    const hash = _.array2hash(all_array);
     return {
         hash: hash,
-        validatorSign: [],
+        signature: sign,
         meta: meta,
         txs: [],
-        raws: []
     };
 };
-exports.CreateMicroBlock = (chain, stateroot, lockroot, txs, extra) => {
+exports.create_micro_block = async (private_key, block_db, last_height, trie, txs, extra) => {
     const empty = exports.empty_block();
-    const last = chain[chain.length - 1] || empty;
-    const key = exports.search_key_block(chain);
+    const last = await block_db.read_obj(last_height) || empty;
+    const previoushash = last.hash;
+    const key = await exports.search_key_block(block_db, last_height);
     const date = new Date();
     const timestamp = Math.floor(date.getTime() / 1000);
-    const pures = txs.map(tx => TxSet.tx_to_pure(tx));
-    const raws = txs.map(tx => tx.raw);
+    const trie_root = trie.now_root();
     const tx_root = exports.GetTreeroot(txs.map(t => t.hash))[0];
-    const fee_sum = tx_fee_sum(pures, raws);
+    const fee_sum = tx_fee_sum(txs);
     const meta = {
-        kind: 'micro',
-        version: constant_1.constant.my_version,
-        network_id: constant_1.constant.my_net_id,
-        chain_id: constant_1.constant.my_chain_id,
-        validator: key.meta.validator,
-        height: chain.length,
-        previoushash: last.hash,
+        kind: 1,
+        height: last_height,
+        previoushash: previoushash,
         timestamp: timestamp,
         pos_diff: key.meta.pos_diff,
-        validatorPub: [],
-        stateroot: stateroot,
-        lockroot: lockroot,
+        trie_root: trie_root,
         tx_root: tx_root,
         fee_sum: fee_sum,
         extra: extra
     };
-    const hash = _.ObjectHash(meta);
+    const id = constant_1.constant.my_version + constant_1.constant.my_chain_id + constant_1.constant.my_net_id;
+    const meta_array = exports.block_meta2array(meta).concat(id);
+    const meta_hash = _.array2hash(meta_array);
+    const signed = crypto_set.sign(meta_hash, private_key);
+    const sign = {
+        data: signed[1],
+        v: signed[0]
+    };
+    const all_array = meta_array.concat(sign.v);
+    const hash = _.array2hash(all_array);
     return {
         hash: hash,
-        validatorSign: [],
+        signature: sign,
         meta: meta,
-        txs: pures,
-        raws: raws
+        txs: txs,
     };
-};
-exports.SignBlock = (block, pub_keys, my_private, my_pub) => {
-    const index = pub_keys.indexOf(my_pub);
-    if (index === -1)
-        return block;
-    const sign = CryptoSet.SignData(block.hash, my_private);
-    const signed = _.new_obj(block, b => {
-        b.validatorSign[index] = sign;
-        return b;
-    });
-    return signed;
 };
 const compute_issue = (height) => {
     const all_issue = constant_1.constant.all_issue;
     const cycle = constant_1.constant.cycle;
-    const n = math.chain(height).divide(cycle).fix().done();
-    const new_amount = math.chain(all_issue).multiply(math.pow(0.5, n + 1)).done();
-    const pre_amount = math.chain(all_issue).multiply(math.pow(0.5, n)).done();
-    const issue = math.chain(pre_amount).subtract(new_amount).divide(cycle).done();
-    if (math.chain(issue).smallerEq(math.pow(10, -18)).done())
-        return 0;
+    const n = big_integer_1.default(height, 16).divide(cycle);
+    const new_amount = big_integer_1.default(all_issue, 16).divide(big_integer_1.default(2).pow(n.add(1)));
+    const pre_amount = big_integer_1.default(all_issue, 16).divide(big_integer_1.default(2).pow(n));
+    const issue = pre_amount.subtract(new_amount).divide(cycle);
+    if (issue.lesser(1))
+        return "0";
     else
-        return issue;
+        return issue.toString(16);
 };
-exports.AcceptKeyBlock = (block, chain, StateData, LockData) => {
-    const last_key = exports.search_key_block(chain);
-    const last_micros = exports.search_micro_block(chain, last_key);
-    const fees = last_micros.reduce((sum, b) => bigInt(sum).add(b.meta.fee_sum).done(), BigInt(0));
-    const issues = last_micros.concat(last_key).reduce((sum, b) => math.chain(sum).add(compute_issue(b.meta.height)).done(), 0);
-    const fee_sum = math.chain(fees).add(issues).done();
-    const pre_fee = math.multiply(fee_sum, 0.4);
-    const next_fee = math.multiply(fee_sum, 0.6);
-    const paid = StateData.map(s => {
-        const fee = Number(s.data.fee || "0x0");
-        if (fee === 0)
-            return s;
-        return _.new_obj(s, s => {
-            s.amount = math.chain(s.amount).subtract(fee).done();
-            s.data.fee = "0x0";
-            return s;
-        });
+exports.accept_key_block = async (block, block_db, last_height, trie, state_db, lock_db) => {
+    const last_key = await exports.search_key_block(block_db, last_height);
+    const last_micros = await exports.search_micro_block(block_db, last_key, last_height);
+    const pre_pulled = get_info_from_block(last_key);
+    const new_pulled = get_info_from_block(block);
+    const pre_native = pre_pulled[4];
+    const new_native = new_pulled[4];
+    const pre_unit = crypto_set.generate_address(constant_1.constant.unit, pre_pulled[3]);
+    const new_unit = crypto_set.generate_address(constant_1.constant.unit, new_pulled[3]);
+    const tx_bases = last_micros.reduce((res, block) => {
+        return res.concat(block.txs.map(tx => {
+            return tx_set.get_info_from_tx(tx)[4];
+        }));
+    }, []);
+    const bases = tx_bases.concat(pre_native).concat(new_native).concat(pre_unit).concat(new_unit).filter((val, i, array) => array.indexOf(val) === i);
+    const base_states = await P.map(bases, async (key) => {
+        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", _.slice_token_part(key), key));
     });
-    const validators = [last_key.meta.validator, block.meta.validator];
-    const gained = paid.map(s => {
-        const i = validators.indexOf(s.owner);
-        if (i === -1)
-            return s;
-        const gain = (() => {
-            if (i === 0)
-                return pre_fee;
-            else if (i === 1)
-                return next_fee;
-            else
-                return 0;
-        })();
-        return _.new_obj(s, s => {
-            s.amount = math.chain(s.amount).add(gain).done();
-            s.data.income = math.chain(Number(s.data.income || "0x0")).add(gain).done().toFixed(18);
-            return s;
-        });
+    const fees = last_micros.reduce((sum, b) => big_integer_1.default(sum).add(b.meta.fee_sum), big_integer_1.default(0));
+    const issues = last_micros.concat(last_key).reduce((sum, b) => sum.add(big_integer_1.default(compute_issue(b.meta.height), 16)), big_integer_1.default(0));
+    const fee_sum = fees.add(issues).toString(16);
+    const changed = contract.key_block_change(base_states, pre_native, new_native, fee_sum, last_height);
+    const lock_states = await P.map(bases, async (key) => {
+        return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));
     });
-    const reduced = gained.map(s => {
-        if (s.kind != "state" || s.token != constant_1.constant.unit)
-            return s;
-        return _.new_obj(s, s => {
-            s.amount = math.chain(s.amount).multiply(constant_1.constant.unit_rate).done();
-            return s;
-        });
+    await P.forEach(bases, async (key, i) => {
+        await data.write_trie(trie, state_db, lock_db, changed[i], lock_states[i]);
     });
-    return [reduced, LockData];
 };
-exports.AcceptMicroBlock = (block, chain, StateData, LockData) => {
-    const first_data = [StateData, LockData];
-    const txs = block.txs.map(pure => TxSet.pure_to_tx(pure, block));
-    const txed = txs.reduce((data, tx, i) => {
-        if (tx.meta.kind === "request")
-            return TxSet.AcceptRequestTx(tx, block.meta.height, block.hash, i, data[0], data[1]);
-        else if (tx.meta.kind === "refresh")
-            return TxSet.AcceptRefreshTx(tx, chain, data[0], data[1]);
-        else
-            return data;
-    }, first_data);
-    const reduced = txed[0].map(s => {
-        if (s.kind != "state" || s.token != constant_1.constant.unit)
-            return s;
-        return _.new_obj(s, s => {
-            s.amount = math.chain(s.amount).multiply(constant_1.constant.unit_rate).done();
-            return s;
-        });
+exports.accept_micro_block = async (block, block_db, last_height, trie, state_db, lock_db) => {
+    await P.forEach(block.txs, async (tx, i) => {
+        if (tx.meta.kind === 0)
+            await tx_set.accept_req_tx(tx, last_height, block.hash, i, trie, state_db, lock_db);
+        else if (tx.meta.kind === 1)
+            await tx_set.accept_ref_tx(tx, last_height, block.hash, i, trie, state_db, lock_db, block_db);
     });
-    return [reduced, txed[1]];
+    const public_key = get_info_from_block(block)[3];
+    const unit_validator = crypto_set.generate_address(constant_1.constant.unit, public_key);
+    const unit_state = await data.read_from_trie(trie, state_db, unit_validator, 0, state_set.CreateState("0", constant_1.constant.unit, unit_validator, "0", ["1", "0"]));
+    const changed = contract.micro_block_change([unit_state], last_height);
+    const lock_state = await data.read_from_trie(trie, lock_db, unit_validator, 1, lock_set.CreateLock(unit_validator));
+    await data.write_trie(trie, state_db, lock_db, changed[0], lock_state);
 };

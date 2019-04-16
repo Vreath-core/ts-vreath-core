@@ -1,5 +1,4 @@
 import * as crypto_set from './crypto_set'
-//import {en_key} from './merkle_patricia'
 import {cloneDeep} from 'lodash'
 import bigInt, { BigInteger } from 'big-integer'
 
@@ -11,25 +10,6 @@ export const copy = <T>(data:T)=>{
 export const new_obj = <T>(obj:T,fn:(obj:T)=>T)=>{
   return fn(copy(obj));
 }
-/*
-export const object2string = <T>(obj:{[key:string]:T}|T[]|T):string=>{
-  if(obj instanceof Array){
-    return obj.reduce((res:string,val)=>res+object2string(val),'');
-  }
-  else if(obj instanceof Object){
-    return Object.entries(obj).slice().sort((a,b)=>Number(en_key(a[0])||"0")-Number(en_key(b[0]||"0"))).reduce((res:string,item)=>{
-      const val:T = item[1];
-      return res+object2string(val);
-    },'');
-  }
-  else if(['number','string','booleam'].indexOf(typeof obj)!=-1) return String(obj);
-  else return '';
-}
-
-export const object2hash = <T>(obj:{[key:string]:T}|T[])=>{
-  const str = object2string(obj);
-  return crypto_set.get_sha256(str);
-}*/
 
 export const hex2num = (str:string):number=>{
   return parseInt(str,16);

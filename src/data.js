@@ -39,7 +39,7 @@ exports.write_lock_hash = async (db, lock) => {
     await db.write_obj(hash, lock);
     return hash;
 };
-exports.write2trie = async (trie, state_db, lock_db, state, lock) => {
+exports.write_trie = async (trie, state_db, lock_db, state, lock) => {
     const state_hash = await exports.write_state_hash(state_db, state);
     const lock_hash = await exports.write_lock_hash(lock_db, lock);
     await trie.put(state.owner, [state_hash, lock_hash]);

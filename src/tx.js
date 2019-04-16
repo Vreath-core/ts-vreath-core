@@ -73,10 +73,10 @@ exports.refreshed_check = async (base, trie, lock_db) => {
 exports.state_check = (state) => {
     return _.address_form_check(state.owner) || _.slice_token_part(state.owner) != state.token;
 };
-const tx_meta2array = (meta) => {
+exports.tx_meta2array = (meta) => {
     const req = meta.request;
     const ref = meta.refresh;
-    return [meta.kind, req.type, req.gas, req.log, ref.height, ref.index, ref.success, ref.nonce, ref.gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness).map(item => {
+    return [meta.kind, req.type, req.feeprice, req.gas, req.log, ref.height, ref.index, ref.success, ref.nonce, ref.gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness).map(item => {
         if (typeof item != 'string' || Buffer.from(item, 'hex').length * 2 != item.length)
             return item.toString(16);
         else
@@ -86,7 +86,8 @@ const tx_meta2array = (meta) => {
 exports.tx_fee = (tx) => {
     const price = tx.meta.request.feeprice;
     const meta = tx.meta;
-    const array = tx_meta2array(meta);
+    const sign = tx.signature.map(s => s.data + s.v);
+    const array = exports.tx_meta2array(meta).splice(2, 1).concat(tx.hash).concat(sign);
     const size_sum = array.reduce((sum, item) => {
         return sum.add(Math.ceil(Buffer.from(item, 'hex').length));
     }, big_integer_1.default(0));
@@ -130,25 +131,25 @@ exports.find_req_tx = async (ref_tx, block_db) => {
     const req_tx = block.txs[index] || exports.empty_tx();
     return req_tx;
 };
-const get_info_from_tx = (tx) => {
+exports.get_info_from_tx = (tx) => {
     const sign = tx.signature;
     const meta = tx.meta;
     const sign_data = sign.map(s => s.data);
-    const meta_array = tx_meta2array(meta);
+    const meta_array = exports.tx_meta2array(meta);
     const recover_ids = sign.map(s => {
-        return s.v % 2;
+        return big_integer_1.default(s.v, 16).mod(2).toJSNumber();
     });
-    const chain_ids = sign.map((s, i) => {
-        return (s.v - 8 - (28 - recover_ids[i])) / 2;
+    const ids = sign.map((s, i) => {
+        return big_integer_1.default(big_integer_1.default(s.v, 16).minus(9).minus(28 - recover_ids[i])).divide(2).toString(16);
     });
-    const data_array = meta_array.concat(chain_ids[0].toString(16));
+    const data_array = meta_array.concat(ids[0]);
     const meta_hash = _.array2hash(data_array);
     const pub_keys = sign_data.map((s, i) => {
         return crypto_set.recover(meta_hash, s, recover_ids[i]);
     });
     const address = crypto_set.generate_address(constant_1.constant.native, _.reduce_pub(pub_keys));
-    const all_array = meta_array.concat(sign.map(s => s.v.toString(16)));
-    return [meta_hash, all_array, chain_ids, pub_keys, address];
+    const all_array = meta_array.concat(sign.map(s => s.v));
+    return [meta_hash, all_array, ids, pub_keys, address];
 };
 exports.contract_check = async (token, bases, base_state, input_data, output_state, block_db, last_height) => {
     if (token === constant_1.constant.native) {
@@ -160,19 +161,30 @@ exports.contract_check = async (token, bases, base_state, input_data, output_sta
     else
         return true;
 };
-const verify_tx_basic = (hash, sign, meta_hash, infos, chain_ids, pub_keys, address) => {
+const verify_tx_basic = (hash, sign, meta_hash, infos, ids, pub_keys, address) => {
+    const version = ids[0].slice(0, 4);
+    const chain_id = ids[0].slice(4, 8);
+    const net_id = ids[0].slice(8, 12);
     if (hash != _.array2hash(infos)) {
         //console.log("invalid hash");
         return false;
     }
-    else if (chain_ids[0] != constant_1.constant.my_chain_id || chain_ids.some(id => chain_ids.indexOf(id) != 0)) {
+    else if (ids.some(id => ids.indexOf(id) != 0)) {
+        //console.log("invalid ids");
+        return false;
+    }
+    else if (big_integer_1.default(version, 16).lesser(constant_1.constant.compatible_version)) {
         //console.log("different version");
         return false;
     }
-    /*else if(network_id!=constant.my_net_id){
-      //console.log("different network id");
-      return false;
-    }*/
+    else if (big_integer_1.default(chain_id, 16).notEquals(constant_1.constant.my_chain_id)) {
+        //console.log("different chain id");
+        return false;
+    }
+    else if (big_integer_1.default(net_id, 16).notEquals(constant_1.constant.my_net_id)) {
+        //console.log("different network id");
+        return false;
+    }
     else if (_.address_check(address, _.reduce_pub(pub_keys), constant_1.constant.native)) {
         //console.log("invalid address");
         return false;
@@ -192,10 +204,10 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
     const ref = meta.refresh;
     const gas = req.gas;
     const other_bases = req.bases;
-    const pulled = get_info_from_tx(tx);
+    const pulled = exports.get_info_from_tx(tx);
     const meta_hash = pulled[0];
     const infos = pulled[1];
-    const chain_ids = pulled[2];
+    const ids = pulled[2];
     const pub_keys = pulled[3];
     const requester = pulled[4];
     const tokens = _.slice_tokens(other_bases);
@@ -206,7 +218,7 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", _.slice_token_part(key), key, "0", []));
     });
     const empty_ref = exports.empty_tx().meta.refresh;
-    if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, infos, chain_ids, pub_keys, requester)) {
+    if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, infos, ids, pub_keys, requester)) {
         return false;
     }
     else if ((disabling != null && disabling.indexOf(1) != -1) || kind != 0) {
@@ -254,15 +266,15 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
     const req_tx = block.txs[index];
     const gas = big_integer_1.default(req_tx.meta.request.gas, 16).multiply(gas_share).divide(100);
     const fee = big_integer_1.default(req_tx.meta.request.gas, 16).subtract(gas);
-    const pulled = get_info_from_tx(tx);
+    const pulled = exports.get_info_from_tx(tx);
     const meta_hash = pulled[0];
     const infos = pulled[1];
-    const chain_ids = pulled[2];
+    const ids = pulled[2];
     const pub_keys = pulled[3];
     const refresher = pulled[4];
     const refresher_state = await data.read_from_trie(trie, state_db, refresher, 0, state_set.CreateState("0", constant_1.constant.native, refresher));
     const unit_add = crypto_set.generate_address(constant_1.constant.unit, _.reduce_pub(pub_keys));
-    const pull_from_req = get_info_from_tx(req_tx);
+    const pull_from_req = exports.get_info_from_tx(req_tx);
     const requester = pull_from_req[4];
     const main_token = _.slice_token_part(req_tx.meta.request.bases[0]);
     const bases = [main_token + _.slice_hash_part(requester)].concat(req_tx.meta.request.bases);
@@ -271,7 +283,7 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
     });
     const base_states_hashes = base_states.map(s => _.array2hash([s.nonce, s.token, s.owner, s.amount].concat(s.data)));
     const empty_req = exports.empty_tx().meta.request;
-    if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, infos, chain_ids, pub_keys, refresher)) {
+    if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, infos, ids, pub_keys, refresher)) {
         return false;
     }
     else if ((disabling != null && disabling.indexOf(1) != -1) || kind != 1) {
@@ -324,7 +336,7 @@ exports.create_req_tx = (type, bases, feeprice, gas, input, log) => {
         },
         refresh: empty.meta.refresh
     };
-    const hash = _.array2hash(tx_meta2array(meta));
+    const hash = _.array2hash(exports.tx_meta2array(meta));
     const tx = {
         hash: hash,
         signature: [],
@@ -349,7 +361,7 @@ exports.create_ref_tx = (height, index, success, output, witness, nonce, gas_sha
             unit_price: unit_price
         }
     };
-    const hash = _.array2hash(tx_meta2array(meta));
+    const hash = _.array2hash(exports.tx_meta2array(meta));
     const tx = {
         hash: hash,
         signature: [],
@@ -360,11 +372,12 @@ exports.create_ref_tx = (height, index, success, output, witness, nonce, gas_sha
 };
 exports.sign_tx = (tx, private_key) => {
     const sign = crypto_set.sign(tx.hash, private_key);
-    const recover_id = sign[0];
+    const recover_id = Number(sign[0]);
     const data = sign[1];
+    const id = big_integer_1.default(("0000" + constant_1.constant.my_version).slice(-4) + ("0000" + constant_1.constant.my_chain_id).slice(-4) + ("0000" + constant_1.constant.my_net_id).slice(-4), 16).toJSNumber();
     const signature = {
         data: data,
-        v: constant_1.constant.my_chain_id * 2 + 8 + 28 - recover_id
+        v: (id * 2 + 8 + 28 - recover_id).toString(16)
     };
     return _.new_obj(tx, tx => {
         tx.signature.push(signature);
@@ -372,7 +385,7 @@ exports.sign_tx = (tx, private_key) => {
     });
 };
 exports.accept_req_tx = async (tx, height, block_hash, index, trie, state_db, lock_db) => {
-    const pulled = get_info_from_tx(tx);
+    const pulled = exports.get_info_from_tx(tx);
     const requester = pulled[4];
     const fee = exports.tx_fee(tx);
     const gas = tx.meta.request.gas;
@@ -398,34 +411,34 @@ exports.accept_req_tx = async (tx, height, block_hash, index, trie, state_db, lo
         });
     });
     await P.forEach(bases, async (key, i) => {
-        await data.write2trie(trie, state_db, lock_db, base_states[i], added[i]);
+        await data.write_trie(trie, state_db, lock_db, base_states[i], added[i]);
     });
 };
-exports.accept_ref_tx = async (ref_tx, trie, state_db, lock_db, block_db, last_height, block_hash, tx_index) => {
+exports.accept_ref_tx = async (ref_tx, height, block_hash, index, trie, state_db, lock_db, block_db) => {
     const req_tx = await exports.find_req_tx(ref_tx, block_db);
-    const requester = get_info_from_tx(req_tx)[4];
-    const refresher = get_info_from_tx(ref_tx)[4];
+    const requester = exports.get_info_from_tx(req_tx)[4];
+    const refresher = exports.get_info_from_tx(ref_tx)[4];
     const gas = big_integer_1.default(req_tx.meta.request.gas, 16).multiply(ref_tx.meta.refresh.gas_share).divide(100).toString(16);
     const fee = big_integer_1.default(req_tx.meta.request.gas, 16).subtract(big_integer_1.default(gas, 16)).toString(16);
     const bases = [requester, refresher].concat(req_tx.meta.request.bases);
     const base_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", _.slice_token_part(key), key, "0", []));
     });
-    const changed = await contracts.ref_tx_change(bases, base_states, requester, refresher, fee, gas, last_height);
+    const changed = await contracts.ref_tx_change(bases, base_states, requester, refresher, fee, gas, height);
     const lock_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));
     });
     const added = lock_states.map(l => {
         return _.new_obj(l, l => {
             l.state = 0;
-            l.height = last_height;
+            l.height = height;
             l.block_hash = block_hash;
-            l.index = tx_index;
+            l.index = index;
             l.tx_hash = ref_tx.hash;
             return l;
         });
     });
     await P.forEach(bases, async (key, i) => {
-        await data.write2trie(trie, state_db, lock_db, changed[i], added[i]);
+        await data.write_trie(trie, state_db, lock_db, changed[i], added[i]);
     });
 };

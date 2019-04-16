@@ -60,12 +60,12 @@ export type TxAdd = {
 
 export type Sign = {
   data:string//64 byte
-  v:number;//1 byte
+  v:string;//6 byte
 }
 
 export type Tx = {
   hash:string;//32 byte
-  signature:Sign[];//65 byte
+  signature:Sign[];//70 byte * n
   meta:TxMeta;
   additional:TxAdd;
 }
@@ -78,8 +78,7 @@ export type BlockMeta = {
   previoushash:string;//32 byte
   timestamp: number;//5 byte
   pos_diff:string;//8 byte
-  stateroot: string;//32 byte
-  lockroot: string;//32 byte
+  trie_root: string;//32 byte
   tx_root: string;//32 byte
   fee_sum:string;//10 byte
   extra:string;//free
@@ -87,13 +86,13 @@ export type BlockMeta = {
 
 export type BlockPure = {
   hash:string;//32 byte
-  validatorSign: Sign;//65 byte
+  signature: Sign;//70 byte
   meta:BlockMeta;
 }
 
 export type Block = {
   hash:string;//32 byte
-  validatorSign: string;//65 byte
+  signature: Sign;//70 byte
   meta:BlockMeta;
   txs:Tx[];
 }

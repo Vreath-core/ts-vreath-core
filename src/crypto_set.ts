@@ -1,4 +1,4 @@
-import * as wasm from 'wasm-vreath'
+const ffi = require('ffi-vreath');
 import * as crypto from 'crypto'
 const cryptonight = require('node-cryptonight-lite').hash;
 
@@ -11,28 +11,19 @@ export const u8_array2hex = (u8_array:Uint8Array):string=>{
 }
 
 export const get_sha256 = (hex:string):string=>{
-  let input = hex2u8_array(hex);
-  return wasm.wasm_get_sha256(input);
+  return ffi.get_sha256(hex);
 }
 
-export const generate_key = ():string=>{
-  let randoms:number[] = [];
-  let i:number;
-  for(i=0;i<32;i++){
-    randoms[i] = Math.floor(Math.random()*256);
-  }
-  return wasm.wasm_generate_key(Uint8Array.from(randoms));
+export const generate_key = ()=>{
+  return ffi.generate_key();
 }
 
-export const private2public = (private_key:string):string=>{
-  const private_array = hex2u8_array(private_key);
-  return wasm.wasm_private2public(private_array);
+export const private2public = (private_key:string)=>{
+  return ffi.private2public(private_key);
 }
 
 export const get_shared_secret = (private_key:string,public_key:string)=>{
-  const private_array = hex2u8_array(private_key);
-  const public_array = hex2u8_array(public_key);
-  return wasm.wasm_get_shared_secret(private_array,public_array);
+  return ffi.get_shared_secret(private_key,public_key);
 }
 
 export const encrypt = (data:string,secret:string):string=>{
@@ -50,35 +41,24 @@ export const decrypt = (data:string,secret:string)=>{
 }
 
 
-export const sign = (data:string,private_key:string):[number,string]=>{
-  const data_array = hex2u8_array(data);
-  const private_array = hex2u8_array(private_key);
-  const signed = wasm.wasm_recoverable_sign(private_array,data_array);
-  const splited = signed.split('_');
-  const recover_id = Number(splited[0]);
-  const sign = splited[1];
-  return[recover_id,sign];
+export const sign = (data:string,private_key:string):[string,string]=>{
+  const signed = ffi.recoverable_sign(private_key,data);
+  return [signed[0].toString(16),signed[1]];
 }
 
 export const recover = (data:string,sign:string,recover_id:number):string=>{
-  const data_array = hex2u8_array(data);
-  const sign_array = hex2u8_array(sign);
-  return wasm.wasm_recover_public_key(data_array,sign_array,recover_id);
+  return ffi.recover_public_key(data,sign,recover_id);
 }
 
 
 export const verify = (data:string,sign:string,public_key:string):boolean=>{
-  const data_array = hex2u8_array(data);
-  const sign_array = hex2u8_array(sign);
-  const public_array = hex2u8_array(public_key);
-  const verify = wasm.wasm_verify_sign(data_array,sign_array,public_array);
-  return verify
+  return ffi.verify_sign(data,sign,public_key);
 }
 
 export const generate_address = (token:string,public_key:string)=>{
-    const token_part = ("0000000000"+token).slice(-12);
+    const token_part = ("0000000000000000"+token).slice(-16);
     const hash = get_sha256(get_sha256(public_key));
-    const key_part = ("00000000000000000000"+hash).slice(-20);
+    const key_part = ("0000000000000000000000000000000000000000000000000000000000000000"+hash).slice(-64);
     return token_part+key_part;
 }
 
@@ -86,4 +66,3 @@ export const compute_cryptonight = (data:string):string=>{
   const hash = cryptonight(Buffer.from(data,'hex'));
   return hash.toString('hex');
 }
-
