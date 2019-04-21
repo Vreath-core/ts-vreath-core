@@ -20,12 +20,9 @@
   },
   "homepage": "https://github.com/Vreath-core/ts-vreath-core#readme",
   "dependencies": {
-    "@types/bn.js": "^4.11.5",
     "@types/leveldown": "^4.0.0",
     "@types/levelup": "^3.1.0",
     "@types/lodash": "^4.14.116",
-    "@types/mathjs": "^4.4.3",
-    "@types/node": "^9.6.1",
     "@types/util.promisify": "^1.0.0",
     "big-integer": "^1.6.43",
     "leveldown": "^4.0.1",
@@ -34,10 +31,8 @@
     "merkle-patricia-tree": "^3.0.0",
     "node-cryptonight-lite": "^1.0.1",
     "p-iteration": "^1.1.5",
-    "prettyjson": "^1.2.1",
     "rlp": "^2.0.0",
-    "typed-promisify": "^0.4.0",
-    "util.promisify": "^1.0.0"
+    "typed-promisify": "^0.4.0"
   },
   "devDependencies": {
     "typescript": "^3.4.1"

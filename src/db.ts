@@ -1,6 +1,8 @@
 import levelup, { LevelUp } from 'levelup';
 import leveldown, { LevelDown } from 'leveldown';
 
+type encode = "utf8" | "hex" | "ascii" | "base64";
+
 export class DB {
     private db:LevelUp<LevelDown>;
     constructor(root:string){
@@ -12,7 +14,7 @@ export class DB {
         return buffer.toString(encode);
     }
 
-    public async put(key:string,val:string,key_encode:string='hex',val_encode='utf8'){
+    public async put(key:string,val:string,key_encode:encode='hex',val_encode:encode='utf8'){
         await this.db.put(Buffer.from(key,key_encode),Buffer.from(val,val_encode));
     }
 
