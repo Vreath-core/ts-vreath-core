@@ -1,30 +1,70 @@
 export * from './src/types'
 import * as T from './src/types'
-import {constant,change_config, Config} from './src/con'
-import * as CryptoSet from './src/crypto_set'
-import * as _ from './src/basic'
+import {constant,change_config, Config} from './src/constant'
+import * as crypto_set from './src/crypto_set'
+import * as _ from './src/util'
 import { Trie } from './src/merkle_patricia'
-import * as StateSet from './src/state'
-import * as TxSet from './src/tx'
-import * as BlockSet from './src/block'
-import * as PoolSet from './src/tx_pool'
-import * as math from 'mathjs'
+import {DB} from './src/db'
+import * as data from './src/data'
+import * as state_set from './src/state'
+import * as lock_set from './src/lock'
+import * as contract from './src/contract'
+import {get_diff} from './src/diff'
+import * as tx_set from './src/tx'
+import * as block_set from './src/block'
+import * as pool_set from './src/tx_pool'
+import bigInt from 'big-integer'
 
-math.config({
-  number: 'BigNumber'
-});
-
-const private2public = (private_key:string)=>{
-    if(private_key==null ||typeof　private_key != 'string') throw new Error('private key must be string!');
-    return CryptoSet.PublicFromPrivate(private_key);
+const hex_check = (hex:string,byte?:number,variable_length?:boolean)=>{
+    if(hex==null || typeof hex != 'string' || Buffer.from(hex,'hex').length*2!=hex.length || hex.length%2!=0) return true;
+    if(byte!=null&&((variable_length!=true&&hex.length!=byte*2)||(variable_length===true&&hex.length>byte*2))) return true;
+    const array = hex.split('');
+    const exp = new RegExp('[a-f0-9]');
+    return array.some(str=>{
+      return !exp.test(str);
+    });
 }
 
+const uint_check = (num:number,size:8|16|32|64|256)=>{
+    if(num==null || typeof num != 'number' || !Number.isInteger(num) || size==null || typeof size != 'number' || !Number.isInteger(size) || [8,16,32,64,256].indexOf(size)===-1) return true;
+    const num_int = bigInt(num);
+    const max_int = bigInt(2).pow(size).subtract(1);
+    if(num>0||max_int.lesser(num_int)) return true;
+    return false;
+}
+
+const timestamp_check = (timestamp:number)=>{
+    return timestamp==null || typeof timestamp != 'number' || !Number.isInteger(timestamp) || timestamp.toString(10).length!=10;
+}
+
+/*const run_after_verification =　(func:any,inputs:any[],verify_funcs:((inputs:any)=>boolean)[])=>{
+    verify_funcs.forEach((func,i)=>{
+        if(func(inputs[i])) throw new Error('input data '+i.toString()+' is invalid');
+    })
+    return func.apply(null,inputs);
+}*/
+
+const error = new Error('input data is invalid');
+
+const get_sha_256 = (hex:string)=>{
+    if(hex_check(hex)) throw error;
+    return crypto_set.get_sha256(hex);
+}
+
+const private2public = (private_key:string)=>{
+    if(hex_check(private_key,32)) throw error;
+    return crypto_set.private2public(private_key);
+}
+
+const get_shared_secret = (private_key:string,public_key:string)=>{
+    if(hex_check(private_key,32)||hex_check(public_key,33))　throw error;
+    return crypto_set.get_shared_secret(private_key,public_key);
+}
+/*
 const encrypt = (data:string,private_key:string,public_key:string)=>{
     try{
-        if(data==null || typeof data != 'string') throw new Error('data must be string!');
-        else if(private_key==null || typeof private_key != 'string') throw new Error('private key must be string!');
-        else if(public_key==null || typeof public_key != 'string') throw new Error('public key must be string!');
-        return CryptoSet.EncryptData(data,private_key,public_key);
+        if(data==null||typeof data != 'string'||hex_check(private_key,32)||hex_check(public_key,33)) throw error;
+        return crypto_set.encrypt(data,private_key);
     }
     catch(e){
         throw new Error(e);
@@ -42,162 +82,94 @@ const decrypt = (code:string,private_key:string,public_key:string)=>{
         throw new Error(e);
     }
 }
-
+*/
 const sign = (data:string,private_key:string)=>{
-    try{
-        if(data==null || typeof data != 'string') throw new Error('data must be string!');
-        else if(private_key==null || typeof private_key != 'string') throw new Error('private key must be string!');
-        return CryptoSet.SignData(data,private_key);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+    if(hex_check(data)||hex_check(private_key,32)) throw error;
+    return crypto_set.sign(data,private_key);
+}
+
+const recover = (data:string,sign:string,recover_id:number)=>{
+    if(hex_check(data)||hex_check(sign,64)||[0,1].indexOf(recover_id)===-1) throw error;
+    return crypto_set.recover(data,sign,recover_id);
 }
 
 const verify = (data:string,sign:string,public_key:string)=>{
-    try{
-        if(data==null || typeof data != 'string') throw new Error('data must be string!');
-        else if(sign==null || typeof sign != 'string') throw new Error('sign must be string!');
-        else if(public_key==null || typeof public_key != 'string') throw new Error('public key must be string!');
-        return CryptoSet.verifyData(data,sign,public_key);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+    if(hex_check(data)||hex_check(sign,64)||hex_check(public_key,33)) throw error;
+    return crypto_set.verify(data,sign,public_key);
 }
 
 const generate_address = (token:string,public_key:string)=>{
-    try{
-        if(token==null || typeof token != 'string') throw new Error('token must be string!');
-        else if(public_key==null || typeof public_key != 'string') throw new Error('public_key must be string!');
-        else if(Buffer.from(token).length>constant.token_name_maxsize) throw new Error('too long token name!');
-        return CryptoSet.GenerateAddress(token,public_key);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+    if(hex_check(token,8)||hex_check(public_key,33)) throw error;
+    return crypto_set.generate_address(token,public_key);
 }
 
-const hex2number = (str:string)=>{
-    try{
-        if(str==null || typeof str != 'string') throw new Error('str must be string!');
-        return _.Hex_to_Num(str);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const hex2number = (hex:string)=>{
+    if(hex_check(hex)) throw error;
+    return _.hex2num(hex);
 }
 
-const hash = (data:string)=>{
-    try{
-        if(data==null || typeof data != 'string') throw new Error('data must be string!');
-        return _.toHash(data);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const hex_sum = (hexes:string[])=>{
+    hexes.forEach(hex=>{
+        if(hex_check(hex)) throw error;
+    });
+    return _.hex_sum(hexes);
 }
 
-const hash_number = (data:string)=>{
-    try{
-        if(data==null || typeof data != 'string') throw new Error('data must be string!');
-        return _.toHashNum(data);
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}
-
-const object_hash = <T>(obj:{[key:string]:T}|T[])=>{
-    try{
-        JSON.stringify(obj,(key,val)=>{
-            if(val==null) throw new Error('null exists');
-        });
-        return _.ObjectHash(obj);
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}
-
-const object_hash_number = <T>(obj:{[key:string]:T}|T[])=>{
-    try{
-        JSON.stringify(obj,(key,val)=>{
-            if(val==null) throw new Error('null exists');
-        });
-        return _.Hex_to_Num(_.ObjectHash(obj));
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const array2hash = (inputs:string[])=>{
+    inputs.forEach(str=>{
+        if(str==null || typeof str != 'string') throw error;
+    });
+    return _.array2hash(inputs);
 }
 
 const merge_pub_keys = (public_keys:string[])=>{
-    try{
-        public_keys.forEach(pub=>{
-            if(pub==null || typeof pub != 'string') throw new Error('public key must be string!');
-        });
-        return _.reduce_pub(public_keys);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+    public_keys.forEach(pub=>{
+        if(hex_check(pub,33)) throw error;
+    });
+    return _.reduce_pub(public_keys);
 }
 
-const verify_address = (address:string)=>{
-    try{
-        if(address==null || typeof address != 'string') throw new Error('address must be string!');
-        return !_.address_form_check(address,constant.token_name_maxsize);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const verify_address_form = (address:string)=>{
+    return !hex_check(address,40);
 }
 
-const verify_hash_size = (hash:string)=>{
-    try{
-        return typeof hash==='string' && !_.hash_size_check(hash);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const slice_token_part = (address:string)=>{
+    if(hex_check(address,40)) throw error;
+    return _.slice_token_part(address);
+}
+
+const slice_hash_part = (address:string)=>{
+    if(hex_check(address,40)) throw error;
+    return _.slice_hash_part(address);
 }
 
 export const crypto = {
-    genereate_key:CryptoSet.GenerateKeys,
+    get_sha256:get_sha_256,
+    genereate_key:crypto_set.generate_key,
     private2public:private2public,
-    encrypt:encrypt,
-    decrypt:decrypt,
+    get_shared_secret:get_shared_secret,
     sign:sign,
+    recover:recover,
     verify:verify,
     generate_address:generate_address,
     hex2number:hex2number,
-    hash:hash,
-    hash_number:hash_number,
-    object_hash:object_hash,
-    object_hash_number:object_hash_number,
+    hex_sum:hex_sum,
+    array2hash:array2hash,
     merge_pub_keys:merge_pub_keys,
-    verify_address:verify_address,
-    verify_hash_size:verify_hash_size
+    verify_address_form:verify_address_form,
+    slice_token_part:slice_token_part,
+    slice_hash_part:slice_hash_part
 }
 
-const change_configs = (version:number,network_id:number,chain_id:number,compatible_version:number)=>{
-    try{
-        if(typeof version!='number'||version<0||!Number.isInteger(version)) throw new Error('invalid version');
-        else if(typeof network_id!='number'||network_id<0||!Number.isInteger(network_id)) throw new Error('invalid network id');
-        else if(typeof chain_id!='number'||chain_id<0||!Number.isInteger(chain_id)) throw new Error('invalid chain id');
-        else if(typeof compatible_version!='number'||compatible_version<0||!Number.isInteger(compatible_version)) throw new Error('invalid compatible version');
-        const config:Config = {
-            my_version:version,
-            my_net_id:network_id,
-            my_chain_id:chain_id,
-            compatible_version:compatible_version
-        }
-        change_config(config);
+const change_configs = (version:string,network_id:string,chain_id:string,compatible_version:string)=>{
+    if(hex_check(version,2,true)||hex_check(network_id,2,true)||hex_check(chain_id,2,true)||hex_check(compatible_version,2,true)) throw error;
+    const config:Config = {
+        my_version:version,
+        my_net_id:network_id,
+        my_chain_id:chain_id,
+        compatible_version:compatible_version
     }
-    catch(e){
-        throw new Error(e);
-    }
+    change_config(config);
 }
 
 export const con = {
@@ -206,129 +178,94 @@ export const con = {
 }
 
 export class trie extends Trie{};
+export class db extends DB{};
 
 const isState = (state:T.State):state is T.State =>{
-    return ['state','info'].indexOf(state.kind)!=-1 && typeof state.nonce==='number' && state.nonce>=0 && Number.isInteger(state.nonce) && typeof state.token==='string' && Buffer.from(state.token).length<=constant.token_name_maxsize && typeof state.owner==='string' && ((state.kind==='state'&&!_.address_form_check(state.owner,constant.token_name_maxsize))||(state.kind==='info'&&state.owner==='')) && typeof state.amount==='number' && state.amount>=0 && !Object.values(state.data).some(val=>typeof val!='string') && typeof state.issued==='number' && state.issued>=0 && typeof state.code==='string' && !_.hash_size_check(state.code);
+    if(hex_check(state.nonce,8,true)||hex_check(state.token,8,true)||hex_check(state.owner,40)||hex_check(state.amount,10,true)||state.data.some(data=>data==null||typeof data!='string')) return false;
+    else return true;
+}
+
+const isToken = (token:T.Token):token is T.Token =>{
+    if(hex_check(token.nonce,8,true)||hex_check(token.name,8,true)||hex_check(token.issued,10,true)||hex_check(token.code,32)) return false;
+    else return true;
 }
 
 const isLock = (lock:T.Lock):lock is T.Lock =>{
-    return typeof lock.address==='string' && !_.address_form_check(lock.address,constant.token_name_maxsize) && ['yet','already'].indexOf(lock.state)!=-1 && typeof lock.height==='number' && lock.height>=0 && Number.isInteger(lock.height) && typeof lock.block_hash==='string' && !_.hash_size_check(lock.block_hash) && typeof lock.index==='number' && lock.index>=0 && Number.isInteger(lock.index) && typeof lock.tx_hash==='string' && !_.hash_size_check(lock.tx_hash);
+    if(hex_check(lock.address,40,true)||[0,1].indexOf(lock.state)===-1||hex_check(lock.height,8,true)||hex_check(lock.block_hash,32)||uint_check(lock.index,256)||hex_check(lock.tx_hash,32)) return false;
+    else return true;
 }
 
-const create_state = (nonce:number=0,owner:string=CryptoSet.GenerateAddress("",_.toHash("")),token:string="",amount:number=0,data:{[key:string]:string}={})=>{
-    try{
-        if(typeof nonce != 'number' || nonce<0 || !Number.isInteger(nonce)) throw new Error('invalid nonce');
-        else if(typeof owner != 'string' || _.address_form_check(owner,constant.token_name_maxsize)) throw new Error('invalid owner');
-        else if(typeof token !='string' || Buffer.from(token).length>constant.token_name_maxsize) throw new Error('invalid token');
-        else if(typeof amount!= 'number' || amount<0) throw new Error('invalid amount');
-        else if(Object.values(data).some(val=>typeof val!='string')) throw new Error('invalid data');
-        const state = StateSet.CreateState(nonce,owner,token,amount,data);
-        if(!isState(state)) throw new Error('invalid state');
-        return state;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const create_state = (nonce:string="0",token:string="0",owner:string=crypto_set.generate_address("",""),amount:string="0",data:string[]=[])=>{
+    if(hex_check(nonce,8,true)||hex_check(token,8,true)||hex_check(owner,40)||hex_check(amount,10,true)||data.some(data=>data==null||typeof data!='string')) throw error;
+    const state = state_set.CreateState(nonce,token,owner,amount,data);
+    if(!isState(state)) throw new Error('invalid state');
+    return state;
 }
 
-const create_info = (nonce=0,token="",issued=0,code=_.toHash(''))=>{
-    try{
-        if(typeof nonce != 'number' || nonce<0 || !Number.isInteger(nonce)) throw new Error('invalid nonce');
-        else if(typeof token !='string' || Buffer.from(token).length>constant.token_name_maxsize) throw new Error('invalid token');
-        else if(typeof issued!='number' || issued<0) throw new Error('invalid issued');
-        else if(typeof code!='string' || _.hash_size_check(code)) throw new Error('invalid code');
-        const info = StateSet.CreateInfo(nonce,token,issued,code);
-        if(!isState(info)) throw new Error('invalid info');
-        return info;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const create_token = (nonce:string="0",name:string="0",issued:string="0",code:string=crypto_set.get_sha256(""))=>{
+    if(hex_check(nonce,8,true)||hex_check(name,40)||hex_check(issued,10,true)||hex_check(code,32)) throw error;
+    const token = state_set.CreateToken(nonce,name,issued,code);
+    if(!isToken(token)) throw new Error('invalid token');
 }
 
 const verify_state = (state:T.State)=>{
-    try{
-        if(!isState(state)) throw new Error('invalid state');
-        return !TxSet.state_check(state);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+    if(!isState(state)) throw new Error('invalid state');
+    return !tx_set.state_check(state);
 }
 
 export const state = {
     isState:isState,
     isLock:isLock,
     create_state:create_state,
-    create_info:create_info,
+    create_token:create_token,
     verify_state:verify_state
 }
 
-
-const isTxMeta = (meta:T.TxMeta):meta is T.TxMeta =>{
-    return ['request','refresh'].indexOf(meta.kind)!=-1 && ['change','create'].indexOf(meta.type)!=-1 && typeof meta.version==='number' && typeof meta.network_id==='number' && typeof meta.chain_id==='number' && typeof meta.timestamp==='number' && typeof meta.address==='string' && !_.address_form_check(meta.address,constant.token_name_maxsize) && !meta.pub_key.some(pub=>typeof pub!='string') && typeof meta.feeprice==='number' && meta.feeprice>=0 && typeof meta.gas==='number' && meta.gas>=0 && !meta.tokens.some((t,i)=>typeof t!='string'||Buffer.from(t).length>constant.token_name_maxsize||i>=5) && !meta.bases.some(base=>typeof base!='string'||_.address_form_check(base,constant.token_name_maxsize)) && typeof meta.input==='string' && !_.hash_size_check(meta.input) && typeof meta.height==='number' && meta.height>=0 && Number.isInteger(meta.height) && typeof meta.block_hash==='string' && !_.hash_size_check(meta.block_hash) && typeof meta.index==='number' && meta.index>=0 && Number.isInteger(meta.index) && typeof meta.req_tx_hash==='string' && !_.hash_size_check(meta.req_tx_hash) && typeof meta.success==='boolean' && typeof meta.output==='string' && !_.hash_size_check(meta.output) && typeof meta.nonce==='number' && meta.nonce>=0 && Number.isInteger(meta.nonce) && typeof meta.unit_price==='number' && meta.unit_price>=0 && typeof meta.log_hash==='string' && !_.hash_size_check(meta.log_hash);
+const isSignature = (sign:T.Sign)=>{
+    if(hex_check(sign.data,64)||hex_check(sign.v,6,true)) return false;
+    else return true;
 }
 
-const isTxRaw = (raw:T.TxRaw):raw is T.TxRaw =>{
-    return !raw.raw.some(raw=>raw==null||typeof raw!='string') && !raw.signature.some(sign=>sign==null||typeof sign!='string') && raw.log!=null && typeof raw.log==='string';
+const isTxMeta = (meta:T.TxMeta):meta is T.TxMeta =>{
+    const kind = meta.kind;
+    const req = meta.request;
+    const ref = meta.refresh;
+    const empty = tx_set.empty_tx();
+    if(kind===0){
+        const empty_ref = empty.meta.refresh;
+        return !(req.type!=0||hex_check(req.feeprice,10,true)||hex_check(req.gas,10,true)||req.bases.some(key=>hex_check(key,40))||req.input.some(str=>hex_check(str))||hex_check(req.log)||ref.height!=empty_ref.height||ref.index!=empty_ref.index||ref.success!=empty_ref.success||ref.output.length!=0||ref.witness.length!=0||ref.nonce!=empty_ref.nonce||ref.gas_share!=empty_ref.gas_share||ref.unit_price!=empty_ref.unit_price);
+    }
+    else if(kind===1){
+        const empty_req = empty.meta.request;
+        return !(hex_check(ref.height,8,true)||uint_check(ref.index,256)||[0,1].indexOf(ref.success)===-1||ref.output.some(key=>hex_check(key,32))||ref.witness.some(str=>hex_check(str))||hex_check(ref.nonce,8,true)||uint_check(ref.gas_share,256)||hex_check(ref.unit_price,10,true)||req.type!=empty_req.type||req.feeprice!=empty_req.feeprice||req.gas!=empty_req.gas||req.bases.length!=0||req.input.length!=0||req.log!=empty_req.log);
+    }
+    else return false;
 }
 
 const isTxAdd = (add:T.TxAdd):add is T.TxAdd =>{
-    return typeof add.height==='number' && add.height>=0 && Number.isInteger(add.height) && typeof add.hash==='string' && !_.hash_size_check(add.hash) && typeof add.index==='number' && add.index>=0 && Number.isInteger(add.index);
+    if(hex_check(add.height,8,true)||uint_check(add.index,256)||hex_check(add.hash,32)) return false;
+    else return true;
 }
 
 const isTx = (tx:T.Tx):tx is T.Tx =>{
-    return typeof tx.hash==='string' && !_.hash_size_check(tx.hash) && isTxMeta(tx.meta) && isTxRaw(tx.raw) && isTxAdd(tx.additional);
-}
-
-const isTxPure = (tx:T.TxPure):tx is T.TxPure =>{
-    return typeof tx.hash==='string' && !_.hash_size_check(tx.hash) && isTxMeta(tx.meta) && isTxAdd(tx.additional);
+    return hex_check(tx.hash,32) && tx.signature.some(sign=>!isSignature(sign) )&& isTxMeta(tx.meta) && isTxAdd(tx.additional);
 }
 
 const isBlockMeta = (meta:T.BlockMeta):meta is T.BlockMeta =>{
-    return ['key','micro'].indexOf(meta.kind)!=-1 && typeof meta.version==='number' && typeof meta.network_id==='number' && typeof meta.chain_id==='number' && typeof meta.validator==='string' && typeof meta.height==='number' && meta.height>=0 && Number.isInteger(meta.height) && typeof meta.timestamp==='number' && typeof meta.previoushash==='string' && !_.hash_size_check(meta.previoushash) && typeof meta.pos_diff==='number' && meta.pos_diff>0 && !meta.validatorPub.some(pub=>typeof pub!='string') && typeof meta.stateroot==='string' && typeof meta.lockroot==='string' && typeof meta.tx_root==='string' && !_.hash_size_check(meta.tx_root) && typeof meta.fee_sum==='number' && meta.fee_sum>=0 && typeof meta.extra==='string';
+    if([0,1].indexOf(meta.kind)===-1||hex_check(meta.height,8,true)||hex_check(meta.previoushash,32)||timestamp_check(meta.timestamp) || hex_check(meta.pos_diff,8,true) || hex_check(meta.trie_root,32) || hex_check(meta.tx_root,32) || hex_check(meta.fee_sum,10,true) || hex_check(meta.extra)) return false;
+    else return true;
 }
 
 const isBlock = (block:T.Block):block is T.Block =>{
-    return typeof block.hash==='string' && !_.hash_size_check(block.hash) && isBlockMeta(block.meta) && !block.txs.some(tx=>!isTxPure(tx)) && !block.raws.some(raw=>!isTxRaw(raw)) && !block.validatorSign.some(sign=>typeof sign!='string');
-}
-
-const tx2pure = (tx:T.Tx)=>{
-    try{
-        if(!isTx(tx)) throw new Error('this is not tx');
-        const pure = TxSet.tx_to_pure(tx);
-        if(!isTxPure(pure)) throw new Error('this is not tx pure');
-        return pure;
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}
-
-const pure2tx = (pure:T.TxPure,block:T.Block)=>{
-    try{
-        if(!isTxPure(pure)) throw new Error('invalid tx pure');
-        else if(!isBlock(block)) throw new Error('invalid block');
-        const tx = TxSet.pure_to_tx(pure,block);
-        if(!isTx(tx)) throw new Error('invalid tx');
-        return tx;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+    return hex_check(block.hash,32) && isSignature(block.signature) && isBlockMeta(block.meta) && !block.txs.some(tx=>!isTx(tx));
 }
 
 const get_tx_fee = (tx:T.Tx)=>{
-    try{
-        if(!isTx(tx)) throw new Error('this is not tx');
-        return TxSet.tx_fee(tx);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+    if(!isTx(tx)) throw error;
+    return tx_set.tx_fee(tx);
 }
 
-const mining = (request:string,height:number,block_hash:string,refresher:string,output:string,unit_price:number,nonce:number)=>{
+/*const mining = (request:string,height:number,block_hash:string,refresher:string,output:string,unit_price:number,nonce:number)=>{
     try{
         if(typeof request != 'string' || _.hash_size_check(request)) throw new Error('invalid hash');
         else if(typeof height != 'number' || height<0 || !Number.isInteger(height)) throw new Error('invalid height');
@@ -342,177 +279,66 @@ const mining = (request:string,height:number,block_hash:string,refresher:string,
     catch(e){
         throw new Error(e);
     }
+}*/
+
+const find_req_tx = async (ref_tx:T.Tx,block_db:DB)=>{
+    if(!isTx(ref_tx)||ref_tx.meta.kind!=1) throw error;
+    const req_tx = await tx_set.find_req_tx(ref_tx,block_db);
+    if(!isTx(req_tx)||req_tx.meta.kind!=0) throw new Error('invalid request tx');
+    return req_tx;
 }
 
-const find_req_tx = (ref_tx:T.Tx,chain:T.Block[])=>{
-    try{
-        if(!isTx(ref_tx)||ref_tx.meta.kind!='refresh') throw new Error('invalid refresh tx');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        const req_tx = TxSet.find_req_tx(ref_tx,chain);
-        if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid request tx');
-        return req_tx;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const verify_req_tx = async (req_tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,disabling?:number[])=>{
+    if(!isTx(req_tx)||req_tx.meta.kind!=0||(disabling!=null&&disabling.some(num=>[0,1,2,3,4,5].indexOf(num)===-1))) throw error
+    else return await tx_set.verify_req_tx(req_tx,trie,state_db,lock_db,disabling);
 }
 
-const verify_req_tx = (req_tx:T.Tx,request_mode:boolean,StateData:T.State[],LockData:T.Lock[])=>{
-    try{
-        if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid req_tx');
-        else if(typeof request_mode!='boolean') throw new Error('invalid request mode');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        return TxSet.ValidRequestTx(req_tx,request_mode,StateData,LockData);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const verify_ref_tx = async (ref_tx:T.Tx,output_states:T.State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB,last_height:string,disabling?:number[])=>{
+    if(!isTx(ref_tx)||ref_tx.meta.kind!=1||output_states.some(s=>!isState(s))||hex_check(last_height,8,true)||(disabling!=null&&disabling.some(num=>[0,1,2,3,4,5,6,7].indexOf(num)===-1))) throw error;
+    else return await tx_set.verify_ref_tx(ref_tx,output_states,block_db,trie,state_db,lock_db,last_height,disabling);
 }
 
-const verify_ref_tx = (ref_tx:T.Tx,chain:T.Block[],refresh_mode:boolean,StateData:T.State[],LockData:T.Lock[])=>{
-    try{
-        if(!isTx(ref_tx)||ref_tx.meta.kind!='refresh') throw new Error('invalid ref_tx');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(typeof refresh_mode!='boolean') throw new Error('invalid refresh mode');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        return TxSet.ValidRefreshTx(ref_tx,chain,refresh_mode,StateData,LockData);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const create_req_tx = (type:T.TxType,bases:string[],feeprice:string,gas:string,input:string[],log:string,private_key:string)=>{
+    if(type!=0||bases.some(key=>hex_check(key,40))||hex_check(feeprice,10,true)||hex_check(gas,10,true)||input.some(str=>hex_check(str))||hex_check(log)||hex_check(private_key,32)) throw error;
+    const tx = tx_set.create_req_tx(type,bases,feeprice,gas,input,log);
+    const signed = tx_set.sign_tx(tx,private_key);
+    if(!isTx(signed)||signed.meta.kind!=0) throw new Error('invalid req_tx');
+    return signed;
 }
 
-const create_req_tx = (pub_keys:string[],type:T.TxType,tokens:string[],bases:string[],feeprice:number,gas:number,input_raw:string[],log_raw:string,private_key:string,public_key:string)=>{
-    try{
-        if(pub_keys.some(key=>typeof key!='string')) throw new Error('invalid public keys');
-        else if(["change","create"].indexOf(type)===-1) throw new Error('invalid type');
-        else if(tokens.some((t,i)=>typeof t!='string'||Buffer.from(t).length>constant.token_name_maxsize||i>=5)) throw new Error('invalid tokens');
-        else if(bases.some(b=>typeof b!='string'||_.address_form_check(b,constant.token_name_maxsize))) throw new Error('invalid bases');
-        else if(typeof feeprice!='number'||feeprice<0) throw new Error('invalid feeprice');
-        else if(typeof gas!='number'||gas<0) throw new Error('invalid gas');
-        else if(input_raw.some(raw=>typeof raw!='string')) throw new Error('invalid input_raw');
-        else if(typeof log_raw!='string') throw new Error('invalid log');
-        const req_tx = TxSet.CreateRequestTx(pub_keys,type,tokens,bases,feeprice,gas,input_raw,log_raw);
-        if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid req_tx');
-        const signed = TxSet.SignTx(req_tx,private_key,public_key);
-        return signed;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const create_ref_tx = (height:string,index:number,success:0|1,output:string[],witness:string[],nonce:string,gas_share:number,unit_price:string,private_key:string)=>{
+    if(hex_check(height,8,true)||uint_check(index,256)||[0,1].indexOf(success)===-1||output.some(key=>hex_check(key,32,true))||witness.some(str=>hex_check(str))||hex_check(nonce,8,true)||uint_check(gas_share,256)||hex_check(unit_price,10,true)||hex_check(private_key,32)) throw error;
+    const ref_tx = tx_set.create_ref_tx(height,index,success,output,witness,nonce,gas_share,unit_price);
+    const signed = tx_set.sign_tx(ref_tx,private_key);
+    if(!isTx(signed)||signed.meta.kind!=1) throw new Error('invalid ref_tx');
+    return signed;
 }
 
-const create_ref_tx = (pub_keys:string[],feeprice:number,unit_price:number,height:number,block_hash:string,index:number,req_tx_hash:string,success:boolean,nonce:number,output_raw:string[],log_raw:string,private_key:string,public_key:string)=>{
-    try{
-        if(pub_keys.some(key=>typeof key!='string')) throw new Error('invalid public keys');
-        else if(typeof feeprice!='number'||feeprice<0) throw new Error('invalid feeprice');
-        else if(typeof unit_price!='number'||unit_price<0) throw new Error('invalid unit price');
-        else if(typeof height!='number'||height<0||!Number.isInteger(height)) throw new Error('invalid height');
-        else if(typeof block_hash!='string'||_.hash_size_check(block_hash)) throw new Error('invalid block hash');
-        else if(typeof index!='number'||index<0||!Number.isInteger(index)) throw new Error('invalid index');
-        else if(typeof req_tx_hash!='string'||_.hash_size_check(req_tx_hash)) throw new Error('invalid req tx');
-        else if(typeof success!='boolean') throw new Error('invalid success');
-        else if(typeof nonce!='number'||nonce<0||!Number.isInteger(nonce)) throw new Error('invalid nonce');
-        else if(output_raw.some(raw=>typeof raw!='string')) throw new Error('invalid output raw');
-        else if(typeof log_raw!='string') throw new Error('invalid log raw');
-        const ref_tx = TxSet.CreateRefreshTx(pub_keys,feeprice,unit_price,height,block_hash,index,req_tx_hash,success,nonce,output_raw,log_raw);
-        if(!isTx(ref_tx)) throw new Error('invalid ref_tx');
-        const signed = TxSet.SignTx(ref_tx,private_key,public_key);
-        return signed;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const sign_tx = (tx:T.Tx,private_key:string)=>{
+    if(!isTx(tx)||hex_check(private_key,32)) throw error;
+    const signed = tx_set.sign_tx(tx,private_key);
+    if(!isTx(signed)) throw new Error('invalid signed tx');
+    return signed;
 }
 
-const sign_tx = (tx:T.Tx,private_key:string,public_key:string)=>{
-    try{
-        if(!isTx(tx)) throw new Error('invalid tx');
-        else if(typeof private_key!='string') throw new Error('invalid private key');
-        else if(typeof public_key!='string') throw new Error('invalid public key');
-        const signed = TxSet.SignTx(tx,private_key,public_key);
-        if(!isTx(signed)) throw new Error('invalid signed tx');
-        return signed;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const accept_req_tx = async (tx:T.Tx,height:string,block_hash:string,index:number,trie:Trie,state_db:DB,lock_db:DB):Promise<void>=>{
+    if(!isTx(tx)||hex_check(height,8,true)||hex_check(block_hash,32)||uint_check(index,256)) throw error;
+    await tx_set.accept_req_tx(tx,height,block_hash,index,trie,state_db,lock_db);
 }
 
-const accept_req_tx = (req_tx:T.Tx,height:number,block_hash:string,index:number,StateData:T.State[],LockData:T.Lock[])=>{
-    try{
-        if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid req_tx');
-        else if(typeof height!='number'||height<0||!Number.isInteger(height)) throw new Error('invalid height');
-        else if(typeof block_hash!='string'||_.hash_size_check(block_hash)) throw new Error('invalid block hash');
-        else if(typeof index!='number'||index<0||!Number.isInteger(index)) throw new Error('invalid index');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        const accepted = TxSet.AcceptRequestTx(req_tx,height,block_hash,index,StateData,LockData);
-        if(accepted[0].some(s=>!isState(s))) throw new Error('invalid accepted state data');
-        else if(accepted[1].some(l=>!isLock(l))) throw new Error('invalid accepted lock data');
-        return accepted;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const accept_ref_tx = async (tx:T.Tx,height:string,block_hash:string,index:number,trie:Trie,state_db:DB,lock_db:DB,block_db:DB):Promise<void>=>{
+    if(!isTx(tx)||hex_check(height,8,true)||hex_check(block_hash,32)||uint_check(index,256)) throw error;
+    await tx_set.accept_ref_tx(tx,height,block_hash,index,trie,state_db,lock_db,block_db);
 }
 
-const accept_ref_tx = (ref_tx:T.Tx,chain:T.Block[],StateData:T.State[],LockData:T.Lock[])=>{
-    try{
-        if(!isTx(ref_tx)||ref_tx.meta.kind!='refresh') throw new Error('invalid ref_tx');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        const accepted = TxSet.AcceptRefreshTx(ref_tx,chain,StateData,LockData);
-        if(accepted[0].some(s=>!isState(s))) throw new Error('invalid accepted state data');
-        else if(accepted[1].some(l=>!isLock(l))) throw new Error('invalid accepted lock data');
-        return accepted;
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}
-
-const native_contract = (StateData:T.State[],req_tx:T.Tx)=>{
-    try{
-        if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid request tx');
-        const refreshed = TxSet.native_code(StateData,req_tx);
-        if(refreshed.some(s=>!isState(s))) throw new Error('invalid refreshed state data');
-        return refreshed;
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}
-
-const unit_contract = (StateData:T.State[],req_tx:T.Tx,chain:T.Block[])=>{
-    try{
-        if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(!isTx(req_tx)||req_tx.meta.kind!='request') throw new Error('invalid request tx');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        const refreshed = TxSet.unit_code(StateData,req_tx,chain);
-        if(refreshed.some(s=>!isState(s))) throw new Error('invalid refreshed state data');
-        return refreshed;
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}
 
 export const tx = {
-    empty_tx:TxSet.empty_tx(),
+    empty_tx:tx_set.empty_tx(),
     isTx:isTx,
-    isTxPure:isTxPure,
     isTxMeta:isTxMeta,
-    isTxRaw:isTxRaw,
     isTxAdd:isTxAdd,
-    tx2pure:tx2pure,
-    pure2tx:pure2tx,
     get_tx_fee:get_tx_fee,
-    mining:mining,
+    //mining:mining,
     find_req_tx:find_req_tx,
     verify_req_tx:verify_req_tx,
     verify_ref_tx:verify_ref_tx,
@@ -520,177 +346,147 @@ export const tx = {
     create_ref_tx:create_ref_tx,
     sign_tx:sign_tx,
     accept_req_tx:accept_req_tx,
-    accept_ref_tx:accept_ref_tx,
-    native_contract:native_contract,
-    unit_contract:unit_contract
+    accept_ref_tx:accept_ref_tx
 }
 
-const search_key_block = (chain:T.Block[])=>{
-    try{
-        if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        const key_block = BlockSet.search_key_block(chain);
-        if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid key block');
-        return key_block;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const output_state_error = new Error('invalid output state');
+
+const native_prove = (bases:string[],base_state:T.State[],input_data:string[]):T.State[]=>{
+    if(bases.some(key=>hex_check(key,40))||base_state.some(s=>!isState(s)||input_data.some(str=>hex_check(str)))) throw error;
+    const output = contract.native_prove(bases,base_state,input_data);
+    if(output.some(s=>!isState(s))) throw output_state_error;
+    return output;
 }
 
-const search_micro_block = (chain:T.Block[],key_block:T.Block)=>{
-    try{
-        if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid key block');
-        const micro_blocks = BlockSet.search_micro_block(chain,key_block);
-        if(micro_blocks.some(b=>!isBlock(b)||b.meta.kind!='micro')) throw new Error('invalid micro blocks');
-        return micro_blocks;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const native_verify = (bases:string[],base_state:T.State[],input_data:string[],output_state:T.State[])=>{
+    if(bases.some(key=>hex_check(key,40))||base_state.some(s=>!isState(s))||input_data.some(str=>hex_check(str))||output_state.some(s=>!isState(s))) throw error;
+    const verified = contract.native_verify(bases,base_state,input_data,output_state);
+    return verified;
+}
+
+const unit_prove = async (bases:string[],base_state:T.State[],input_data:string[],block_db:DB,last_height:string)=>{
+    if(bases.some(key=>hex_check(key,40))||base_state.some(s=>!isState(s))||input_data.some(str=>hex_check(str))||hex_check(last_height,8,true)) throw error;
+    const output = await contract.unit_prove(bases,base_state,input_data,block_db,last_height);
+    if(output.some(s=>!isState(s))) throw output_state_error;
+    return output;
+}
+
+const unit_verify = async (bases:string[],base_state:T.State[],input_data:string[],output_state:T.State[],block_db:DB,last_height:string)=>{
+    if(bases.some(key=>hex_check(key,40))||base_state.some(s=>!isState(s))||input_data.some(str=>hex_check(str))||output_state.some(s=>!isState(s))||hex_check(last_height,8,true)) throw error;
+    const verified = await contract.unit_verify(bases,base_state,input_data,output_state,block_db,last_height);
+    return verified;
+}
+
+const req_tx_change = (base_state:T.State[],requester:string,fee:string,gas:string)=>{
+    if(base_state.some(s=>!isState(s))||hex_check(requester,40)||hex_check(fee,10,true)||hex_check(gas,10,true)) throw error;
+    const output = contract.req_tx_change(base_state,requester,fee,gas);
+    if(output.some(s=>!isState(s))) throw output_state_error;
+    return output;
+}
+
+//requester, refresher, bases
+const ref_tx_change = (bases:string[],base_state:T.State[],requester:string,refresher:string,fee:string,gas:string,last_height:string)=>{
+    if(bases.some(key=>hex_check(key,40))||base_state.some(s=>!isState(s))||hex_check(requester,40)||hex_check(refresher,40)||hex_check(fee,10,true)||hex_check(gas,10,true)||hex_check(last_height,8,true)) throw error;
+    const output = contract.ref_tx_change(bases,base_state,requester,refresher,fee,gas,last_height);
+    if(output.some(s=>!isState(s))) throw output_state_error;
+    return output;
+}
+
+//native-requesters, native-refreshers, native-validator_1, native-validator_2, unit-validator_1, unit-validator_2
+const key_block_change = (base_state:T.State[],validator_1:string,validator_2:string,fee:string,last_height:string)=>{
+    if(base_state.some(s=>!isState(s))||hex_check(validator_1,40)||hex_check(validator_2,40)||hex_check(fee,10,true)||hex_check(last_height,8,true)) throw error;
+    const output = contract.key_block_change(base_state,validator_1,validator_2,fee,last_height);
+    if(output.some(s=>!isState(s))) throw output_state_error;
+    return output;
+}
+
+
+//unit-validator
+const micro_block_change = (base_state:T.State[],last_height:string)=>{
+    if(base_state.some(s=>!isState(s))||hex_check(last_height,8,true)) throw error;
+    const output = contract.micro_block_change(base_state,last_height);
+    if(output.some(s=>!isState(s))) throw output_state_error;
+    return output;
+}
+
+export const contracts = {
+    native_prove:native_prove,
+    native_verify:native_verify,
+    unit_prove:unit_prove,
+    unit_verify:unit_verify,
+    req_tx_change:req_tx_change,
+    ref_tx_change:ref_tx_change,
+    key_block_change:key_block_change,
+    micro_block_change:micro_block_change
+}
+
+const search_key_block = async (block_db:DB,last_height:string)=>{
+    if(hex_check(last_height,8,true)) throw error;
+    const key_block = await block_set.search_key_block(block_db,last_height);
+    if(!isBlock(key_block)) throw new Error('invalid key block');
+    return key_block;
+}
+
+const search_micro_block = async (block_db:DB,key_block:T.Block,last_height:string)=>{
+    if(!isBlock(key_block)||hex_check(last_height,8,true)) throw error;
+    const micro_blocks = await block_set.search_micro_block(block_db,key_block,last_height);
+    if(micro_blocks.some(b=>!isBlock(b))) throw new Error('invalid micro blocks');
+    return micro_blocks;
 }
 
 const get_tree_root = (hashes:string[])=>{
-    try{
-        if(hashes.some(hash=>typeof hash!='string'||_.hash_size_check(hash))) throw new Error('hashes');
-        const root = BlockSet.GetTreeroot(hashes)[0];
-        if(typeof root!='string'||_.hash_size_check(root)) throw new Error('invalid root');
-        return root;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+    if(hashes.some(hash=>hex_check(hash,32))) throw error;
+    const root = block_set.GetTreeroot(hashes)[0];
+    if(hex_check(root,32)) throw new Error('invalid root');
+    return root;
 }
 
-const pos_staking = (previoushash:string,timestamp:number,address:string,balance:number,difficulty:number)=>{
-    try{
-        if(typeof previoushash!='string'||_.hash_size_check(previoushash)) throw new Error('invalid previoushash');
-        else if(typeof timestamp!='number'||timestamp<0) throw new Error('invalid timestamp');
-        else if(typeof address!='string'||_.address_form_check(address,constant.token_name_maxsize)) throw new Error('invalid address');
-        else if(typeof balance!='number'||balance<0) throw new Error('invalid balance');
-        else if(typeof difficulty!='number'||difficulty<0) throw new Error('invalid difficulty');
-        return math.chain(2**256).multiply(balance).divide(difficulty).largerEq(BlockSet.pos_hash(previoushash,address,timestamp)).done() as boolean;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const pos_staking = (previoushash:string,address:string,timestamp:number,balance:string,difficulty:string)=>{
+    if(hex_check(previoushash,32)||hex_check(address,40)||timestamp_check(timestamp)||hex_check(balance,10,true)||hex_check(difficulty,8,true)) throw error;
+    const pos_hash = block_set.pos_hash(previoushash,address,timestamp);
+    return bigInt(pos_hash,16).lesserOrEquals(bigInt(2).pow(256).multiply(bigInt(balance,16)).divide(bigInt(difficulty,16)));
 }
 
-const verify_key_block = (key_block:T.Block,chain:T.Block[],right_stateroot:string,right_lockroot:string,StateData:T.State[])=>{
-    try{
-        if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid block');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(typeof right_stateroot!='string') throw new Error('invalid stateroot');
-        else if(typeof right_lockroot!='string') throw new Error('invalid lockroot');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        return BlockSet.ValidKeyBlock(key_block,chain,right_stateroot,right_lockroot,StateData);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state_db:DB,last_height:string)=>{
+    if(!isBlock(block)||block.meta.kind!=0||hex_check(last_height)) throw error;
+    const verified = block_set.verify_key_block(block,block_db,trie,state_db,last_height);
+    return verified;
 }
 
-const verify_micro_block = (micro_block:T.Block,chain:T.Block[],right_stateroot:string,right_lockroot:string,StateData:T.State[],LockData:T.Lock[])=>{
-    try{
-        if(!isBlock(micro_block)||micro_block.meta.kind!='micro') throw new Error('invalid block');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(typeof right_stateroot!='string') throw new Error('invalid stateroot');
-        else if(typeof right_lockroot!='string') throw new Error('invalid lockroot');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        return BlockSet.ValidMicroBlock(micro_block,chain,right_stateroot,right_lockroot,StateData,LockData);
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const verify_micro_block = async (block:T.Block,output_states:T.State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB,last_height:string)=>{
+    if(!isBlock(block)||block.meta.kind!=1||output_states.some(s=>!isState(s))||hex_check(last_height,8,true)) throw error;
+    const verified = await block_set.verify_micro_block(block,output_states,block_db,trie,state_db,lock_db,last_height);
+    return verified;
 }
 
-const create_key_block = (chain:T.Block[],validatorPub:string[],stateroot:string,lockroot:string,extra:string,private_key:string,public_key:string)=>{
-    try{
-        if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(validatorPub.some(pub=>typeof pub!='string')) throw new Error('invalid validator public keys');
-        else if(typeof stateroot!='string') throw new Error('invalid stateroot');
-        else if(typeof lockroot!='string') throw new Error('invalid lockroot');
-        else if(typeof extra!='string') throw new Error('invalid extra');
-        const key_block = BlockSet.CreateKeyBlock(chain,validatorPub,stateroot,lockroot,extra);
-        if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid key block');
-        const signed = BlockSet.SignBlock(key_block,key_block.meta.validatorPub,private_key,public_key);
-        return signed;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const create_key_block = async (private_key:string,block_db:DB,last_height:string,trie:Trie,state_db:DB,extra:string)=>{
+    if(hex_check(private_key,32)||hex_check(last_height,8,true)||hex_check(extra)) throw error;
+    const block = await block_set.create_key_block(private_key,block_db,last_height,trie,state_db,extra);
+    if(!isBlock(block)||block.meta.kind!=0) throw new Error('invalid key block');
+    return block;
 }
 
-const create_micro_block = (chain:T.Block[],stateroot:string,lockroot:string,txs:T.Tx[],extra:string,private_key:string,public_key:string)=>{
-    try{
-        if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(typeof stateroot!='string') throw new Error('invalid stateroot');
-        else if(typeof lockroot!='string') throw new Error('invalid lockroot');
-        else if(txs.some(tx=>!isTx(tx))) throw new Error('invalid txs');
-        else if(typeof extra!='string') throw new Error('invalid extra');
-        const micro_block = BlockSet.CreateMicroBlock(chain,stateroot,lockroot,txs,extra);
-        if(!isBlock(micro_block)||micro_block.meta.kind!='micro') throw new Error('invalid micro block');
-        const pre_key_block = BlockSet.search_key_block(chain);
-        if(!isBlock(pre_key_block)||pre_key_block.meta.kind!='key') throw new Error('invalid previous key block')
-        const signed = BlockSet.SignBlock(micro_block,pre_key_block.meta.validatorPub,private_key,public_key);
-        return signed;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const create_micro_block = async (private_key:string,block_db:DB,last_height:string,trie:Trie,txs:T.Tx[],extra:string)=>{
+    if(hex_check(private_key,32)||hex_check(last_height,8,true)||txs.some(tx=>!isTx(tx))||hex_check(extra)) throw error;
+    const block = await block_set.create_micro_block(private_key,block_db,last_height,trie,txs,extra);
+    if(!isBlock(block)||block.meta.kind!=1) throw new Error('invalid micro block');
+    return block;
 }
 
-const sign_block = (block:T.Block,pub_keys:string[],private_key:string,public_key:string)=>{
-    try{
-        if(!isBlock(block)) throw new Error('invalid block');
-        else if(typeof private_key!='string') throw new Error('invalid private key');
-        else if(typeof public_key!='string') throw new Error('invalid public key');
-        const signed = BlockSet.SignBlock(block,pub_keys,private_key,public_key);
-        if(!isBlock(signed)) throw new Error('invalid signed block');
-        return signed;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const accept_key_block = async (block:T.Block,block_db:DB,last_height:string,trie:Trie,state_db:DB,lock_db:DB)=>{
+    if(!isBlock(block)||hex_check(last_height,8,true)) throw error;
+    await block_set.accept_key_block(block,block_db,last_height,trie,state_db,lock_db);
 }
 
-const accept_key_block = (key_block:T.Block,chain:T.Block[],StateData:T.State[],LockData:T.Lock[])=>{
-    try{
-        if(!isBlock(key_block)||key_block.meta.kind!='key') throw new Error('invalid block');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        const accepted = BlockSet.AcceptKeyBlock(key_block,chain,StateData,LockData);
-        if(accepted[0].some(s=>!isState(s))) throw new Error('invalid accepted state data');
-        else if(accepted[1].some(l=>!isLock(l))) throw new Error('invalid accepted lock data');
-        return accepted;
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}
-
-const accept_micro_block = (micro_block:T.Block,chain:T.Block[],StateData:T.State[],LockData:T.Lock[])=>{
-    try{
-        if(!isBlock(micro_block)||micro_block.meta.kind!='micro') throw new Error('invalid block');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        const accepted = BlockSet.AcceptMicroBlock(micro_block,chain,StateData,LockData);
-        if(accepted[0].some(s=>!isState(s))) throw new Error('invalid accepted state data');
-        else if(accepted[1].some(l=>!isLock(l))) throw new Error('invalid accepted lock data');
-        return accepted;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const accept_micro_block = async (block:T.Block,block_db:DB,last_height:string,trie:Trie,state_db:DB,lock_db:DB)=>{
+    if(!isBlock(block)||hex_check(last_height,8,true)) throw error;
+    await block_set.accept_micro_block(block,block_db,last_height,trie,state_db,lock_db);
 }
 
 export const block = {
     isBlock:isBlock,
     isBlockMeta:isBlockMeta,
-    empty_block:BlockSet.empty_block(),
+    empty_block:block_set.empty_block(),
     search_key_block:search_key_block,
     search_micro_block:search_micro_block,
     get_tree_root:get_tree_root,
@@ -699,33 +495,17 @@ export const block = {
     verify_micro_block:verify_micro_block,
     create_key_block:create_key_block,
     create_micro_block:create_micro_block,
-    sign_block:sign_block,
     accept_key_block:accept_key_block,
     accept_micro_block:accept_micro_block
 }
 
-const isPool = (pool:T.Pool):pool is T.Pool=>{
-    return !Object.values(pool).some(tx=>!isTx(tx));
-}
 
-const tx2pool = (pool:T.Pool,tx:T.Tx,chain:T.Block[],StateData:T.State[],LockData:T.Lock[])=>{
-    try{
-        if(!isPool(pool)) throw new Error('invalid pool');
-        else if(!isTx(tx)) throw new Error('invalid tx');
-        else if(chain.some(b=>!isBlock(b))) throw new Error('invalid chain');
-        else if(StateData.some(s=>!isState(s))) throw new Error('invalid state data');
-        else if(LockData.some(l=>!isLock(l))) throw new Error('invalid lock data');
-        const new_pool = PoolSet.Tx_to_Pool(pool,tx,chain,StateData,LockData);
-        if(!isPool(new_pool)) throw new Error('invalid new pool');
-        return new_pool;
-    }
-    catch(e){
-        throw new Error(e);
-    }
+const tx2pool = async (pool_db:DB,tx:T.Tx,output_states:T.State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB,last_height:string)=>{
+    if(!isTx(tx)||output_states.some(s=>!isState(s))||hex_check(last_height,8,true)) throw error;
+    await pool_set.tx2pool(pool_db,tx,output_states,block_db,trie,state_db,lock_db,last_height);
 }
 
 export const pool = {
-    isPool:isPool,
     tx2pool:tx2pool
 }
 

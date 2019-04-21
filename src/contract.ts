@@ -6,7 +6,7 @@ import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
 import { DB } from './db';
 
-export const native_prove = (bases:string[],base_state:T.State[],input_data:string[],):T.State[]=>{
+export const native_prove = (bases:string[],base_state:T.State[],input_data:string[]):T.State[]=>{
     const native = constant.native;
     const type = input_data[0];
     switch(type){
@@ -291,7 +291,7 @@ export const req_tx_change = (base_state:T.State[],requester:string,fee:string,g
 }
 
 //requester, refresher, bases
-export const ref_tx_change = async (bases:string[],base_state:T.State[],requester:string,refresher:string,fee:string,gas:string,last_height:string)=>{
+export const ref_tx_change = (bases:string[],base_state:T.State[],requester:string,refresher:string,fee:string,gas:string,last_height:string)=>{
     const reqed = base_state.map(s=>{
         if(s.owner!=requester) return s;
         return _.new_obj(

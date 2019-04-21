@@ -2,7 +2,6 @@ import * as crypto_set from './crypto_set'
 import {cloneDeep} from 'lodash'
 import bigInt, { BigInteger } from 'big-integer'
 
-
 export const copy = <T>(data:T)=>{
   return cloneDeep(data);
 }

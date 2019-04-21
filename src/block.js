@@ -214,7 +214,7 @@ exports.verify_key_block = async (block, block_db, trie, state_db, last_height) 
     const last = await block_db.read_obj(last_height) || exports.empty_block();
     const right_previoushash = last.hash;
     const right_trie_root = trie.now_root();
-    if (hash != _.array2hash(all_array) || !big_integer_1.default(hash_for_pos, 16).lesserOrEquals(big_integer_1.default(2).pow(256).multiply(reduced_amount).divide(right_diff))) {
+    if (hash != _.array2hash(all_array) || !big_integer_1.default(hash_for_pos, 16).lesserOrEquals(big_integer_1.default(2).pow(256).multiply(big_integer_1.default(reduced_amount, 16)).divide(big_integer_1.default(right_diff, 16)))) {
         //console.log("invalid hash");
         return false;
     }

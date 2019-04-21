@@ -1,14 +1,6 @@
 const ffi = require('ffi-vreath');
-import * as crypto from 'crypto'
+//import * as crypto from 'crypto'
 const cryptonight = require('node-cryptonight-lite').hash;
-
-export const hex2u8_array = (hex:string):Uint8Array=>{
-  return Uint8Array.from(Buffer.from(hex,'hex'));
-}
-
-export const u8_array2hex = (u8_array:Uint8Array):string=>{
-  return Buffer.from(u8_array).toString('hex');
-}
 
 export const get_sha256 = (hex:string):string=>{
   return ffi.get_sha256(hex);
@@ -26,7 +18,7 @@ export const get_shared_secret = (private_key:string,public_key:string)=>{
   return ffi.get_shared_secret(private_key,public_key);
 }
 
-export const encrypt = (data:string,secret:string):string=>{
+/*export const encrypt = (data:string,secret:string):string=>{
   const cipher = crypto.createCipher('aes-256-cbc', secret);
   let crypted = cipher.update(data, 'utf8', 'hex');
   crypted += cipher.final('hex');
@@ -38,7 +30,7 @@ export const decrypt = (data:string,secret:string)=>{
   let dec = decipher.update(data, 'hex', 'utf8');
   dec += decipher.final('utf-8');
   return dec;
-}
+}*/
 
 
 export const sign = (data:string,private_key:string):[string,string]=>{

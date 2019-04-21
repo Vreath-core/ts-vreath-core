@@ -53,7 +53,7 @@ export type TxMeta = {
 }
 
 export type TxAdd = {
-  height:number;//8 byte
+  height:string;//8 byte
   hash:string;//32 byte
   index:number;//1 byte
 }
@@ -76,7 +76,7 @@ export type BlockMeta = {
   kind:BlockKind;
   height:string;//8 byte
   previoushash:string;//32 byte
-  timestamp: number;//5 byte
+  timestamp: number;//0 ~ 9999999999
   pos_diff:string;//8 byte
   trie_root: string;//32 byte
   tx_root: string;//32 byte
@@ -97,9 +97,6 @@ export type Block = {
   txs:Tx[];
 }
 
-export type Pool = {
-  [key:string]:Tx;
-}
 
 export type Unit = [string,number,string,string,string];
 /*

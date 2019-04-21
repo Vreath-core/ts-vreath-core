@@ -212,7 +212,7 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
     const right_trie_root = trie.now_root();
 
 
-    if(hash!=_.array2hash(all_array)||!bigInt(hash_for_pos,16).lesserOrEquals(bigInt(2).pow(256).multiply(reduced_amount).divide(right_diff))){
+    if(hash!=_.array2hash(all_array)||!bigInt(hash_for_pos,16).lesserOrEquals(bigInt(2).pow(256).multiply(bigInt(reduced_amount,16)).divide(bigInt(right_diff,16)))){
         //console.log("invalid hash");
         return false;
     }

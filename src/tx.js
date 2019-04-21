@@ -45,7 +45,7 @@ exports.empty_tx = () => {
         refresh: refresh
     };
     const add = {
-        height: 0,
+        height: "",
         hash: "",
         index: 0
     };
@@ -201,7 +201,6 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
     const meta = tx.meta;
     const kind = meta.kind;
     const req = meta.request;
-    const ref = meta.refresh;
     const gas = req.gas;
     const other_bases = req.bases;
     const pulled = exports.get_info_from_tx(tx);
@@ -217,7 +216,6 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
     const base_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", _.slice_token_part(key), key, "0", []));
     });
-    const empty_ref = exports.empty_tx().meta.refresh;
     if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, infos, ids, pub_keys, requester)) {
         return false;
     }
@@ -225,7 +223,7 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
         //console.log("invalid kind");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(2) != -1) || requester_state == null || _.hashed_pub_check(requester, pub_keys) || requester_state.token != constant_1.constant.native || big_integer_1.default(requester_state.amount, 16).subtract(big_integer_1.default(exports.tx_fee(tx), 16)).subtract(big_integer_1.default(gas, 16)).lesser(0) || await exports.requested_check([requester], trie, lock_db)) {
+    else if ((disabling != null && disabling.indexOf(2) != -1) || requester_state == null || _.hashed_pub_check(requester, pub_keys) || requester_state.token != constant_1.constant.native || big_integer_1.default(requester_state.amount, 16).subtract(big_integer_1.default(exports.tx_fee(tx), 16)).subtract(big_integer_1.default(gas, 16)).lesser(0)) {
         //console.log("invalid requester");
         return false;
     }
@@ -241,10 +239,6 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
         //console.log("base states are already requested");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(6) != -1) || ref.height != empty_ref.height || ref.index != empty_ref.index || ref.success != empty_ref.success || ref.output.length != 0 || ref.witness.length != 0 || ref.nonce != empty_ref.nonce || ref.gas_share != empty_ref.gas_share || ref.unit_price != empty_ref.unit_price) {
-        //console.log("invalid refresh part");
-        return false;
-    }
     else {
         return true;
     }
@@ -252,7 +246,6 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
 exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock_db, last_height, disabling) => {
     const meta = tx.meta;
     const kind = meta.kind;
-    const req = meta.request;
     const ref = meta.refresh;
     const height = ref.height;
     const index = ref.index;
@@ -282,7 +275,6 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", _.slice_token_part(key), key, "0", []));
     });
     const base_states_hashes = base_states.map(s => _.array2hash([s.nonce, s.token, s.owner, s.amount].concat(s.data)));
-    const empty_req = exports.empty_tx().meta.request;
     if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, infos, ids, pub_keys, refresher)) {
         return false;
     }
@@ -312,10 +304,6 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
     }
     else if ((disabling != null && disabling.indexOf(7) != -1) || (success && req_tx.meta.request.type == 0 && (await output_change_check(bases, output_states) || await exports.contract_check(main_token, bases, base_states, req_tx.meta.request.input, output_states, block_db, last_height))) || (!success && (base_states_hashes.map((hash, i) => hash != output[i]) || gas_share != 0))) {
         //console.log("invalid output");
-        return false;
-    }
-    else if ((disabling != null && disabling.indexOf(7) != -1) || req.type != empty_req.type || req.feeprice != empty_req.feeprice || req.gas != empty_req.gas || req.bases.length != 0 || req.input.length != 0 || req.log != empty_req.log) {
-        //console.log("invalid request part");
         return false;
     }
     else {

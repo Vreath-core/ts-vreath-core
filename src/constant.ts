@@ -12,7 +12,7 @@ export type Config = {
     compatible_version:string
 }
 
-export const constant = {
+export let constant = {
     my_version:my_version,
     my_net_id:my_net_id,
     my_chain_id:my_chain_id,
@@ -31,8 +31,8 @@ export const constant = {
 }
 
 export const change_config = (config:Config) => {
-    my_version = config.my_version;
-    my_net_id = config.my_net_id;
-    my_chain_id = config.my_chain_id;
-    compatible_version = config.compatible_version;
+    constant.my_version = config.my_version;
+    constant.my_net_id = config.my_net_id;
+    constant.my_chain_id = config.my_chain_id;
+    constant.compatible_version = config.compatible_version;
 }

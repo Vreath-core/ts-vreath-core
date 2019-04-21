@@ -310,7 +310,7 @@ exports.req_tx_change = (base_state, requester, fee, gas) => {
     return gained;
 };
 //requester, refresher, bases
-exports.ref_tx_change = async (bases, base_state, requester, refresher, fee, gas, last_height) => {
+exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last_height) => {
     const reqed = base_state.map(s => {
         if (s.owner != requester)
             return s;

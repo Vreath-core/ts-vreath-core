@@ -7,24 +7,19 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const TxSet = __importStar(require("./tx"));
-const _ = __importStar(require("./util"));
-const check_tx = (tx, chain, StateData, LockData) => {
-    if (tx.meta.kind == "request") {
-        return TxSet.ValidRequestTx(tx, false, StateData, LockData);
+const tx_set = __importStar(require("./tx"));
+const check_tx = (tx, output_states, block_db, trie, state_db, lock_db, last_height) => {
+    if (tx.meta.kind === 0) {
+        return tx_set.verify_req_tx(tx, trie, state_db, lock_db, [5]);
     }
-    else if (tx.meta.kind == "refresh") {
-        return TxSet.ValidRefreshTx(tx, chain, true, StateData, LockData);
+    else if (tx.meta.kind === 1) {
+        return tx_set.verify_ref_tx(tx, output_states, block_db, trie, state_db, lock_db, last_height, []);
     }
     else
         return false;
 };
-exports.Tx_to_Pool = (pool, tx, chain, StateData, LockData) => {
-    if (!check_tx(tx, chain, StateData, LockData))
-        return pool;
-    const new_pool = _.new_obj(pool, p => {
-        p[tx.hash] = tx;
-        return p;
-    });
-    return new_pool;
+exports.tx2pool = async (pool_db, tx, output_states, block_db, trie, state_db, lock_db, last_height) => {
+    if (check_tx(tx, output_states, block_db, trie, state_db, lock_db, last_height)) {
+        await pool_db.write_obj(tx.hash, tx);
+    }
 };

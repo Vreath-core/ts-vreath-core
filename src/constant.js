@@ -26,8 +26,8 @@ exports.constant = {
     compatible_version: compatible_version
 };
 exports.change_config = (config) => {
-    my_version = config.my_version;
-    my_net_id = config.my_net_id;
-    my_chain_id = config.my_chain_id;
-    compatible_version = config.compatible_version;
+    exports.constant.my_version = config.my_version;
+    exports.constant.my_net_id = config.my_net_id;
+    exports.constant.my_chain_id = config.my_chain_id;
+    exports.constant.compatible_version = config.compatible_version;
 };

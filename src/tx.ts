@@ -39,7 +39,7 @@ export const empty_tx = ():T.Tx=>{
   }
 
   const add:T.TxAdd = {
-    height:0,
+    height:"",
     hash:"",
     index:0
   }
@@ -210,7 +210,6 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
   const meta = tx.meta;
   const kind = meta.kind;
   const req = meta.request;
-  const ref = meta.refresh;
   const gas = req.gas;
   const other_bases = req.bases;
 
@@ -231,8 +230,6 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
     return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0",_.slice_token_part(key),key,"0",[]));
   });
 
-  const empty_ref = empty_tx().meta.refresh;
-
   if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,ids,pub_keys,requester)){
     return false;
   }
@@ -240,7 +237,7 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
     //console.log("invalid kind");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(2)!=-1)||requester_state==null||_.hashed_pub_check(requester,pub_keys)||requester_state.token!=constant.native||bigInt(requester_state.amount,16).subtract(bigInt(tx_fee(tx),16)).subtract(bigInt(gas,16)).lesser(0)||await requested_check([requester],trie,lock_db)){
+  else if((disabling!=null&&disabling.indexOf(2)!=-1)||requester_state==null||_.hashed_pub_check(requester,pub_keys)||requester_state.token!=constant.native||bigInt(requester_state.amount,16).subtract(bigInt(tx_fee(tx),16)).subtract(bigInt(gas,16)).lesser(0)){
     //console.log("invalid requester");
     return false;
   }
@@ -256,10 +253,6 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
     //console.log("base states are already requested");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(6)!=-1)||ref.height!=empty_ref.height||ref.index!=empty_ref.index||ref.success!=empty_ref.success||ref.output.length!=0||ref.witness.length!=0||ref.nonce!=empty_ref.nonce||ref.gas_share!=empty_ref.gas_share||ref.unit_price!=empty_ref.unit_price){
-    //console.log("invalid refresh part");
-    return false;
-  }
   else{
     return true;
   }
@@ -269,7 +262,6 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
 export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB,last_height:string,disabling?:number[])=>{
   const meta = tx.meta;
   const kind = meta.kind;
-  const req = meta.request;
   const ref = meta.refresh;
 
   const height = ref.height;
@@ -305,7 +297,6 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
     return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0",_.slice_token_part(key),key,"0",[]));
   });
   const base_states_hashes = base_states.map(s=>_.array2hash([s.nonce,s.token,s.owner,s.amount].concat(s.data)));
-  const empty_req = empty_tx().meta.request;
 
   if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,ids,pub_keys,refresher)){
     return false;
@@ -336,10 +327,6 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
   }
   else if((disabling!=null&&disabling.indexOf(7)!=-1)||(success&&req_tx.meta.request.type==0&&(await output_change_check(bases,output_states)||await contract_check(main_token,bases,base_states,req_tx.meta.request.input,output_states,block_db,last_height)))||(!success&&(base_states_hashes.map((hash,i)=>hash!=output[i])||gas_share!=0))){
     //console.log("invalid output");
-    return false;
-  }
-  else if((disabling!=null&&disabling.indexOf(7)!=-1)||req.type!=empty_req.type||req.feeprice!=empty_req.feeprice||req.gas!=empty_req.gas||req.bases.length!=0||req.input.length!=0||req.log!=empty_req.log){
-    //console.log("invalid request part");
     return false;
   }
   else{
