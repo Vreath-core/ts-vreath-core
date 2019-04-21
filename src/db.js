@@ -25,5 +25,27 @@ class DB {
     async write_obj(key, obj) {
         await this.put(key, JSON.stringify(obj));
     }
+    async filterr(key_encode = 'hex', val_encode = 'utf8', check = (key, value) => true) {
+        let result = [];
+        const stream = this.db.createReadStream();
+        return new Promise((resolve, reject) => {
+            try {
+                stream.on('data', async (data) => {
+                    if (data.key == null || data.value == null)
+                        return result;
+                    const key = data.key.toString(key_encode);
+                    const value = JSON.parse(data.value.toString(val_encode));
+                    if (await check(key, value))
+                        result.push(value);
+                });
+                stream.on('end', (data) => {
+                    resolve(result);
+                });
+            }
+            catch (e) {
+                reject(e);
+            }
+        });
+    }
 }
 exports.DB = DB;
