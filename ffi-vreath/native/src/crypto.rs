@@ -18,6 +18,30 @@ fn hex_to_bytes32_slice(hex:String)->[u8;32]{
     vec_to_bytes32_slice(&vec)
 }
 
+fn vec_to_bytes33_slice(vec: &Vec<u8>)->[u8; 33]{
+    let mut array:[u8;33] = [0;33];
+    let bytes = &vec[..33];
+    array.copy_from_slice(bytes);
+    array
+}
+
+fn hex_to_bytes33_slice(hex:String)->[u8;33]{
+    let vec = util::hex2vec(hex);
+    vec_to_bytes33_slice(&vec)
+}
+
+fn vec_to_bytes64_slice(vec: &Vec<u8>)->[u8; 64]{
+    let mut array:[u8;64] = [0;64];
+    let bytes = &vec[..64];
+    array.copy_from_slice(bytes);
+    array
+}
+
+fn hex_to_bytes64_slice(hex:String)->[u8;64]{
+    let vec = util::hex2vec(hex);
+    vec_to_bytes64_slice(&vec)
+}
+
 pub fn get_sha256(mut cx: FunctionContext)->JsResult<JsString>{
     let data:String = cx.argument::<JsString>(0)?.value();
     let vec_data = util::hex2vec(data.to_string());
@@ -27,9 +51,7 @@ pub fn get_sha256(mut cx: FunctionContext)->JsResult<JsString>{
 }
 
 pub fn generate_key(mut cx: FunctionContext)->JsResult<JsString>{
-    let mut rng = rand::thread_rng();
-    let rng_slice:[u8;32] = rng.gen();
-    let private = crypto::generate_key(&rng_slice);
+    let private = crypto::generate_key();
     let hex = util::vec2hex(private.to_vec());
     Ok(cx.string(&hex))
 }
@@ -44,7 +66,7 @@ pub fn private2public(mut cx: FunctionContext)->JsResult<JsString>{
 pub fn get_shared_secret(mut cx: FunctionContext)->JsResult<JsString>{
     let private_key = cx.argument::<JsString>(0)?.value();
     let public_key = cx.argument::<JsString>(1)?.value();
-    let shared_secret = crypto::get_shared_secret(&hex_to_bytes32_slice(private_key),&hex_to_bytes32_slice(public_key));
+    let shared_secret = crypto::get_shared_secret(&hex_to_bytes32_slice(private_key),&hex_to_bytes33_slice(public_key));
     let hex = util::vec2hex(shared_secret.to_vec());
     Ok(cx.string(&hex))
 }
@@ -66,7 +88,7 @@ pub fn recover_public_key(mut cx: FunctionContext)->JsResult<JsString>{
     let data = cx.argument::<JsString>(0)?.value();
     let sign = cx.argument::<JsString>(1)?.value();
     let recover_id = cx.argument::<JsNumber>(2)?.value() as i32;
-    let key = crypto::recover_public_key(&util::hex2vec(data)[..],&util::hex2vec(sign)[..],recover_id);
+    let key = crypto::recover_public_key(&util::hex2vec(data)[..],&hex_to_bytes64_slice(sign),recover_id);
     let hex = util::vec2hex(key.to_vec());
     Ok(cx.string(hex))
 }
@@ -75,6 +97,6 @@ pub fn verify_sign(mut cx: FunctionContext)->JsResult<JsBoolean>{
     let data = cx.argument::<JsString>(0)?.value();
     let sign = cx.argument::<JsString>(1)?.value();
     let public_key = cx.argument::<JsString>(2)?.value();
-    let verify = crypto::verify_sign(&util::hex2vec(data)[..],&util::hex2vec(sign)[..],&util::hex2vec(public_key)[..]);
+    let verify = crypto::verify_sign(&util::hex2vec(data)[..],&hex_to_bytes64_slice(sign),&hex_to_bytes33_slice(public_key));
     Ok(cx.boolean(verify))
 }
