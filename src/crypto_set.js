@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const ffi = require('ffi-vreath');
+const ffi = require('../ffi-vreath/lib/index');
 //import * as crypto from 'crypto'
 const cryptonight = require('node-cryptonight-lite').hash;
 exports.get_sha256 = (hex) => {
