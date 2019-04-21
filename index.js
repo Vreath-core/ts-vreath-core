@@ -166,7 +166,7 @@ exports.crypto = {
     slice_hash_part: slice_hash_part
 };
 const change_configs = (version, network_id, chain_id, compatible_version) => {
-    if (hex_check(version, 2, true) || hex_check(network_id, 2, true) || hex_check(chain_id, 2, true) || hex_check(compatible_version, 2, true))
+    if (hex_check(version, 2) || hex_check(network_id, 2) || hex_check(chain_id, 2) || hex_check(compatible_version, 2))
         throw error;
     const config = {
         my_version: version,

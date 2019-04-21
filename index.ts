@@ -162,7 +162,7 @@ export const crypto = {
 }
 
 const change_configs = (version:string,network_id:string,chain_id:string,compatible_version:string)=>{
-    if(hex_check(version,2,true)||hex_check(network_id,2,true)||hex_check(chain_id,2,true)||hex_check(compatible_version,2,true)) throw error;
+    if(hex_check(version,2)||hex_check(network_id,2)||hex_check(chain_id,2)||hex_check(compatible_version,2)) throw error;
     const config:Config = {
         my_version:version,
         my_net_id:network_id,
