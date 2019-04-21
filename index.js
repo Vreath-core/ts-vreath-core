@@ -15,8 +15,11 @@ const crypto_set = __importStar(require("./src/crypto_set"));
 const _ = __importStar(require("./src/util"));
 const merkle_patricia_1 = require("./src/merkle_patricia");
 const db_1 = require("./src/db");
+const data_set = __importStar(require("./src/data"));
 const state_set = __importStar(require("./src/state"));
+const lock_set = __importStar(require("./src/lock"));
 const contract = __importStar(require("./src/contract"));
+const diff_1 = require("./src/diff");
 const tx_set = __importStar(require("./src/tx"));
 const block_set = __importStar(require("./src/block"));
 const pool_set = __importStar(require("./src/tx_pool"));
@@ -44,12 +47,11 @@ const uint_check = (num, size) => {
 const timestamp_check = (timestamp) => {
     return timestamp == null || typeof timestamp != 'number' || !Number.isInteger(timestamp) || timestamp.toString(10).length != 10;
 };
-/*const run_after_verification =　(func:any,inputs:any[],verify_funcs:((inputs:any)=>boolean)[])=>{
-    verify_funcs.forEach((func,i)=>{
-        if(func(inputs[i])) throw new Error('input data '+i.toString()+' is invalid');
-    })
-    return func.apply(null,inputs);
-}*/
+exports.checker = {
+    hex_check: hex_check,
+    uint_check: uint_check,
+    timestamp_check: timestamp_check
+};
 const error = new Error('input data is invalid');
 const get_sha_256 = (hex) => {
     if (hex_check(hex))
@@ -188,6 +190,38 @@ class db extends db_1.DB {
 }
 exports.db = db;
 ;
+const trie_ins = (db, root) => {
+    if (hex_check(root, 32))
+        throw error;
+    return data_set.trie_ins(db, root);
+};
+const read_from_trie = async (trie, db, key, index, empty) => {
+    if (hex_check(key) || [0, 1].indexOf(index) === -1)
+        throw error;
+    return await data_set.read_from_trie(trie, db, key, index, empty);
+};
+const write_state_hash = async (db, state) => {
+    if (!isState(state))
+        throw error;
+    await data_set.write_state_hash(db, state);
+};
+const write_lock_hash = async (db, lock) => {
+    if (!isLock(lock))
+        throw error;
+    await data_set.write_lock_hash(db, lock);
+};
+const write_trie = async (trie, state_db, lock_db, state, lock) => {
+    if (!isState(state) || !isLock(lock))
+        throw error;
+    await data_set.write_trie(trie, state_db, lock_db, state, lock);
+};
+exports.data = {
+    trie_ins: trie_ins,
+    read_from_trie: read_from_trie,
+    write_state_hash: write_state_hash,
+    write_lock_hash: write_lock_hash,
+    write_trie: write_trie
+};
 const isState = (state) => {
     if (hex_check(state.nonce, 8, true) || hex_check(state.token, 8, true) || hex_check(state.owner, 40) || hex_check(state.amount, 10, true) || state.data.some(data => data == null || typeof data != 'string'))
         return false;
@@ -196,12 +230,6 @@ const isState = (state) => {
 };
 const isToken = (token) => {
     if (hex_check(token.nonce, 8, true) || hex_check(token.name, 8, true) || hex_check(token.issued, 10, true) || hex_check(token.code, 32))
-        return false;
-    else
-        return true;
-};
-const isLock = (lock) => {
-    if (hex_check(lock.address, 40, true) || [0, 1].indexOf(lock.state) === -1 || hex_check(lock.height, 8, true) || hex_check(lock.block_hash, 32) || uint_check(lock.index, 256) || hex_check(lock.tx_hash, 32))
         return false;
     else
         return true;
@@ -228,10 +256,27 @@ const verify_state = (state) => {
 };
 exports.state = {
     isState: isState,
-    isLock: isLock,
     create_state: create_state,
     create_token: create_token,
     verify_state: verify_state
+};
+const isLock = (lock) => {
+    if (hex_check(lock.address, 40, true) || [0, 1].indexOf(lock.state) === -1 || hex_check(lock.height, 8, true) || hex_check(lock.block_hash, 32) || uint_check(lock.index, 256) || hex_check(lock.tx_hash, 32))
+        return false;
+    else
+        return true;
+};
+const create_lock = (address = crypto_set.generate_address("", ""), state = 0, height = "0x0", block_hash = crypto_set.get_sha256(""), index = 0, tx_hash = crypto_set.get_sha256("")) => {
+    if (hex_check(address, 40) || [0, 1].indexOf(state) === -1 || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 256) || hex_check(tx_hash, 32))
+        throw error;
+    const lock = lock_set.CreateLock(address, state, height, block_hash, index, tx_hash);
+    if (!isLock(lock))
+        throw new Error('invalid lock');
+    return lock;
+};
+exports.lock = {
+    isLock: isLock,
+    create_lock: create_lock
 };
 const isSignature = (sign) => {
     if (hex_check(sign.data, 64) || hex_check(sign.v, 6, true))
@@ -529,4 +574,9 @@ const tx2pool = async (pool_db, tx, output_states, block_db, trie, state_db, loc
 };
 exports.pool = {
     tx2pool: tx2pool
+};
+exports.compute_diff = (amount) => {
+    if (hex_check(amount, 10, true))
+        throw error;
+    return diff_1.get_diff(amount);
 };
