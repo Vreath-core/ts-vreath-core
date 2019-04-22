@@ -261,13 +261,13 @@ exports.state = {
     verify_state: verify_state
 };
 const isLock = (lock) => {
-    if (hex_check(lock.address, 40, true) || [0, 1].indexOf(lock.state) === -1 || hex_check(lock.height, 8, true) || hex_check(lock.block_hash, 32) || uint_check(lock.index, 256) || hex_check(lock.tx_hash, 32))
+    if (hex_check(lock.address, 40, true) || [0, 1].indexOf(lock.state) === -1 || hex_check(lock.height, 8, true) || hex_check(lock.block_hash, 32) || uint_check(lock.index, 8) || hex_check(lock.tx_hash, 32))
         return false;
     else
         return true;
 };
 const create_lock = (address = crypto_set.generate_address("", ""), state = 0, height = "0x0", block_hash = crypto_set.get_sha256(""), index = 0, tx_hash = crypto_set.get_sha256("")) => {
-    if (hex_check(address, 40) || [0, 1].indexOf(state) === -1 || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 256) || hex_check(tx_hash, 32))
+    if (hex_check(address, 40) || [0, 1].indexOf(state) === -1 || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 8) || hex_check(tx_hash, 32))
         throw error;
     const lock = lock_set.CreateLock(address, state, height, block_hash, index, tx_hash);
     if (!isLock(lock))
@@ -295,13 +295,13 @@ const isTxMeta = (meta) => {
     }
     else if (kind === 1) {
         const empty_req = empty.meta.request;
-        return !(hex_check(ref.height, 8, true) || uint_check(ref.index, 256) || [0, 1].indexOf(ref.success) === -1 || ref.output.some(key => hex_check(key, 32)) || ref.witness.some(str => hex_check(str)) || hex_check(ref.nonce, 8, true) || uint_check(ref.gas_share, 256) || hex_check(ref.unit_price, 10, true) || req.type != empty_req.type || req.feeprice != empty_req.feeprice || req.gas != empty_req.gas || req.bases.length != 0 || req.input.length != 0 || req.log != empty_req.log);
+        return !(hex_check(ref.height, 8, true) || uint_check(ref.index, 8) || [0, 1].indexOf(ref.success) === -1 || ref.output.some(key => hex_check(key, 32)) || ref.witness.some(str => hex_check(str)) || hex_check(ref.nonce, 8, true) || uint_check(ref.gas_share, 8) || hex_check(ref.unit_price, 10, true) || req.type != empty_req.type || req.feeprice != empty_req.feeprice || req.gas != empty_req.gas || req.bases.length != 0 || req.input.length != 0 || req.log != empty_req.log);
     }
     else
         return false;
 };
 const isTxAdd = (add) => {
-    if (hex_check(add.height, 8, true) || uint_check(add.index, 256) || hex_check(add.hash, 32))
+    if (hex_check(add.height, 8, true) || uint_check(add.index, 8) || hex_check(add.hash, 32))
         return false;
     else
         return true;
@@ -317,6 +317,32 @@ const isBlockMeta = (meta) => {
 };
 const isBlock = (block) => {
     return hex_check(block.hash, 32) && isSignature(block.signature) && isBlockMeta(block.meta) && !block.txs.some(tx => !isTx(tx));
+};
+const requested_check = async (base, trie, lock_db) => {
+    if (base.some(key => hex_check(key, 40)))
+        throw error;
+    return await tx_set.requested_check(base, trie, lock_db);
+};
+//require info about request-tx
+const refreshed_check = async (base, trie, lock_db) => {
+    if (base.some(key => hex_check(key, 40)))
+        throw error;
+    return await tx_set.refreshed_check(base, trie, lock_db);
+};
+const state_check = (state) => {
+    if (!isState(state))
+        throw error;
+    return tx_set.state_check(state);
+};
+const tx_meta2array = (meta) => {
+    if (!isTxMeta(meta))
+        throw error;
+    return tx_set.tx_meta2array(meta);
+};
+const tx_fee = (tx) => {
+    if (!isTx(tx))
+        throw error;
+    return tx_set.tx_fee(tx);
 };
 const get_tx_fee = (tx) => {
     if (!isTx(tx))
@@ -346,6 +372,16 @@ const find_req_tx = async (ref_tx, block_db) => {
         throw new Error('invalid request tx');
     return req_tx;
 };
+const get_info_from_tx = (tx) => {
+    if (!isTx(tx))
+        throw error;
+    return tx_set.get_info_from_tx(tx);
+};
+const contract_check = async (token, bases, base_state, input_data, output_state, block_db, last_height) => {
+    if (hex_check(token, 8, true) || bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || output_state.some(s => !isState(s)) || (last_height != null && hex_check(last_height, 8, true)))
+        throw error;
+    return await tx_set.contract_check(token, bases, base_state, input_data, output_state, block_db, last_height);
+};
 const verify_req_tx = async (req_tx, trie, state_db, lock_db, disabling) => {
     if (!isTx(req_tx) || req_tx.meta.kind != 0 || (disabling != null && disabling.some(num => [0, 1, 2, 3, 4, 5].indexOf(num) === -1)))
         throw error;
@@ -368,7 +404,7 @@ const create_req_tx = (type, bases, feeprice, gas, input, log, private_key) => {
     return signed;
 };
 const create_ref_tx = (height, index, success, output, witness, nonce, gas_share, unit_price, private_key) => {
-    if (hex_check(height, 8, true) || uint_check(index, 256) || [0, 1].indexOf(success) === -1 || output.some(key => hex_check(key, 32, true)) || witness.some(str => hex_check(str)) || hex_check(nonce, 8, true) || uint_check(gas_share, 256) || hex_check(unit_price, 10, true) || hex_check(private_key, 32))
+    if (hex_check(height, 8, true) || uint_check(index, 8) || [0, 1].indexOf(success) === -1 || output.some(key => hex_check(key, 32, true)) || witness.some(str => hex_check(str)) || hex_check(nonce, 8, true) || uint_check(gas_share, 8) || hex_check(unit_price, 10, true) || hex_check(private_key, 32))
         throw error;
     const ref_tx = tx_set.create_ref_tx(height, index, success, output, witness, nonce, gas_share, unit_price);
     const signed = tx_set.sign_tx(ref_tx, private_key);
@@ -385,12 +421,12 @@ const sign_tx = (tx, private_key) => {
     return signed;
 };
 const accept_req_tx = async (tx, height, block_hash, index, trie, state_db, lock_db) => {
-    if (!isTx(tx) || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 256))
+    if (!isTx(tx) || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 8))
         throw error;
     await tx_set.accept_req_tx(tx, height, block_hash, index, trie, state_db, lock_db);
 };
 const accept_ref_tx = async (tx, height, block_hash, index, trie, state_db, lock_db, block_db) => {
-    if (!isTx(tx) || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 256))
+    if (!isTx(tx) || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 8))
         throw error;
     await tx_set.accept_ref_tx(tx, height, block_hash, index, trie, state_db, lock_db, block_db);
 };
@@ -399,9 +435,16 @@ exports.tx = {
     isTx: isTx,
     isTxMeta: isTxMeta,
     isTxAdd: isTxAdd,
+    requested_check: requested_check,
+    refreshed_check: refreshed_check,
+    state_check: state_check,
+    tx_meta2array: tx_meta2array,
+    tx_fee: tx_fee,
     get_tx_fee: get_tx_fee,
     //mining:mining,
     find_req_tx: find_req_tx,
+    get_info_from_tx: get_info_from_tx,
+    contract_check: contract_check,
     verify_req_tx: verify_req_tx,
     verify_ref_tx: verify_ref_tx,
     create_req_tx: create_req_tx,
@@ -484,6 +527,16 @@ exports.contracts = {
     key_block_change: key_block_change,
     micro_block_change: micro_block_change
 };
+const block_meta2array = (meta) => {
+    if (!isBlockMeta(meta))
+        throw error;
+    return block_set.block_meta2array(meta);
+};
+const get_info_from_block = (block) => {
+    if (!isBlock(block))
+        throw error;
+    return block_set.get_info_from_block(block);
+};
 const search_key_block = async (block_db, last_height) => {
     if (hex_check(last_height, 8, true))
         throw error;
@@ -508,11 +561,31 @@ const get_tree_root = (hashes) => {
         throw new Error('invalid root');
     return root;
 };
+const tx_fee_sum = (txs) => {
+    if (txs.some(tx => !isTx(tx)))
+        throw error;
+    return block_set.tx_fee_sum(txs);
+};
+const pos_hash = (previoushash, address, timestamp) => {
+    if (hex_check(previoushash, 32) || hex_check(address, 40) || timestamp_check(timestamp))
+        throw error;
+    return block_set.pos_hash(previoushash, address, timestamp);
+};
 const pos_staking = (previoushash, address, timestamp, balance, difficulty) => {
     if (hex_check(previoushash, 32) || hex_check(address, 40) || timestamp_check(timestamp) || hex_check(balance, 10, true) || hex_check(difficulty, 8, true))
         throw error;
     const pos_hash = block_set.pos_hash(previoushash, address, timestamp);
     return big_integer_1.default(pos_hash, 16).lesserOrEquals(big_integer_1.default(2).pow(256).multiply(big_integer_1.default(balance, 16)).divide(big_integer_1.default(difficulty, 16)));
+};
+const txs_check = (block, output_states, block_db, trie, state_db, lock_db, last_height) => {
+    if (!isBlock(block) || output_states.some(s => !isState(s)) || hex_check(last_height, 8, true))
+        throw error;
+    return block_set.txs_check(block, output_states, block_db, trie, state_db, lock_db, last_height);
+};
+const compute_block_size = (block) => {
+    if (!isBlock(block))
+        throw error;
+    return block_set.compute_block_size(block);
 };
 const verify_key_block = async (block, block_db, trie, state_db, last_height) => {
     if (!isBlock(block) || block.meta.kind != 0 || hex_check(last_height))
@@ -556,10 +629,16 @@ exports.block = {
     isBlock: isBlock,
     isBlockMeta: isBlockMeta,
     empty_block: block_set.empty_block(),
+    block_meta2array: block_meta2array,
+    get_info_from_block: get_info_from_block,
     search_key_block: search_key_block,
     search_micro_block: search_micro_block,
     get_tree_root: get_tree_root,
+    tx_fee_sum: tx_fee_sum,
+    pos_hash: pos_hash,
     pos_staking: pos_staking,
+    txs_check: txs_check,
+    compute_block_size: compute_block_size,
     verify_key_block: verify_key_block,
     verify_micro_block: verify_micro_block,
     create_key_block: create_key_block,
