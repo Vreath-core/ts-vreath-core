@@ -336,21 +336,10 @@ const get_tx_fee = (tx:T.Tx)=>{
     return tx_set.tx_fee(tx);
 }
 
-/*const mining = (request:string,height:number,block_hash:string,refresher:string,output:string,unit_price:number,nonce:number)=>{
-    try{
-        if(typeof request != 'string' || _.hash_size_check(request)) throw new Error('invalid hash');
-        else if(typeof height != 'number' || height<0 || !Number.isInteger(height)) throw new Error('invalid height');
-        else if(typeof block_hash != 'string' || _.hash_size_check(block_hash)) throw new Error('invalid block hash');
-        else if(typeof refresher != 'string' || _.address_form_check(refresher,constant.token_name_maxsize)) throw new Error('invalid refresher');
-        else if(typeof output != 'string' || _.hash_size_check(output)) throw new Error('invalid output');
-        else if(typeof unit_price != 'number' || unit_price<0) throw new Error('invalid unit price');
-        else if(typeof nonce != 'number' || nonce<0 || !Number.isInteger(nonce)) throw new Error('invalid nonce');
-        return math.smallerEq(TxSet.unit_hash(request,height,block_hash,nonce,refresher,output,unit_price),constant.pow_target) as boolean;
-    }
-    catch(e){
-        throw new Error(e);
-    }
-}*/
+const mining = (request:string,height:string,block_hash:string,nonce:string,refresher:string,output:string,unit_price:string)=>{
+    if(hex_check(request,32)||hex_check(height,8,true)||hex_check(block_hash,32)||hex_check(nonce,8,true)||hex_check(refresher,40)||hex_check(output,32)||hex_check(unit_price,10,true)) throw error;
+    return tx_set.unit_hash(request,height,block_hash,nonce,refresher,output,unit_price):
+}
 
 const find_req_tx = async (ref_tx:T.Tx,block_db:DB)=>{
     if(!isTx(ref_tx)||ref_tx.meta.kind!=1) throw error;
@@ -424,7 +413,7 @@ export const tx = {
     tx_meta2array:tx_meta2array,
     tx_fee:tx_fee,
     get_tx_fee:get_tx_fee,
-    //mining:mining,
+    mining:mining,
     find_req_tx:find_req_tx,
     get_info_from_tx:get_info_from_tx,
     contract_check:contract_check,
