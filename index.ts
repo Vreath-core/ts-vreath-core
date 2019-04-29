@@ -13,7 +13,7 @@ import {get_diff} from './src/diff'
 import * as tx_set from './src/tx'
 import * as block_set from './src/block'
 import * as pool_set from './src/tx_pool'
-import bigInt from 'big-integer'
+import bigInt, { BigInteger } from 'big-integer'
 
 const hex_check = (hex:string,byte?:number,variable_length?:boolean)=>{
     if(hex==null || typeof hex != 'string' || Buffer.from(hex,'hex').length*2!=hex.length || hex.length%2!=0) return true;
@@ -111,6 +111,10 @@ const hex2number = (hex:string)=>{
     return _.hex2num(hex);
 }
 
+const bigint2hex = (bigInt:BigInteger)=>{
+    return _.bigInt2hex(bigInt);
+}
+
 const hex_sum = (hexes:string[])=>{
     hexes.forEach(hex=>{
         if(hex_check(hex)) throw error;
@@ -157,6 +161,7 @@ export const crypto = {
     isSignature:isSignature,
     generate_address:generate_address,
     hex2number:hex2number,
+    bigint2hex:bigint2hex,
     hex_sum:hex_sum,
     array2hash:array2hash,
     merge_pub_keys:merge_pub_keys,

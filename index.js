@@ -122,6 +122,9 @@ const hex2number = (hex) => {
         throw error;
     return _.hex2num(hex);
 };
+const bigint2hex = (bigInt) => {
+    return _.bigInt2hex(bigInt);
+};
 const hex_sum = (hexes) => {
     hexes.forEach(hex => {
         if (hex_check(hex))
@@ -167,6 +170,7 @@ exports.crypto = {
     isSignature: isSignature,
     generate_address: generate_address,
     hex2number: hex2number,
+    bigint2hex: bigint2hex,
     hex_sum: hex_sum,
     array2hash: array2hash,
     merge_pub_keys: merge_pub_keys,
