@@ -5,7 +5,6 @@ import {constant} from './constant'
 import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
 import { DB } from './db';
-import { empty_block } from './block';
 
 export const native_prove = (bases:string[],base_state:T.State[],input_data:string[]):T.State[]=>{
     const native = constant.native;
@@ -108,18 +107,18 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
             const native_base_hash_parts = native_base.map(add=>_.slice_hash_part(add));
             if(unit_base.length!=units.length+1||_.slice_hash_part(unit_validator)!=_.slice_hash_part(native_validator)||unit_miners.some(add=>_.slice_token_part(add)!=constant.unit||native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add))===-1)) return base_state;
             const unit_verify = P.some(units,async (unit,i)=>{
-                const ref_block:T.Block = await block_db.read_obj(unit[0]) || empty_block();
+                const ref_block:T.Block|null = await block_db.read_obj(unit[0]);
                 if(ref_block==null) return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if(ref_tx==null) return true;
                 const height = ref_tx.meta.refresh.height || "00";
-                const req_block:T.Block = await block_db.read_obj(height) || empty_block();
+                const req_block:T.Block|null = await block_db.read_obj(height);
                 if(req_block==null) return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
                 if(req_tx==null) return true;
                 const output_hash = _.array2hash(ref_tx.meta.refresh.output);
                 const iden = _.array2hash([req_tx.hash,height,req_block.hash,unit[3],output_hash]);
-                const hash = await tx_set.unit_hash(req_tx.hash,height,req_block.hash,unit[2],unit[3],output_hash,unit[4]);
+                const hash = await tx_set.unit_hash(req_tx.hash,req_block.hash,height,unit[2],unit[3],output_hash,unit[4]);
                 return !bigInt(hash,16).lesserOrEquals(constant.pow_target) || unit_base_hash_parts[i+1]!=iden || unit_states[i].data.length!=0;
             });
             if(unit_verify) return base_state;
@@ -203,12 +202,12 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
             const native_base_hash_parts = native_base.map(add=>_.slice_hash_part(add));
             if(unit_base.length!=units.length+1||_.slice_hash_part(unit_validator)!=_.slice_hash_part(native_validator)||unit_miners.some(add=>_.slice_token_part(add)!=constant.unit||native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add))===-1)) return false;
             const unit_verify = P.some(units,async (unit,i)=>{
-                const ref_block:T.Block = await block_db.read_obj(unit[0]) || empty_block();
+                const ref_block:T.Block|null = await block_db.read_obj(unit[0]);
                 if(ref_block==null) return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if(ref_tx==null) return true;
                 const height = ref_tx.meta.refresh.height || "00";
-                const req_block:T.Block = await block_db.read_obj(height) || empty_block();
+                const req_block:T.Block|null = await block_db.read_obj(height);
                 if(req_block==null) return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
                 if(req_tx==null) return true;

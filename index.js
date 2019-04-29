@@ -657,3 +657,32 @@ exports.compute_diff = (amount) => {
         throw error;
     return diff_1.get_diff(amount);
 };
+const isUnit = (unit) => {
+    return !hex_check(unit[0], 8, true) && !uint_check(unit[1], 8) && !hex_check(unit[2], 8, true) && !hex_check(unit[3], 40) && !hex_check(unit[4], 10, true);
+};
+const get_info_from_unit = async (unit, block_db) => {
+    if (!isUnit(unit))
+        throw error;
+    const ref_block = await block_db.read_obj(unit[0]);
+    if (ref_block == null)
+        throw new Error("ref_block doesn't exist");
+    const ref_tx = ref_block.txs[unit[1]];
+    if (ref_tx == null)
+        throw new Error("ref_tx doesn't exist");
+    const height = ref_tx.meta.refresh.height || "00";
+    const req_block = await block_db.read_obj(height);
+    if (req_block == null)
+        throw new Error("req_block doesn't exist");
+    const req_tx = req_block.txs[ref_tx.meta.refresh.index];
+    if (req_tx == null)
+        throw new Error("req_tx doesn't exist");
+    const output_hash = _.array2hash(ref_tx.meta.refresh.output);
+    const iden = _.array2hash([req_tx.hash, height, req_block.hash, unit[3], output_hash]);
+    const unit_address = crypto_set.generate_address(constant_1.constant.unit, iden);
+    const hash = await tx_set.unit_hash(req_tx.hash, req_block.hash, height, unit[2], unit[3], output_hash, unit[4]);
+    return [iden, unit_address, hash];
+};
+exports.unit = {
+    isUnit: isUnit,
+    get_info_from_unit: get_info_from_unit
+};
