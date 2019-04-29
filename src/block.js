@@ -66,6 +66,8 @@ exports.search_key_block = async (block_db, last_height) => {
     let block = exports.empty_block();
     while (1) {
         block = await block_db.read_obj(height);
+        if (block == null)
+            continue;
         if (block.meta.kind === 0)
             break;
         else if (height === "00")
@@ -87,6 +89,8 @@ exports.search_micro_block = async (block_db, key_block, last_height) => {
     let micros = [];
     while (1) {
         block = await block_db.read_obj(height);
+        if (block == null)
+            continue;
         raw_hash = _.array2hash(exports.block_meta2array(block.meta));
         public_key = crypto_set.recover(raw_hash, block.signature.data, big_integer_1.default(block.signature.v, 16).mod(2).toJSNumber());
         if (block.meta.kind === 1 && public_key === key_public)
@@ -300,7 +304,7 @@ exports.verify_micro_block = async (block, output_states, block_db, trie, state_
     const tx_roots = txs.map(t => t.hash);
     const date = new Date();
     const now = Math.floor(date.getTime() / 1000);
-    const key_block = await exports.search_key_block(block_db, last_height);
+    const key_block = await exports.search_key_block(block_db, last_height) || exports.empty_block();
     const key_block_public = exports.get_info_from_block(key_block)[3];
     const already_micro = await exports.search_micro_block(block_db, key_block, last_height);
     const last = await block_db.read_obj(last_height) || exports.empty_block();
@@ -438,7 +442,7 @@ exports.create_micro_block = async (private_key, block_db, last_height, trie, tx
     const empty = exports.empty_block();
     const last = await block_db.read_obj(last_height) || empty;
     const previoushash = last.hash;
-    const key = await exports.search_key_block(block_db, last_height);
+    const key = await exports.search_key_block(block_db, last_height) || exports.empty_block();
     const date = new Date();
     const timestamp = Math.floor(date.getTime() / 1000);
     const trie_root = trie.now_root();
@@ -485,7 +489,7 @@ const compute_issue = (height) => {
         return issue.toString(16);
 };
 exports.accept_key_block = async (block, block_db, last_height, trie, state_db, lock_db) => {
-    const last_key = await exports.search_key_block(block_db, last_height);
+    const last_key = await exports.search_key_block(block_db, last_height) || exports.empty_block();
     const last_micros = await exports.search_micro_block(block_db, last_key, last_height);
     const pre_pulled = exports.get_info_from_block(last_key);
     const new_pulled = exports.get_info_from_block(block);

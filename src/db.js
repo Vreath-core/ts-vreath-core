@@ -10,8 +10,13 @@ class DB {
         this.db = levelup_1.default(leveldown_1.default(root));
     }
     async get(key, encode = 'utf8') {
-        const buffer = await this.db.get(key);
-        return buffer.toString(encode);
+        try {
+            const buffer = await this.db.get(key);
+            return buffer.toString(encode);
+        }
+        catch (e) {
+            return null;
+        }
     }
     async put(key, val, key_encode = 'hex', val_encode = 'utf8') {
         await this.db.put(Buffer.from(key, key_encode), Buffer.from(val, val_encode));
@@ -20,7 +25,10 @@ class DB {
         await this.db.del(key);
     }
     async read_obj(key) {
-        return JSON.parse(await this.get(key));
+        const read = await this.get(key);
+        if (read == null)
+            return null;
+        return JSON.parse(read);
     }
     async write_obj(key, obj) {
         await this.put(key, JSON.stringify(obj));

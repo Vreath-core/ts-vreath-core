@@ -13,7 +13,7 @@ export const trie_ins = (db:DB,root?:string)=>{
 export const read_from_trie = async <T>(trie:Trie,db:DB,key:string,index:0|1,empty:T)=>{
     const hashes = await trie.get<[string,string]>(key);
     if(hashes==null) return empty;
-    const raw:T = await db.read_obj(hashes[index]);
+    const raw:T|null = await db.read_obj(hashes[index]);
     if(raw==null) return empty;
     else return raw;
 }

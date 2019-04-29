@@ -539,7 +539,7 @@ const search_key_block = async (block_db, last_height) => {
     if (hex_check(last_height, 8, true))
         throw error;
     const key_block = await block_set.search_key_block(block_db, last_height);
-    if (!isBlock(key_block))
+    if (key_block == null || !isBlock(key_block))
         throw new Error('invalid key block');
     return key_block;
 };

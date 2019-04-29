@@ -15,6 +15,7 @@ const tx_set = __importStar(require("./tx"));
 const constant_1 = require("./constant");
 const big_integer_1 = __importDefault(require("big-integer"));
 const P = __importStar(require("p-iteration"));
+const block_1 = require("./block");
 exports.native_prove = (bases, base_state, input_data) => {
     const native = constant_1.constant.native;
     const type = input_data[0];
@@ -114,14 +115,14 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
             if (unit_base.length != units.length + 1 || _.slice_hash_part(unit_validator) != _.slice_hash_part(native_validator) || unit_miners.some(add => _.slice_token_part(add) != constant_1.constant.unit || native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add)) === -1))
                 return base_state;
             const unit_verify = P.some(units, async (unit, i) => {
-                const ref_block = await block_db.read_obj(unit[0]);
+                const ref_block = await block_db.read_obj(unit[0]) || block_1.empty_block();
                 if (ref_block == null)
                     return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if (ref_tx == null)
                     return true;
                 const height = ref_tx.meta.refresh.height || "00";
-                const req_block = await block_db.read_obj(height);
+                const req_block = await block_db.read_obj(height) || block_1.empty_block();
                 if (req_block == null)
                     return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
@@ -214,14 +215,14 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
             if (unit_base.length != units.length + 1 || _.slice_hash_part(unit_validator) != _.slice_hash_part(native_validator) || unit_miners.some(add => _.slice_token_part(add) != constant_1.constant.unit || native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add)) === -1))
                 return false;
             const unit_verify = P.some(units, async (unit, i) => {
-                const ref_block = await block_db.read_obj(unit[0]);
+                const ref_block = await block_db.read_obj(unit[0]) || block_1.empty_block();
                 if (ref_block == null)
                     return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if (ref_tx == null)
                     return true;
                 const height = ref_tx.meta.refresh.height || "00";
-                const req_block = await block_db.read_obj(height);
+                const req_block = await block_db.read_obj(height) || block_1.empty_block();
                 if (req_block == null)
                     return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];

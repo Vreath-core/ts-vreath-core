@@ -59,9 +59,10 @@ export const get_info_from_block = (block:T.Block):[string,string[],string,strin
 
 export const search_key_block = async (block_db:DB,last_height:string)=>{
     let height:string = last_height;
-    let block:T.Block = empty_block();
+    let block:T.Block|null = empty_block();
     while(1){
         block = await block_db.read_obj(height);
+        if(block==null) continue;
         if(block.meta.kind===0) break;
         else if(height==="00") break;
         else{
@@ -76,12 +77,13 @@ export const search_micro_block = async (block_db:DB,key_block:T.Block,last_heig
     const recover_id = bigInt(key_block.signature.v,16).mod(2).toJSNumber();
     const key_public = crypto_set.recover(raw_block_hash,key_block.signature.data,recover_id);
     let height = key_block.meta.height;
-    let block:T.Block;
+    let block:T.Block | null;
     let raw_hash:string;
     let public_key:string;
     let micros:T.Block[] = [];
     while(1){
         block = await block_db.read_obj(height);
+        if(block==null) continue;
         raw_hash = _.array2hash(block_meta2array(block.meta));
         public_key = crypto_set.recover(raw_hash,block.signature.data,bigInt(block.signature.v,16).mod(2).toJSNumber());
         if(block.meta.kind===1&&public_key===key_public) micros.push(block);
@@ -303,7 +305,7 @@ export const verify_micro_block = async (block:T.Block,output_states:T.State[],b
     const date = new Date();
     const now = Math.floor(date.getTime()/1000);
 
-    const key_block = await search_key_block(block_db,last_height);
+    const key_block = await search_key_block(block_db,last_height) || empty_block();
     const key_block_public = get_info_from_block(key_block)[3];
     const already_micro = await search_micro_block(block_db,key_block,last_height);
 
@@ -446,7 +448,7 @@ export const create_micro_block = async (private_key:string,block_db:DB,last_hei
     const empty = empty_block();
     const last:T.Block = await block_db.read_obj(last_height) || empty;
     const previoushash = last.hash;
-    const key = await search_key_block(block_db,last_height);
+    const key = await search_key_block(block_db,last_height) || empty_block();
     const date = new Date();
     const timestamp = Math.floor(date.getTime()/1000);
     const trie_root = trie.now_root();
@@ -495,7 +497,7 @@ const compute_issue = (height:string)=>{
 }
 
 export const accept_key_block = async (block:T.Block,block_db:DB,last_height:string,trie:Trie,state_db:DB,lock_db:DB)=>{
-    const last_key = await search_key_block(block_db,last_height);
+    const last_key = await search_key_block(block_db,last_height) || empty_block();
     const last_micros = await search_micro_block(block_db,last_key,last_height);
 
     const pre_pulled = get_info_from_block(last_key);
