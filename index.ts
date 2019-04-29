@@ -294,16 +294,18 @@ const isTxAdd = (add:T.TxAdd):add is T.TxAdd =>{
 }
 
 const isTx = (tx:T.Tx):tx is T.Tx =>{
-    return hex_check(tx.hash,32) && tx.signature.some(sign=>!isSignature(sign) )&& isTxMeta(tx.meta) && isTxAdd(tx.additional);
+    if(hex_check(tx.hash,32)||tx.signature.some(sign=>!isSignature(sign))||!isTxMeta(tx.meta)||!isTxAdd(tx.additional)) return false;
+    else return true;
 }
 
 const isBlockMeta = (meta:T.BlockMeta):meta is T.BlockMeta =>{
-    if([0,1].indexOf(meta.kind)===-1||hex_check(meta.height,8,true)||hex_check(meta.previoushash,32)||timestamp_check(meta.timestamp) || hex_check(meta.pos_diff,8,true) || hex_check(meta.trie_root,32) || hex_check(meta.tx_root,32) || hex_check(meta.fee_sum,10,true) || hex_check(meta.extra)) return false;
+    if([0,1].indexOf(meta.kind)===-1||hex_check(meta.height,8,true)||hex_check(meta.previoushash,32)||timestamp_check(meta.timestamp)||hex_check(meta.pos_diff,8,true)||hex_check(meta.trie_root,32)||hex_check(meta.tx_root,32)||hex_check(meta.fee_sum,10,true)||hex_check(meta.extra)) return false;
     else return true;
 }
 
 const isBlock = (block:T.Block):block is T.Block =>{
-    return hex_check(block.hash,32) && isSignature(block.signature) && isBlockMeta(block.meta) && !block.txs.some(tx=>!isTx(tx));
+    if(hex_check(block.hash,32)||!isSignature(block.signature)||!isBlockMeta(block.meta)||block.txs.some(tx=>!isTx(tx))) return false;
+    else return true;
 }
 
 const requested_check = async (base:string[],trie:Trie,lock_db:DB)=>{

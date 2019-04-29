@@ -309,7 +309,10 @@ const isTxAdd = (add) => {
         return true;
 };
 const isTx = (tx) => {
-    return hex_check(tx.hash, 32) && tx.signature.some(sign => !isSignature(sign)) && isTxMeta(tx.meta) && isTxAdd(tx.additional);
+    if (hex_check(tx.hash, 32) || tx.signature.some(sign => !isSignature(sign)) || !isTxMeta(tx.meta) || !isTxAdd(tx.additional))
+        return false;
+    else
+        return true;
 };
 const isBlockMeta = (meta) => {
     if ([0, 1].indexOf(meta.kind) === -1 || hex_check(meta.height, 8, true) || hex_check(meta.previoushash, 32) || timestamp_check(meta.timestamp) || hex_check(meta.pos_diff, 8, true) || hex_check(meta.trie_root, 32) || hex_check(meta.tx_root, 32) || hex_check(meta.fee_sum, 10, true) || hex_check(meta.extra))
@@ -318,7 +321,10 @@ const isBlockMeta = (meta) => {
         return true;
 };
 const isBlock = (block) => {
-    return hex_check(block.hash, 32) && isSignature(block.signature) && isBlockMeta(block.meta) && !block.txs.some(tx => !isTx(tx));
+    if (hex_check(block.hash, 32) || !isSignature(block.signature) || !isBlockMeta(block.meta) || block.txs.some(tx => !isTx(tx)))
+        return false;
+    else
+        return true;
 };
 const requested_check = async (base, trie, lock_db) => {
     if (base.some(key => hex_check(key, 40)))
