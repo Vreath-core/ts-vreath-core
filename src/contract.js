@@ -150,7 +150,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                 if (s.token != constant_1.constant.unit || s.owner != unit_base[0])
                     return s;
                 const flag = s.data[0];
-                if (flag === "0x0")
+                if (flag === "0")
                     return s;
                 const pre_height = s.data[1];
                 const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
@@ -206,7 +206,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
     const unit_miners = units.map(u => u[3]).filter((val, i, array) => array.indexOf(val) === i);
     const type = input_data[0];
     switch (type) {
-        case "0x0":
+        case "0":
             const unit_validator = unit_base[0];
             const native_validator = native_base[0];
             const unit_base_hash_parts = unit_base.map(add => _.slice_hash_part(add));
@@ -271,7 +271,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 if (s.token != constant_1.constant.unit || unit_base.slice(1).indexOf(s.owner) === -1)
                     return false;
                 const output = output_state[i];
-                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || s.data[0] != null || output.data[0] != "0x0" || output.data[1] != last_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
+                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || s.data[0] != null || output.data[0] != "0" || output.data[1] != last_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
             });
             if (unit_used)
                 return false;

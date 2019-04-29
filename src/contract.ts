@@ -137,7 +137,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
             const unit_bought = base_state.map(s=>{
                 if(s.token!=constant.unit||s.owner!=unit_base[0]) return s;
                 const flag = s.data[0];
-                if(flag==="0x0") return s;
+                if(flag==="0") return s;
                 const pre_height = s.data[1];
                 const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
                 const amount = (()=>{
@@ -195,7 +195,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
     const unit_miners = units.map(u=>u[3]).filter((val,i,array)=>array.indexOf(val)===i);
     const type = input_data[0];
     switch(type){
-        case "0x0":
+        case "0":
             const unit_validator = unit_base[0];
             const native_validator = native_base[0];
             const unit_base_hash_parts = unit_base.map(add=>_.slice_hash_part(add));
@@ -248,7 +248,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
             const unit_used = base_state.some((s,i)=>{
                 if(s.token!=constant.unit||unit_base.slice(1).indexOf(s.owner)===-1) return false;
                 const output = output_state[i];
-                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || s.data[0]!=null || output.data[0]!="0x0" || output.data[1]!=last_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
+                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || s.data[0]!=null || output.data[0]!="0" || output.data[1]!=last_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
             });
             if(unit_used) return false;
             const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>big.toString(16));
