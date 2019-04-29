@@ -8,7 +8,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = __importStar(require("./util"));
-const crypto_set = __importStar(require("./crypto_set"));
 const merkle_patricia_1 = require("./merkle_patricia");
 exports.trie_ins = (db, root) => {
     if (root == null)
@@ -27,12 +26,16 @@ exports.read_from_trie = async (trie, db, key, index, empty) => {
         return raw;
 };
 exports.write_state_hash = async (db, state) => {
-    const hash = crypto_set.get_sha256(_.hex_sum([state.nonce, state.token, state.token, state.amount].concat(state.data)));
+    const hash = _.array2hash([state.nonce, state.token, state.owner, state.amount].concat(state.data));
     await db.write_obj(hash, state);
     return hash;
 };
 exports.write_lock_hash = async (db, lock) => {
-    const hash = crypto_set.get_sha256(_.hex_sum([lock.address, lock.index.toString(16), lock.height, lock.index.toString(16), lock.tx_hash]));
+    const state = "0" + lock.state.toString(16);
+    let index = lock.index.toString(16);
+    if (index.length % 2 != 0)
+        index = "0" + index;
+    const hash = _.array2hash([lock.address, state, lock.height, lock.block_hash, index, lock.tx_hash]);
     await db.write_obj(hash, lock);
     return hash;
 };

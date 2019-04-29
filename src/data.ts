@@ -19,13 +19,16 @@ export const read_from_trie = async <T>(trie:Trie,db:DB,key:string,index:0|1,emp
 }
 
 export const write_state_hash = async (db:DB,state:T.State)=>{
-    const hash = crypto_set.get_sha256(_.hex_sum([state.nonce,state.token,state.token,state.amount].concat(state.data)));
+    const hash = _.array2hash([state.nonce,state.token,state.owner,state.amount].concat(state.data));
     await db.write_obj(hash,state);
     return hash;
 }
 
 export const write_lock_hash = async (db:DB,lock:T.Lock)=>{
-    const hash = crypto_set.get_sha256(_.hex_sum([lock.address,lock.index.toString(16),lock.height,lock.index.toString(16),lock.tx_hash]));
+    const state = "0"+lock.state.toString(16);
+    let index = lock.index.toString(16);
+    if(index.length%2!=0) index = "0"+index;
+    const hash = _.array2hash([lock.address,state,lock.height,lock.block_hash,index,lock.tx_hash]);
     await db.write_obj(hash,lock);
     return hash;
 }
