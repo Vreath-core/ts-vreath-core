@@ -184,8 +184,8 @@ export const con = {
 export class trie extends Trie{};
 export class db extends DB{};
 
-const trie_ins = (db:DB,root:string)=>{
-    if(hex_check(root,32)) throw error;
+const trie_ins = (db:DB,root?:string)=>{
+    if(root!=null&&hex_check(root,32)) throw error;
     return data_set.trie_ins(db,root);
 }
 

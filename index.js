@@ -198,7 +198,7 @@ class db extends db_1.DB {
 exports.db = db;
 ;
 const trie_ins = (db, root) => {
-    if (hex_check(root, 32))
+    if (root != null && hex_check(root, 32))
         throw error;
     return data_set.trie_ins(db, root);
 };

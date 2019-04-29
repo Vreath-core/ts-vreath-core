@@ -11,13 +11,10 @@ const _ = __importStar(require("./util"));
 const crypto_set = __importStar(require("./crypto_set"));
 const merkle_patricia_1 = require("./merkle_patricia");
 exports.trie_ins = (db, root) => {
-    try {
-        return new merkle_patricia_1.Trie(db, root);
-    }
-    catch (e) {
-        console.log(e);
+    if (root == null)
         return new merkle_patricia_1.Trie(db);
-    }
+    else
+        return new merkle_patricia_1.Trie(db, root);
 };
 exports.read_from_trie = async (trie, db, key, index, empty) => {
     const hashes = await trie.get(key);

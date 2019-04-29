@@ -4,14 +4,9 @@ import * as T from './types'
 import { Trie } from './merkle_patricia';
 import {DB} from './db'
 
-export const trie_ins = (db:DB,root:string)=>{
-    try{
-        return new Trie(db,root);
-    }
-    catch(e){
-        console.log(e);
-        return new Trie(db);
-    }
+export const trie_ins = (db:DB,root?:string)=>{
+    if(root==null) return new Trie(db);
+    else return new Trie(db,root);
 }
 
 
