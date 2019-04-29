@@ -40,7 +40,8 @@ export const empty_block = ():T.Block=>{
 }
 
 export const block_meta2array = (meta:T.BlockMeta):string[]=>{
-    return [meta.kind.toString(16),meta.height,meta.previoushash,meta.timestamp.toString(16),meta.pos_diff,meta.trie_root,meta.tx_root,meta.extra];
+    const kind = "0"+meta.kind.toString(16);
+    return [kind,meta.height,meta.previoushash,meta.timestamp.toString(16),meta.pos_diff,meta.trie_root,meta.tx_root,meta.extra];
 }
 
 export const get_info_from_block = (block:T.Block):[string,string[],string,string,string]=>{

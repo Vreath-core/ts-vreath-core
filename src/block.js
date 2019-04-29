@@ -46,7 +46,8 @@ exports.empty_block = () => {
     };
 };
 exports.block_meta2array = (meta) => {
-    return [meta.kind.toString(16), meta.height, meta.previoushash, meta.timestamp.toString(16), meta.pos_diff, meta.trie_root, meta.tx_root, meta.extra];
+    const kind = "0" + meta.kind.toString(16);
+    return [kind, meta.height, meta.previoushash, meta.timestamp.toString(16), meta.pos_diff, meta.trie_root, meta.tx_root, meta.extra];
 };
 exports.get_info_from_block = (block) => {
     const sign = block.signature;

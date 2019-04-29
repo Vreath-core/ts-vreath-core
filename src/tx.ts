@@ -77,10 +77,14 @@ export const state_check = (state:T.State):boolean=>{
 export const tx_meta2array = (meta:T.TxMeta):string[]=>{
   const req = meta.request;
   const ref = meta.refresh;
-  return [meta.kind,req.type,req.feeprice,req.gas,req.log,ref.height,ref.index,ref.success,ref.nonce,ref.gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness).map(item=>{
-    if(typeof item != 'string' || Buffer.from(item,'hex').length*2!=item.length) return item.toString(16);
-    else return item;
-  });
+  const kind = "0"+meta.kind;
+  const type = "0"+req.type.toString(16);
+  let index = ref.index.toString(16);
+  if(index.length%2!=0) index = "0"+index;
+  const success = "0"+ref.success.toString(16);
+  let gas_share = ref.gas_share.toString(16);
+  if(gas_share.length%2!=0) gas_share = "0"+gas_share;
+  return [kind,type,req.feeprice,req.gas,req.log,ref.height,index,success,ref.nonce,gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness);
 }
 
 export const tx_fee = (tx:T.Tx):string=>{

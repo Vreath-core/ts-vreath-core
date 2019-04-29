@@ -8,7 +8,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto_set = __importStar(require("./crypto_set"));
-exports.CreateLock = (address = crypto_set.generate_address("", ""), state = 0, height = "0x0", block_hash = crypto_set.get_sha256(""), index = 0, tx_hash = crypto_set.get_sha256("")) => {
+exports.CreateLock = (address = crypto_set.generate_address("", ""), state = 0, height = "00", block_hash = crypto_set.get_sha256(""), index = 0, tx_hash = crypto_set.get_sha256("")) => {
     return {
         address: address,
         state: state,
