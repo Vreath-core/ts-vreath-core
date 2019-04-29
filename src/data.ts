@@ -11,7 +11,7 @@ export const trie_ins = (db:DB,root?:string)=>{
 
 
 export const read_from_trie = async <T>(trie:Trie,db:DB,key:string,index:0|1,empty:T)=>{
-    const hashes:[string,string]= await trie.get(key);
+    const hashes = await trie.get<[string,string]>(key);
     if(hashes==null) return empty;
     const raw:T = await db.read_obj(hashes[index]);
     if(raw==null) return empty;
@@ -33,7 +33,7 @@ export const write_lock_hash = async (db:DB,lock:T.Lock)=>{
     return hash;
 }
 
-export const write_trie = async (trie:Trie,state_db:DB,lock_db:DB,state:T.State,lock:T.Lock)=>{
+export const write_trie = async (trie:Trie,state_db:DB,lock_db:DB,state:T.State,lock:T.Lock):Promise<void>=>{
     const state_hash = await write_state_hash(state_db,state);
     const lock_hash = await write_lock_hash(lock_db,lock);
     await trie.put(state.owner,[state_hash,lock_hash]);

@@ -28,29 +28,26 @@ export class Trie {
     else this.trie = new Merkle(db,Buffer.from(root,'hex'));
   }
 
-  async get(key:string){
+  async get<T>(key:string):Promise<T|null>{
     const result:string = await promisify(this.trie.get).bind(this.trie)(key);
     if(result==null) return null;
     return JSON.parse(result);
   }
 
-  async put(key:string,value:any){
+  async put<T>(key:string,value:T):Promise<void>{
     await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
-    return this.trie;
   }
 
-  async delete(key:string){
+  async delete(key:string):Promise<void>{
     await promisify(this.trie.del).bind(this.trie)(key);
-    return this.trie;
   }
 
   now_root():string{
     return this.trie.root.toString("hex");
   }
 
-  checkpoint(){
+  checkpoint():void{
     this.trie.checkpoint();
-    return this.trie;
   }
 
   async filter<T>(check:(value:T)=>Promise<boolean>|boolean=(value:T)=>true){

@@ -37,18 +37,15 @@ class Trie {
     }
     async put(key, value) {
         await util_1.promisify(this.trie.put).bind(this.trie)(key, JSON.stringify(value));
-        return this.trie;
     }
     async delete(key) {
         await util_1.promisify(this.trie.del).bind(this.trie)(key);
-        return this.trie;
     }
     now_root() {
         return this.trie.root.toString("hex");
     }
     checkpoint() {
         this.trie.checkpoint();
-        return this.trie;
     }
     async filter(check = (value) => true) {
         let result = [];
