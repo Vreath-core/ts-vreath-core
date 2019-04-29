@@ -49,7 +49,6 @@ const get_sha_256 = (hex:string)=>{
     if(hex_check(hex)) throw error;
     return crypto_set.get_sha256(hex);
 }
-
 const private2public = (private_key:string)=>{
     if(hex_check(private_key,32)) throw error;
     return crypto_set.private2public(private_key);
@@ -98,7 +97,7 @@ const verify = (data:string,sign:string,public_key:string)=>{
 }
 
 const generate_address = (token:string,public_key:string)=>{
-    if(hex_check(token,8)||hex_check(public_key,33)) throw error;
+    if(hex_check(token,8,true)||hex_check(public_key,33)) throw error;
     return crypto_set.generate_address(token,public_key);
 }
 

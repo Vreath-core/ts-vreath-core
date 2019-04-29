@@ -107,7 +107,7 @@ const verify = (data, sign, public_key) => {
     return crypto_set.verify(data, sign, public_key);
 };
 const generate_address = (token, public_key) => {
-    if (hex_check(token, 8) || hex_check(public_key, 33))
+    if (hex_check(token, 8, true) || hex_check(public_key, 33))
         throw error;
     return crypto_set.generate_address(token, public_key);
 };
