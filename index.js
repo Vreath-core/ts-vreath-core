@@ -248,6 +248,7 @@ const create_token = (nonce = "0", name = "0", issued = "0", code = crypto_set.g
     const token = state_set.CreateToken(nonce, name, issued, code);
     if (!isToken(token))
         throw new Error('invalid token');
+    return token;
 };
 const verify_state = (state) => {
     if (!isState(state))

@@ -234,6 +234,7 @@ const create_token = (nonce:string="0",name:string="0",issued:string="0",code:st
     if(hex_check(nonce,8,true)||hex_check(name,40)||hex_check(issued,10,true)||hex_check(code,32)) throw error;
     const token = state_set.CreateToken(nonce,name,issued,code);
     if(!isToken(token)) throw new Error('invalid token');
+    return token;
 }
 
 const verify_state = (state:T.State)=>{
@@ -338,7 +339,7 @@ const get_tx_fee = (tx:T.Tx)=>{
 
 const mining = (request:string,height:string,block_hash:string,nonce:string,refresher:string,output:string,unit_price:string)=>{
     if(hex_check(request,32)||hex_check(height,8,true)||hex_check(block_hash,32)||hex_check(nonce,8,true)||hex_check(refresher,40)||hex_check(output,32)||hex_check(unit_price,10,true)) throw error;
-    return tx_set.unit_hash(request,height,block_hash,nonce,refresher,output,unit_price):
+    return tx_set.unit_hash(request,height,block_hash,nonce,refresher,output,unit_price);
 }
 
 const find_req_tx = async (ref_tx:T.Tx,block_db:DB)=>{
