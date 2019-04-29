@@ -47,5 +47,8 @@ class DB {
             }
         });
     }
+    leveldb() {
+        return this.db;
+    }
 }
 exports.DB = DB;

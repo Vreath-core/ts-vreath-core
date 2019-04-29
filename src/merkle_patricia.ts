@@ -24,8 +24,8 @@ export const de_value = (value:string)=>{
 export class Trie {
   private trie:any;
   constructor(db:DB,root:string=""){
-    if(root==="") this.trie = new Merkle(db);
-    else this.trie = new Merkle(db,Buffer.from(root,'hex'));
+    if(root==="") this.trie = new Merkle(db.leveldb());
+    else this.trie = new Merkle(db.leveldb(),Buffer.from(root,'hex'));
   }
 
   async get<T>(key:string):Promise<T|null>{

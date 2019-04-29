@@ -25,9 +25,9 @@ exports.de_value = (value) => {
 class Trie {
     constructor(db, root = "") {
         if (root === "")
-            this.trie = new Merkle(db);
+            this.trie = new Merkle(db.leveldb());
         else
-            this.trie = new Merkle(db, Buffer.from(root, 'hex'));
+            this.trie = new Merkle(db.leveldb(), Buffer.from(root, 'hex'));
     }
     async get(key) {
         const result = await util_1.promisify(this.trie.get).bind(this.trie)(key);

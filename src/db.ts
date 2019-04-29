@@ -49,4 +49,8 @@ export class DB {
             catch(e){reject(e)}
           });
     }
+
+    public leveldb(){
+        return this.db;
+    }
 }
