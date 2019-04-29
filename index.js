@@ -106,6 +106,12 @@ const verify = (data, sign, public_key) => {
         throw error;
     return crypto_set.verify(data, sign, public_key);
 };
+const isSignature = (sign) => {
+    if (hex_check(sign.data, 64) || hex_check(sign.v, 6, true))
+        return false;
+    else
+        return true;
+};
 const generate_address = (token, public_key) => {
     if (hex_check(token, 8, true) || hex_check(public_key, 33))
         throw error;
@@ -158,6 +164,7 @@ exports.crypto = {
     sign: sign,
     recover: recover,
     verify: verify,
+    isSignature: isSignature,
     generate_address: generate_address,
     hex2number: hex2number,
     hex_sum: hex_sum,
@@ -278,12 +285,6 @@ const create_lock = (address = crypto_set.generate_address("", ""), state = 0, h
 exports.lock = {
     isLock: isLock,
     create_lock: create_lock
-};
-const isSignature = (sign) => {
-    if (hex_check(sign.data, 64) || hex_check(sign.v, 6, true))
-        return false;
-    else
-        return true;
 };
 const isTxMeta = (meta) => {
     const kind = meta.kind;
