@@ -267,7 +267,7 @@ const isLock = (lock) => {
     else
         return true;
 };
-const create_lock = (address = crypto_set.generate_address("", ""), state = 0, height = "0x0", block_hash = crypto_set.get_sha256(""), index = 0, tx_hash = crypto_set.get_sha256("")) => {
+const create_lock = (address = crypto_set.generate_address("", ""), state = 0, height = "00", block_hash = crypto_set.get_sha256(""), index = 0, tx_hash = crypto_set.get_sha256("")) => {
     if (hex_check(address, 40) || [0, 1].indexOf(state) === -1 || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 8) || hex_check(tx_hash, 32))
         throw error;
     const lock = lock_set.CreateLock(address, state, height, block_hash, index, tx_hash);

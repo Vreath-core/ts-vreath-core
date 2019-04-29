@@ -253,7 +253,7 @@ const isLock = (lock:T.Lock):lock is T.Lock =>{
     else return true;
 }
 
-const create_lock = (address:string=crypto_set.generate_address("",""),state:0|1=0,height:string="0x0",block_hash:string=crypto_set.get_sha256(""),index:number=0,tx_hash:string=crypto_set.get_sha256(""))=>{
+const create_lock = (address:string=crypto_set.generate_address("",""),state:0|1=0,height:string="00",block_hash:string=crypto_set.get_sha256(""),index:number=0,tx_hash:string=crypto_set.get_sha256(""))=>{
     if(hex_check(address,40)||[0,1].indexOf(state)===-1||hex_check(height,8,true)||hex_check(block_hash,32)||uint_check(index,8)||hex_check(tx_hash,32)) throw error;
     const lock = lock_set.CreateLock(address,state,height,block_hash,index,tx_hash);
     if(!isLock(lock)) throw new Error('invalid lock');
