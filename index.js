@@ -243,7 +243,7 @@ const create_state = (nonce = "00", token = "00", owner = crypto_set.generate_ad
     return state;
 };
 const create_token = (nonce = "00", name = "00", issued = "00", code = crypto_set.get_sha256("")) => {
-    if (hex_check(nonce, 8, true) || hex_check(name, 40) || hex_check(issued, 10, true) || hex_check(code, 32))
+    if (hex_check(nonce, 8, true) || hex_check(name, 8, true) || hex_check(issued, 10, true) || hex_check(code, 32))
         throw error;
     const token = state_set.CreateToken(nonce, name, issued, code);
     if (!isToken(token))

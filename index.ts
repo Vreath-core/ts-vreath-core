@@ -230,7 +230,7 @@ const create_state = (nonce:string="00",token:string="00",owner:string=crypto_se
 }
 
 const create_token = (nonce:string="00",name:string="00",issued:string="00",code:string=crypto_set.get_sha256(""))=>{
-    if(hex_check(nonce,8,true)||hex_check(name,40)||hex_check(issued,10,true)||hex_check(code,32)) throw error;
+    if(hex_check(nonce,8,true)||hex_check(name,8,true)||hex_check(issued,10,true)||hex_check(code,32)) throw error;
     const token = state_set.CreateToken(nonce,name,issued,code);
     if(!isToken(token)) throw new Error('invalid token');
     return token;
