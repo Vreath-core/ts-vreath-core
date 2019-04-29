@@ -43,7 +43,7 @@ export const block_meta2array = (meta:T.BlockMeta):string[]=>{
     return [meta.kind.toString(16),meta.height,meta.previoushash,meta.timestamp.toString(16),meta.pos_diff,meta.trie_root,meta.tx_root,meta.extra];
 }
 
-const get_info_from_block = (block:T.Block):[string,string[],string,string,string]=>{
+export const get_info_from_block = (block:T.Block):[string,string[],string,string,string]=>{
     const sign = block.signature;
     const meta_data = block_meta2array(block.meta);
     const recover_id = bigInt(sign.v,16).mod(2).toJSNumber();
@@ -62,7 +62,7 @@ export const search_key_block = async (block_db:DB,last_height:string)=>{
     while(1){
         block = await block_db.read_obj(height);
         if(block.meta.kind===0) break;
-        else if(height==="0") break;
+        else if(height==="00") break;
         else{
             height = bigInt(height,16).subtract(1).toString(16);
         }
@@ -110,7 +110,7 @@ export const GetTreeroot = (pre:string[]):string[]=>{
     }
 }
 
-const tx_fee_sum = (txs:T.Tx[]):string=>{
+export const tx_fee_sum = (txs:T.Tx[]):string=>{
     const sum = txs.reduce((sum,tx)=>sum.add(bigInt(tx_set.tx_fee(tx),16)),bigInt(0));
     return sum.toString(16);
 };
@@ -160,7 +160,7 @@ export const txs_check = async (block:T.Block,output_states:T.State[],block_db:D
     });
 }
 
-const compute_block_size = (block:T.Block)=>{
+export const compute_block_size = (block:T.Block)=>{
     const meta_array = block_meta2array(block.meta);
     const signs = [block.signature.data,block.signature.v];
     const txs = block.txs.reduce((res:string[],tx)=>{
@@ -195,12 +195,12 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
     const validator_pub = info[3];
     const unit_validator = crypto_set.generate_address(constant.unit,validator_pub);
 
-    const unit_validator_state:T.State = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("0",unit_validator,constant.unit,"0",["1","0"]));
+    const unit_validator_state:T.State = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",unit_validator,constant.unit,"00",["01","00"]));
     const pre_height = unit_validator_state.data[1];
     const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
     const reduced_amount = (()=>{
         const computed = bigInt(unit_validator_state.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-        if(computed.lesser(1)) return bigInt("0").toString(16);
+        if(computed.lesser(1)) return bigInt("00").toString(16);
         else return computed.toString(16);
     })();
     const right_diff = get_diff(reduced_amount);
@@ -260,7 +260,7 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
         //console.log("invalid tx_root");
         return false;
     }
-    else if(fee_sum!="0"){
+    else if(fee_sum!="00"){
         //console.log("invalid fee_sum");
         return false;
     }
@@ -399,12 +399,12 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
     const previoushash = last.hash
     const public_key = crypto_set.private2public(private_key);
     const unit_validator = crypto_set.generate_address(constant.unit,public_key);
-    const unit_validator_state:T.State = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("0",unit_validator,constant.unit,"0",["1","0"]));
+    const unit_validator_state:T.State = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",unit_validator,constant.unit,"00",["01","00"]));
     const pre_height = unit_validator_state.data[1];
     const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
     const reduced_amount = (()=>{
         const computed = bigInt(unit_validator_state.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-        if(computed.lesser(1)) return bigInt("0").toString(16);
+        if(computed.lesser(1)) return bigInt("00").toString(16);
         else return computed.toString(16);
     })();
     const pos_diff = get_diff(reduced_amount);
@@ -420,7 +420,7 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
         pos_diff:pos_diff,
         trie_root:trie_root,
         tx_root:crypto_set.get_sha256(''),
-        fee_sum:"0",
+        fee_sum:"00",
         extra:extra
     }
     const id = constant.my_version+constant.my_chain_id+constant.my_net_id;
@@ -489,7 +489,7 @@ const compute_issue = (height:string)=>{
     const new_amount:BigInteger = bigInt(all_issue,16).divide(bigInt(2).pow(n.add(1)));
     const pre_amount:BigInteger = bigInt(all_issue,16).divide(bigInt(2).pow(n));
     const issue:BigInteger = pre_amount.subtract(new_amount).divide(cycle);
-    if(issue.lesser(1)) return "0";
+    if(issue.lesser(1)) return "00";
     else return issue.toString(16);
 }
 
@@ -510,7 +510,7 @@ export const accept_key_block = async (block:T.Block,block_db:DB,last_height:str
     },[]);
     const bases = tx_bases.concat(pre_native).concat(new_native).concat(pre_unit).concat(new_unit).filter((val,i,array)=>array.indexOf(val)===i);
     const base_states = await P.map(bases, async key=>{
-        return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("0",_.slice_token_part(key),key));
+        return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("00",_.slice_token_part(key),key));
     });
 
     const fees = last_micros.reduce((sum,b)=>bigInt(sum).add(b.meta.fee_sum),bigInt(0));
@@ -532,7 +532,7 @@ export const accept_micro_block = async (block:T.Block,block_db:DB,last_height:s
     });
     const public_key = get_info_from_block(block)[3];
     const unit_validator = crypto_set.generate_address(constant.unit,public_key);
-    const unit_state = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("0",constant.unit,unit_validator,"0",["1","0"]));
+    const unit_state = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",constant.unit,unit_validator,"00",["01","00"]));
     const changed = contract.micro_block_change([unit_state],last_height);
     const lock_state = await data.read_from_trie(trie,lock_db,unit_validator,1,lock_set.CreateLock(unit_validator));
     await data.write_trie(trie,state_db,lock_db,changed[0],lock_state);

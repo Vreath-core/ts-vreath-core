@@ -6,15 +6,15 @@ export const get_sha256 = (hex:string):string=>{
   return ffi.get_sha256(hex);
 }
 
-export const generate_key = ()=>{
+export const generate_key = ():string=>{
   return ffi.generate_key();
 }
 
-export const private2public = (private_key:string)=>{
+export const private2public = (private_key:string):string=>{
   return ffi.private2public(private_key);
 }
 
-export const get_shared_secret = (private_key:string,public_key:string)=>{
+export const get_shared_secret = (private_key:string,public_key:string):string=>{
   return ffi.get_shared_secret(private_key,public_key);
 }
 
@@ -47,7 +47,7 @@ export const verify = (data:string,sign:string,public_key:string):boolean=>{
   return ffi.verify_sign(data,sign,public_key);
 }
 
-export const generate_address = (token:string,public_key:string)=>{
+export const generate_address = (token:string,public_key:string):string=>{
     const token_part = ("0000000000000000"+token).slice(-16);
     const hash = get_sha256(get_sha256(public_key));
     const key_part = ("0000000000000000000000000000000000000000000000000000000000000000"+hash).slice(-64);

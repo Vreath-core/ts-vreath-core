@@ -2,7 +2,7 @@ import * as _ from './util'
 import * as T from './types'
 import * as crypto_set from './crypto_set'
 
-export const CreateState = (nonce:string="0",token:string="0",owner:string=crypto_set.generate_address("",""),amount:string="0",data:string[]=[]):T.State=>{
+export const CreateState = (nonce:string="00",token:string="00",owner:string=crypto_set.generate_address("",""),amount:string="00",data:string[]=[]):T.State=>{
   return {
     nonce:nonce,
     token:token,
@@ -12,7 +12,7 @@ export const CreateState = (nonce:string="0",token:string="0",owner:string=crypt
   }
 }
 
-export const CreateToken = (nonce:string="0",name:string="0",issued:string="0",code:string=crypto_set.get_sha256("")):T.Token=>{
+export const CreateToken = (nonce:string="00",name:string="00",issued:string="00",code:string=crypto_set.get_sha256("")):T.Token=>{
   return {
     nonce:nonce,
     name:name,

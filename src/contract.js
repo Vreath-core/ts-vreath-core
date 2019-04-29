@@ -19,21 +19,21 @@ exports.native_prove = (bases, base_state, input_data) => {
     const native = constant_1.constant.native;
     const type = input_data[0];
     switch (type) {
-        case "0":
+        case "00":
             const remiter = bases[0];
             const remiter_state = base_state[0];
             const receivers = bases;
             const amounts = input_data.slice(1);
             const sum = amounts.reduce((s, a) => big_integer_1.default(a, 16).add(s), big_integer_1.default(0));
-            const fee = big_integer_1.default(remiter_state.data[0] || "0", 16);
-            const gas = big_integer_1.default(remiter_state.data[1] || "0", 16);
-            const income = big_integer_1.default(remiter_state.data[2] || "0", 16);
+            const fee = big_integer_1.default(remiter_state.data[0] || "00", 16);
+            const gas = big_integer_1.default(remiter_state.data[1] || "00", 16);
+            const income = big_integer_1.default(remiter_state.data[2] || "00", 16);
             if (big_integer_1.default(remiter_state.amount, 16).subtract(sum).subtract(fee).subtract(gas).subtract(income).lesser(0) || receivers.length != amounts.length)
                 return base_state;
             const remited = base_state.map(s => {
                 if (s.token != native || s.owner != remiter)
                     return s;
-                const income = big_integer_1.default(s.data[2] || "0", 16);
+                const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, (s) => {
                     s.nonce = big_integer_1.default(s.nonce, 16).add(1).toString(16);
                     s.amount = big_integer_1.default(s.amount, 16).subtract(income).subtract(sum).toString(16);
@@ -44,7 +44,7 @@ exports.native_prove = (bases, base_state, input_data) => {
                 const index = receivers.indexOf(s.owner);
                 if (s.token != native || index === -1)
                     return s;
-                const income = big_integer_1.default(s.data[2] || "0", 16);
+                const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, s => {
                     s.nonce = big_integer_1.default(s.nonce, 16).add(1).toString(16);
                     s.amount = big_integer_1.default(s.amount, 16).subtract(income).subtract(big_integer_1.default(amounts[index], 16)).toString(16);
@@ -59,20 +59,20 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
     const native = constant_1.constant.native;
     const type = input_data[0];
     switch (type) {
-        case "0":
+        case "00":
             const remiter = bases[0];
             const remiter_state = base_state[0];
             const receivers = bases;
             const amounts = input_data.slice(1);
             const sum = amounts.reduce((s, a) => big_integer_1.default(a, 16).add(s), big_integer_1.default(0));
-            const fee = big_integer_1.default(remiter_state.data[0] || "0", 16);
-            const gas = big_integer_1.default(remiter_state.data[1] || "0", 16);
+            const fee = big_integer_1.default(remiter_state.data[0] || "00", 16);
+            const gas = big_integer_1.default(remiter_state.data[1] || "00", 16);
             if (big_integer_1.default(remiter_state.amount, 16).subtract(sum).subtract(fee).subtract(gas).lesser(0) || receivers.length != amounts.length)
                 return false;
             const remited = base_state.some((s, i) => {
                 if (s.token != native || s.owner != remiter)
                     return false;
-                const income = big_integer_1.default(s.data[2] || "0", 16);
+                const income = big_integer_1.default(s.data[2] || "00", 16);
                 const output = output_state[i];
                 return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).subtract(sum).notEquals(big_integer_1.default(output.amount, 16));
             });
@@ -82,7 +82,7 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
                 const index = receivers.indexOf(s.owner);
                 if (s.token != native || index === -1)
                     return false;
-                const income = big_integer_1.default(s.data[2] || "0", 16);
+                const income = big_integer_1.default(s.data[2] || "00", 16);
                 const output = output_state[i];
                 return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).add(big_integer_1.default(amounts[index], 16)).notEquals(big_integer_1.default(output.amount, 16));
             });
@@ -106,7 +106,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
     const unit_miners = units.map(u => u[3]).filter((val, i, array) => array.indexOf(val) === i);
     const type = input_data[0];
     switch (type) {
-        case "0":
+        case "00":
             const unit_validator = unit_base[0];
             const native_validator = native_base[0];
             const unit_base_hash_parts = unit_base.map(add => _.slice_hash_part(add));
@@ -120,7 +120,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                 const ref_tx = ref_block.txs[unit[1]];
                 if (ref_tx == null)
                     return true;
-                const height = ref_tx.meta.refresh.height || "0";
+                const height = ref_tx.meta.refresh.height || "00";
                 const req_block = await block_db.read_obj(height);
                 if (req_block == null)
                     return true;
@@ -150,21 +150,21 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                 if (s.token != constant_1.constant.unit || s.owner != unit_base[0])
                     return s;
                 const flag = s.data[0];
-                if (flag === "0")
+                if (flag === "00")
                     return s;
                 const pre_height = s.data[1];
                 const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
                 const amount = (() => {
                     const computed = (big_integer_1.default(s.amount, 16).add(unit_sum)).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
                     if (computed.lesser(1))
-                        return big_integer_1.default("0");
+                        return big_integer_1.default("00");
                     else
                         return computed;
                 })();
                 return _.new_obj(s, s => {
                     s.nonce = big_integer_1.default(s.nonce, 16).add(1).toString(16);
                     s.amount = amount.toString(16);
-                    s.data[0] = "1";
+                    s.data[0] = "01";
                     s.data[1] = last_height;
                     return s;
                 });
@@ -174,7 +174,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                     return s;
                 return _.new_obj(s, s => {
                     s.nonce = big_integer_1.default(s.nonce, 16).add(1).toString(16);
-                    s.data[0] = "0";
+                    s.data[0] = "00";
                     s.data[1] = last_height;
                     return s;
                 });
@@ -206,7 +206,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
     const unit_miners = units.map(u => u[3]).filter((val, i, array) => array.indexOf(val) === i);
     const type = input_data[0];
     switch (type) {
-        case "0":
+        case "00":
             const unit_validator = unit_base[0];
             const native_validator = native_base[0];
             const unit_base_hash_parts = unit_base.map(add => _.slice_hash_part(add));
@@ -220,7 +220,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 const ref_tx = ref_block.txs[unit[1]];
                 if (ref_tx == null)
                     return true;
-                const height = ref_tx.meta.refresh.height || "0";
+                const height = ref_tx.meta.refresh.height || "00";
                 const req_block = await block_db.read_obj(height);
                 if (req_block == null)
                     return true;
@@ -252,18 +252,18 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 const output = output_state[i];
                 const pre_flag = s.data[0];
                 const new_flag = output.data[0];
-                if (pre_flag === "0" || new_flag != "1")
+                if (pre_flag === "00" || new_flag != "01")
                     return true;
                 const pre_height = s.data[1];
                 const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
                 const amount = (() => {
                     const computed = (big_integer_1.default(s.amount, 16).add(unit_sum)).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
                     if (computed.lesser(1))
-                        return big_integer_1.default("0");
+                        return big_integer_1.default("00");
                     else
                         return computed;
                 })();
-                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || amount.notEquals(big_integer_1.default(output.amount, 16)) || pre_flag === "0" || new_flag != "1" || output.data[1] != last_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
+                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || amount.notEquals(big_integer_1.default(output.amount, 16)) || pre_flag === "00" || new_flag != "01" || output.data[1] != last_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
             });
             if (unit_bought)
                 return false;
@@ -271,7 +271,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 if (s.token != constant_1.constant.unit || unit_base.slice(1).indexOf(s.owner) === -1)
                     return false;
                 const output = output_state[i];
-                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || s.data[0] != null || output.data[0] != "0" || output.data[1] != last_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
+                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || s.data[0] != null || output.data[0] != "00" || output.data[1] != last_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
             });
             if (unit_used)
                 return false;
@@ -291,7 +291,7 @@ exports.req_tx_change = (base_state, requester, fee, gas) => {
             return s;
         return _.new_obj(s, s => {
             if (s.data[0] == null)
-                s.data[0] = "0";
+                s.data[0] = "00";
             else
                 s.data[0] = big_integer_1.default(s.data[0], 16).add(big_integer_1.default(fee, 16)).toString(16);
             s.data[1] = gas;
@@ -299,11 +299,11 @@ exports.req_tx_change = (base_state, requester, fee, gas) => {
         });
     });
     const gained = reqed.map(s => {
-        const income = big_integer_1.default(s.data[2] || "0", 16);
+        const income = big_integer_1.default(s.data[2] || "00", 16);
         if (income.eq(0))
             return s;
         return _.new_obj(s, s => {
-            s.data[2] = "0";
+            s.data[2] = "00";
             return s;
         });
     });
@@ -315,7 +315,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last
         if (s.owner != requester)
             return s;
         return _.new_obj(s, s => {
-            s.data[1] = "0";
+            s.data[1] = "00";
             s.amount = big_integer_1.default(s.amount, 16).subtract(big_integer_1.default(gas, 16)).toString(16);
             return s;
         });
@@ -333,24 +333,24 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last
         });
     });
     const gained = refed.map(s => {
-        const income = big_integer_1.default(s.data[2] || "0", 16);
+        const income = big_integer_1.default(s.data[2] || "00", 16);
         if (income.eq(0))
             return s;
         return _.new_obj(s, s => {
             s.amount = big_integer_1.default(s.amount, 16).add(income).toString(16);
-            s.data[2] = "0";
+            s.data[2] = "00";
             return s;
         });
     });
     const reduced = gained.map(s => {
-        if (s.token != constant_1.constant.unit || bases.indexOf(s.owner) === -1 || s.data[0] != "1")
+        if (s.token != constant_1.constant.unit || bases.indexOf(s.owner) === -1 || s.data[0] != "01")
             return s;
         const pre_height = s.data[1];
         const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
-                return big_integer_1.default("0");
+                return big_integer_1.default("00");
             else
                 return computed;
         })();
@@ -369,12 +369,12 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
     const paid = base_state.map(s => {
         if (s.token != constant_1.constant.native)
             return s;
-        const fee = big_integer_1.default(s.data[0] || "0", 16);
+        const fee = big_integer_1.default(s.data[0] || "00", 16);
         if (fee.eq(0))
             return s;
         return _.new_obj(s, s => {
             s.amount = big_integer_1.default(s.amount, 16).subtract(fee).toString(16);
-            s.data[0] = "0";
+            s.data[0] = "00";
             return s;
         });
     });
@@ -392,7 +392,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
         })();
         return _.new_obj(s, s => {
             s.amount = big_integer_1.default(s.amount, 16).add(gain).toString(16);
-            s.data[2] = big_integer_1.default(s.data[2] || "0", 16).add(gain).toString(16);
+            s.data[2] = big_integer_1.default(s.data[2] || "00", 16).add(gain).toString(16);
             return s;
         });
     });
@@ -404,7 +404,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
-                return big_integer_1.default("0");
+                return big_integer_1.default("00");
             else
                 return computed;
         })();
@@ -426,7 +426,7 @@ exports.micro_block_change = (base_state, last_height) => {
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
-                return big_integer_1.default("0");
+                return big_integer_1.default("00");
             else
                 return computed;
         })();

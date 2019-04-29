@@ -8,7 +8,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto_set = __importStar(require("./crypto_set"));
-exports.CreateState = (nonce = "0", token = "0", owner = crypto_set.generate_address("", ""), amount = "0", data = []) => {
+exports.CreateState = (nonce = "00", token = "00", owner = crypto_set.generate_address("", ""), amount = "00", data = []) => {
     return {
         nonce: nonce,
         token: token,
@@ -17,7 +17,7 @@ exports.CreateState = (nonce = "0", token = "0", owner = crypto_set.generate_add
         data: data
     };
 };
-exports.CreateToken = (nonce = "0", name = "0", issued = "0", code = crypto_set.get_sha256("")) => {
+exports.CreateToken = (nonce = "00", name = "00", issued = "00", code = crypto_set.get_sha256("")) => {
     return {
         nonce: nonce,
         name: name,

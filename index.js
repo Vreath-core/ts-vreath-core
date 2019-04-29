@@ -234,7 +234,7 @@ const isToken = (token) => {
     else
         return true;
 };
-const create_state = (nonce = "0", token = "0", owner = crypto_set.generate_address("", ""), amount = "0", data = []) => {
+const create_state = (nonce = "00", token = "00", owner = crypto_set.generate_address("", ""), amount = "00", data = []) => {
     if (hex_check(nonce, 8, true) || hex_check(token, 8, true) || hex_check(owner, 40) || hex_check(amount, 10, true) || data.some(data => data == null || typeof data != 'string'))
         throw error;
     const state = state_set.CreateState(nonce, token, owner, amount, data);
@@ -242,7 +242,7 @@ const create_state = (nonce = "0", token = "0", owner = crypto_set.generate_addr
         throw new Error('invalid state');
     return state;
 };
-const create_token = (nonce = "0", name = "0", issued = "0", code = crypto_set.get_sha256("")) => {
+const create_token = (nonce = "00", name = "00", issued = "00", code = crypto_set.get_sha256("")) => {
     if (hex_check(nonce, 8, true) || hex_check(name, 40) || hex_check(issued, 10, true) || hex_check(code, 32))
         throw error;
     const token = state_set.CreateToken(nonce, name, issued, code);

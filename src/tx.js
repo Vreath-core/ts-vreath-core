@@ -212,9 +212,9 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
     const tokens = _.slice_tokens(other_bases);
     const sender = crypto_set.generate_address(tokens[0], _.reduce_pub(pub_keys));
     const bases = [sender].concat(other_bases);
-    const requester_state = await data.read_from_trie(trie, state_db, requester, 0, state_set.CreateState("0", constant_1.constant.native, requester, "0", []));
+    const requester_state = await data.read_from_trie(trie, state_db, requester, 0, state_set.CreateState("00", constant_1.constant.native, requester, "00", []));
     const base_states = await P.map(bases, async (key) => {
-        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", _.slice_token_part(key), key, "0", []));
+        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
     });
     if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, infos, ids, pub_keys, requester)) {
         return false;
@@ -265,14 +265,14 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
     const ids = pulled[2];
     const pub_keys = pulled[3];
     const refresher = pulled[4];
-    const refresher_state = await data.read_from_trie(trie, state_db, refresher, 0, state_set.CreateState("0", constant_1.constant.native, refresher));
+    const refresher_state = await data.read_from_trie(trie, state_db, refresher, 0, state_set.CreateState("00", constant_1.constant.native, refresher));
     const unit_add = crypto_set.generate_address(constant_1.constant.unit, _.reduce_pub(pub_keys));
     const pull_from_req = exports.get_info_from_tx(req_tx);
     const requester = pull_from_req[4];
     const main_token = _.slice_token_part(req_tx.meta.request.bases[0]);
     const bases = [main_token + _.slice_hash_part(requester)].concat(req_tx.meta.request.bases);
     const base_states = await P.map(bases, async (key) => {
-        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", _.slice_token_part(key), key, "0", []));
+        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
     });
     const base_states_hashes = base_states.map(s => _.array2hash([s.nonce, s.token, s.owner, s.amount].concat(s.data)));
     if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, infos, ids, pub_keys, refresher)) {
@@ -377,13 +377,13 @@ exports.accept_req_tx = async (tx, height, block_hash, index, trie, state_db, lo
     const requester = pulled[4];
     const fee = exports.tx_fee(tx);
     const gas = tx.meta.request.gas;
-    const requester_state = await data.read_from_trie(trie, state_db, requester, 0, state_set.CreateState("0", constant_1.constant.native, requester, "0"));
+    const requester_state = await data.read_from_trie(trie, state_db, requester, 0, state_set.CreateState("00", constant_1.constant.native, requester, "00"));
     const changed_states = contracts.req_tx_change([requester_state], requester, fee, gas);
     const bases = tx.meta.request.bases.concat(requester).filter((val, i, array) => array.indexOf(val) === i);
     const base_states = await P.map(bases, async (key) => {
         if (key === requester)
             return changed_states[0];
-        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", constant_1.constant.native, key, "0"));
+        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", constant_1.constant.native, key, "00"));
     });
     const lock_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));
@@ -410,7 +410,7 @@ exports.accept_ref_tx = async (ref_tx, height, block_hash, index, trie, state_db
     const fee = big_integer_1.default(req_tx.meta.request.gas, 16).subtract(big_integer_1.default(gas, 16)).toString(16);
     const bases = [requester, refresher].concat(req_tx.meta.request.bases);
     const base_states = await P.map(bases, async (key) => {
-        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("0", _.slice_token_part(key), key, "0", []));
+        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
     });
     const changed = await contracts.ref_tx_change(bases, base_states, requester, refresher, fee, gas, height);
     const lock_states = await P.map(bases, async (key) => {

@@ -10,20 +10,20 @@ export const native_prove = (bases:string[],base_state:T.State[],input_data:stri
     const native = constant.native;
     const type = input_data[0];
     switch(type){
-      case "0":
+      case "00":
         const remiter = bases[0];
         const remiter_state = base_state[0];
         const receivers = bases;
         const amounts:string[] = input_data.slice(1);
         const sum = amounts.reduce((s,a)=>bigInt(a,16).add(s),bigInt(0));
-        const fee = bigInt(remiter_state.data[0]||"0",16);
-        const gas = bigInt(remiter_state.data[1]||"0",16);
-        const income = bigInt(remiter_state.data[2]||"0",16);
+        const fee = bigInt(remiter_state.data[0]||"00",16);
+        const gas = bigInt(remiter_state.data[1]||"00",16);
+        const income = bigInt(remiter_state.data[2]||"00",16);
         if(bigInt(remiter_state.amount,16).subtract(sum).subtract(fee).subtract(gas).subtract(income).lesser(0)||receivers.length!=amounts.length) return base_state;
 
         const remited = base_state.map(s=>{
           if(s.token!=native||s.owner!=remiter) return s;
-          const income = bigInt(s.data[2]||"0",16);
+          const income = bigInt(s.data[2]||"00",16);
           return _.new_obj(
             s,
             (s)=>{
@@ -36,7 +36,7 @@ export const native_prove = (bases:string[],base_state:T.State[],input_data:stri
         const recieved = remited.map(s=>{
           const index = receivers.indexOf(s.owner);
           if(s.token!=native||index===-1) return s;
-          const income = bigInt(s.data[2]||"0",16);
+          const income = bigInt(s.data[2]||"00",16);
           return _.new_obj(
             s,
             s=>{
@@ -56,19 +56,19 @@ export const native_verify = (bases:string[],base_state:T.State[],input_data:str
     const native = constant.native;
     const type = input_data[0];
     switch(type){
-        case "0":
+        case "00":
             const remiter = bases[0];
             const remiter_state = base_state[0];
             const receivers = bases;
             const amounts:string[] = input_data.slice(1);
             const sum = amounts.reduce((s,a)=>bigInt(a,16).add(s),bigInt(0));
-            const fee = bigInt(remiter_state.data[0]||"0",16);
-            const gas = bigInt(remiter_state.data[1]||"0",16);
+            const fee = bigInt(remiter_state.data[0]||"00",16);
+            const gas = bigInt(remiter_state.data[1]||"00",16);
             if(bigInt(remiter_state.amount,16).subtract(sum).subtract(fee).subtract(gas).lesser(0)||receivers.length!=amounts.length) return false;
 
             const remited = base_state.some((s,i)=>{
                 if(s.token!=native||s.owner!=remiter) return false;
-                const income = bigInt(s.data[2]||"0",16);
+                const income = bigInt(s.data[2]||"00",16);
                 const output = output_state[i];
                 return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || bigInt(s.amount,16).subtract(income).subtract(sum).notEquals(bigInt(output.amount,16));
             });
@@ -76,7 +76,7 @@ export const native_verify = (bases:string[],base_state:T.State[],input_data:str
             const recieved = base_state.map((s,i)=>{
                 const index = receivers.indexOf(s.owner);
                 if(s.token!=native||index===-1) return false;
-                const income = bigInt(s.data[2]||"0",16);
+                const income = bigInt(s.data[2]||"00",16);
                 const output = output_state[i];
                 return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || bigInt(s.amount,16).subtract(income).add(bigInt(amounts[index],16)).notEquals(bigInt(output.amount,16));
             });
@@ -100,7 +100,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
     const unit_miners = units.map(u=>u[3]).filter((val,i,array)=>array.indexOf(val)===i);
     const type = input_data[0];
     switch(type){
-        case "0":
+        case "00":
             const unit_validator = unit_base[0];
             const native_validator = native_base[0];
             const unit_base_hash_parts = unit_base.map(add=>_.slice_hash_part(add));
@@ -111,7 +111,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                 if(ref_block==null) return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if(ref_tx==null) return true;
-                const height = ref_tx.meta.refresh.height || "0";
+                const height = ref_tx.meta.refresh.height || "00";
                 const req_block:T.Block = await block_db.read_obj(height);
                 if(req_block==null) return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
@@ -137,12 +137,12 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
             const unit_bought = base_state.map(s=>{
                 if(s.token!=constant.unit||s.owner!=unit_base[0]) return s;
                 const flag = s.data[0];
-                if(flag==="0") return s;
+                if(flag==="00") return s;
                 const pre_height = s.data[1];
                 const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
                 const amount = (()=>{
                     const computed = (bigInt(s.amount,16).add(unit_sum)).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-                    if(computed.lesser(1)) return bigInt("0");
+                    if(computed.lesser(1)) return bigInt("00");
                     else return computed;
                 })();
                 return _.new_obj(
@@ -150,7 +150,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                     s=>{
                         s.nonce = bigInt(s.nonce,16).add(1).toString(16);
                         s.amount = amount.toString(16);
-                        s.data[0] = "1";
+                        s.data[0] = "01";
                         s.data[1] = last_height;
                         return s;
                     }
@@ -162,7 +162,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                     s,
                     s=>{
                         s.nonce = bigInt(s.nonce,16).add(1).toString(16);
-                        s.data[0] = "0";
+                        s.data[0] = "00";
                         s.data[1] = last_height;
                         return s;
                     }
@@ -195,7 +195,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
     const unit_miners = units.map(u=>u[3]).filter((val,i,array)=>array.indexOf(val)===i);
     const type = input_data[0];
     switch(type){
-        case "0":
+        case "00":
             const unit_validator = unit_base[0];
             const native_validator = native_base[0];
             const unit_base_hash_parts = unit_base.map(add=>_.slice_hash_part(add));
@@ -206,7 +206,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                 if(ref_block==null) return true;
                 const ref_tx = ref_block.txs[unit[1]];
                 if(ref_tx==null) return true;
-                const height = ref_tx.meta.refresh.height || "0";
+                const height = ref_tx.meta.refresh.height || "00";
                 const req_block:T.Block = await block_db.read_obj(height);
                 if(req_block==null) return true;
                 const req_tx = req_block.txs[ref_tx.meta.refresh.index];
@@ -234,21 +234,21 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                 const output = output_state[i];
                 const pre_flag = s.data[0];
                 const new_flag = output.data[0];
-                if(pre_flag==="0"||new_flag!="1") return true;
+                if(pre_flag==="00"||new_flag!="01") return true;
                 const pre_height = s.data[1];
                 const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
                 const amount = (()=>{
                     const computed = (bigInt(s.amount,16).add(unit_sum)).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-                    if(computed.lesser(1)) return bigInt("0");
+                    if(computed.lesser(1)) return bigInt("00");
                     else return computed;
                 })();
-                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || amount.notEquals(bigInt(output.amount,16)) || pre_flag==="0" || new_flag!="1" || output.data[1]!=last_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
+                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || amount.notEquals(bigInt(output.amount,16)) || pre_flag==="00" || new_flag!="01" || output.data[1]!=last_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
             });
             if(unit_bought) return false;
             const unit_used = base_state.some((s,i)=>{
                 if(s.token!=constant.unit||unit_base.slice(1).indexOf(s.owner)===-1) return false;
                 const output = output_state[i];
-                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || s.data[0]!=null || output.data[0]!="0" || output.data[1]!=last_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
+                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || s.data[0]!=null || output.data[0]!="00" || output.data[1]!=last_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
             });
             if(unit_used) return false;
             const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>big.toString(16));
@@ -269,7 +269,7 @@ export const req_tx_change = (base_state:T.State[],requester:string,fee:string,g
         return _.new_obj(
             s,
             s=>{
-                if(s.data[0]==null) s.data[0] = "0";
+                if(s.data[0]==null) s.data[0] = "00";
                 else s.data[0] = bigInt(s.data[0],16).add(bigInt(fee,16)).toString(16);
                 s.data[1] = gas;
                 return s;
@@ -277,12 +277,12 @@ export const req_tx_change = (base_state:T.State[],requester:string,fee:string,g
         )
     });
     const gained = reqed.map(s=>{
-        const income = bigInt(s.data[2]||"0",16);
+        const income = bigInt(s.data[2]||"00",16);
         if(income.eq(0)) return s;
         return _.new_obj(
           s,
           s=>{
-            s.data[2] = "0";
+            s.data[2] = "00";
             return s;
           }
         )
@@ -297,7 +297,7 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
         return _.new_obj(
             s,
             s=>{
-                s.data[1] = "0";
+                s.data[1] = "00";
                 s.amount = bigInt(s.amount,16).subtract(bigInt(gas,16)).toString(16);
                 return s;
             }
@@ -316,24 +316,24 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
         )
     });
     const gained = refed.map(s=>{
-        const income = bigInt(s.data[2]||"0",16);
+        const income = bigInt(s.data[2]||"00",16);
         if(income.eq(0)) return s;
         return _.new_obj(
             s,
             s=>{
                 s.amount = bigInt(s.amount,16).add(income).toString(16);
-                s.data[2] = "0";
+                s.data[2] = "00";
                 return s;
             }
         )
     });
     const reduced = gained.map(s=>{
-        if(s.token!=constant.unit||bases.indexOf(s.owner)===-1||s.data[0]!="1") return s;
+        if(s.token!=constant.unit||bases.indexOf(s.owner)===-1||s.data[0]!="01") return s;
         const pre_height = s.data[1];
         const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
         const amount = (()=>{
             const computed = bigInt(s.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-            if(computed.lesser(1)) return bigInt("0");
+            if(computed.lesser(1)) return bigInt("00");
             else return computed;
         })();
         return _.new_obj(
@@ -354,13 +354,13 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
     const fee_2 = bigInt(fee,16).multiply(6).divide(10);
     const paid = base_state.map(s=>{
         if(s.token!=constant.native) return s;
-        const fee = bigInt(s.data[0]||"0",16)
+        const fee = bigInt(s.data[0]||"00",16)
         if(fee.eq(0)) return s;
         return _.new_obj(
             s,
             s=>{
                 s.amount = bigInt(s.amount,16).subtract(fee).toString(16);
-                s.data[0] = "0";
+                s.data[0] = "00";
                 return s;
             }
         )
@@ -377,7 +377,7 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
             s,
             s=>{
                 s.amount = bigInt(s.amount,16).add(gain).toString(16);
-                s.data[2] = bigInt(s.data[2]||"0",16).add(gain).toString(16);
+                s.data[2] = bigInt(s.data[2]||"00",16).add(gain).toString(16);
                 return s;
             }
         )
@@ -388,7 +388,7 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
         const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
         const amount = (()=>{
             const computed = bigInt(s.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-            if(computed.lesser(1)) return bigInt("0");
+            if(computed.lesser(1)) return bigInt("00");
             else return computed;
         })();
         return _.new_obj(
@@ -412,7 +412,7 @@ export const micro_block_change = (base_state:T.State[],last_height:string)=>{
         const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
         const amount = (()=>{
             const computed = bigInt(s.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-            if(computed.lesser(1)) return bigInt("0");
+            if(computed.lesser(1)) return bigInt("00");
             else return computed;
         })();
         return _.new_obj(

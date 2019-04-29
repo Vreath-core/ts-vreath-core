@@ -222,14 +222,14 @@ const isToken = (token:T.Token):token is T.Token =>{
     else return true;
 }
 
-const create_state = (nonce:string="0",token:string="0",owner:string=crypto_set.generate_address("",""),amount:string="0",data:string[]=[])=>{
+const create_state = (nonce:string="00",token:string="00",owner:string=crypto_set.generate_address("",""),amount:string="00",data:string[]=[])=>{
     if(hex_check(nonce,8,true)||hex_check(token,8,true)||hex_check(owner,40)||hex_check(amount,10,true)||data.some(data=>data==null||typeof data!='string')) throw error;
     const state = state_set.CreateState(nonce,token,owner,amount,data);
     if(!isState(state)) throw new Error('invalid state');
     return state;
 }
 
-const create_token = (nonce:string="0",name:string="0",issued:string="0",code:string=crypto_set.get_sha256(""))=>{
+const create_token = (nonce:string="00",name:string="00",issued:string="00",code:string=crypto_set.get_sha256(""))=>{
     if(hex_check(nonce,8,true)||hex_check(name,40)||hex_check(issued,10,true)||hex_check(code,32)) throw error;
     const token = state_set.CreateToken(nonce,name,issued,code);
     if(!isToken(token)) throw new Error('invalid token');
