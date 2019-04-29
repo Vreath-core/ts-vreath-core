@@ -48,7 +48,7 @@ export const get_info_from_block = (block:T.Block):[string,string[],string,strin
     const sign = block.signature;
     const meta_data = block_meta2array(block.meta);
     const recover_id = bigInt(sign.v,16).mod(2).toJSNumber();
-    const id = bigInt(bigInt(sign.v,16).minus(9).minus(28-recover_id)).divide(2).toString(16);
+    const id = _.bigInt2hex(bigInt(bigInt(sign.v,16).minus(9).minus(28-recover_id)).divide(2));
     const raw_array = meta_data.concat(id);
     const meta_hash = _.array2hash(raw_array);
     const public_key = crypto_set.recover(meta_hash,sign.data,recover_id);
@@ -66,7 +66,7 @@ export const search_key_block = async (block_db:DB,last_height:string)=>{
         if(block.meta.kind===0) break;
         else if(height==="00") break;
         else{
-            height = bigInt(height,16).subtract(1).toString(16);
+            height = _.bigInt2hex(bigInt(height,16).subtract(1));
         }
     }
     return block;
@@ -88,7 +88,7 @@ export const search_micro_block = async (block_db:DB,key_block:T.Block,last_heig
         public_key = crypto_set.recover(raw_hash,block.signature.data,bigInt(block.signature.v,16).mod(2).toJSNumber());
         if(block.meta.kind===1&&public_key===key_public) micros.push(block);
         if(height===last_height) break;
-        height = bigInt(height,16).add(1).toString(16);
+        height = _.bigInt2hex(bigInt(height,16).add(1));
     }
     return micros;
 }
@@ -115,7 +115,7 @@ export const GetTreeroot = (pre:string[]):string[]=>{
 
 export const tx_fee_sum = (txs:T.Tx[]):string=>{
     const sum = txs.reduce((sum,tx)=>sum.add(bigInt(tx_set.tx_fee(tx),16)),bigInt(0));
-    return sum.toString(16);
+    return _.bigInt2hex(sum)
 };
 
 export const pos_hash = (previoushash:string,address:string,timestamp:number)=>{
@@ -173,7 +173,7 @@ export const compute_block_size = (block:T.Block)=>{
         return res.concat(array);
     },[]);
     const all_array = meta_array.concat(block.hash).concat(signs).concat(txs);
-    const tx_fee_sum = all_array.reduce((sum,item)=>sum.add(Math.ceil(Buffer.from(item,'hex').length)),bigInt(0)).toString(16);
+    const tx_fee_sum = _.bigInt2hex(all_array.reduce((sum,item)=>sum.add(Math.ceil(Buffer.from(item,'hex').length)),bigInt(0)));
     return tx_fee_sum;
 }
 
@@ -203,8 +203,8 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
     const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
     const reduced_amount = (()=>{
         const computed = bigInt(unit_validator_state.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-        if(computed.lesser(1)) return bigInt("00").toString(16);
-        else return computed.toString(16);
+        if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
+        else return _.bigInt2hex(computed);
     })();
     const right_diff = get_diff(reduced_amount);
     const hash_for_pos = pos_hash(previoushash,unit_validator,timestamp);
@@ -407,8 +407,8 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
     const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
     const reduced_amount = (()=>{
         const computed = bigInt(unit_validator_state.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-        if(computed.lesser(1)) return bigInt("00").toString(16);
-        else return computed.toString(16);
+        if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
+        else return _.bigInt2hex(computed);
     })();
     const pos_diff = get_diff(reduced_amount);
     const trie_root = trie.now_root();
@@ -493,7 +493,7 @@ const compute_issue = (height:string)=>{
     const pre_amount:BigInteger = bigInt(all_issue,16).divide(bigInt(2).pow(n));
     const issue:BigInteger = pre_amount.subtract(new_amount).divide(cycle);
     if(issue.lesser(1)) return "00";
-    else return issue.toString(16);
+    else return _.bigInt2hex(issue);
 }
 
 export const accept_key_block = async (block:T.Block,block_db:DB,last_height:string,trie:Trie,state_db:DB,lock_db:DB)=>{
@@ -518,7 +518,7 @@ export const accept_key_block = async (block:T.Block,block_db:DB,last_height:str
 
     const fees = last_micros.reduce((sum,b)=>bigInt(sum).add(b.meta.fee_sum),bigInt(0));
     const issues = last_micros.concat(last_key).reduce((sum,b)=>sum.add(bigInt(compute_issue(b.meta.height),16)),bigInt(0));
-    const fee_sum = fees.add(issues).toString(16);
+    const fee_sum = _.bigInt2hex(fees.add(issues));
     const changed =contract.key_block_change(base_states,pre_native,new_native,fee_sum,last_height);
     const lock_states = await P.map(bases, async key=>{
         return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));

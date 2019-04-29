@@ -95,7 +95,7 @@ export const tx_fee = (tx:T.Tx):string=>{
   const size_sum = array.reduce((sum:BigInteger,item:string)=>{
     return sum.add(Math.ceil(Buffer.from(item,'hex').length))
   },bigInt(0));
-  return size_sum.multiply(price).toString(16);
+  return _.bigInt2hex(size_sum.multiply(price));
 }
 
 
@@ -151,7 +151,7 @@ export const get_info_from_tx = (tx:T.Tx):[string,string[],string[],string[],str
     return bigInt(s.v,16).mod(2).toJSNumber();
   });
   const ids = sign.map((s,i)=>{
-    return bigInt(bigInt(s.v,16).minus(9).minus(28-recover_ids[i])).divide(2).toString(16);
+    return _.bigInt2hex(bigInt(bigInt(s.v,16).minus(9).minus(28-recover_ids[i])).divide(2));
   });
   const data_array = meta_array.concat(ids[0]);
   const meta_hash = _.array2hash(data_array);
@@ -448,8 +448,8 @@ export const accept_ref_tx = async (ref_tx:T.Tx,height:string,block_hash:string,
   const req_tx = await find_req_tx(ref_tx,block_db);
   const requester = get_info_from_tx(req_tx)[4];
   const refresher = get_info_from_tx(ref_tx)[4];
-  const gas = bigInt(req_tx.meta.request.gas,16).multiply(ref_tx.meta.refresh.gas_share).divide(100).toString(16);
-  const fee = bigInt(req_tx.meta.request.gas,16).subtract(bigInt(gas,16)).toString(16);
+  const gas = _.bigInt2hex(bigInt(req_tx.meta.request.gas,16).multiply(ref_tx.meta.refresh.gas_share).divide(100));
+  const fee = _.bigInt2hex(bigInt(req_tx.meta.request.gas,16).subtract(bigInt(gas,16)));
 
   const bases = [requester,refresher].concat(req_tx.meta.request.bases);
   const base_states = await P.map(bases, async key=>{

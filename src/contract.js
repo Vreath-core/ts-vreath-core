@@ -35,8 +35,8 @@ exports.native_prove = (bases, base_state, input_data) => {
                     return s;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, (s) => {
-                    s.nonce = big_integer_1.default(s.nonce, 16).add(1).toString(16);
-                    s.amount = big_integer_1.default(s.amount, 16).subtract(income).subtract(sum).toString(16);
+                    s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
+                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(income).subtract(sum));
                     return s;
                 });
             });
@@ -46,8 +46,8 @@ exports.native_prove = (bases, base_state, input_data) => {
                     return s;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, s => {
-                    s.nonce = big_integer_1.default(s.nonce, 16).add(1).toString(16);
-                    s.amount = big_integer_1.default(s.amount, 16).subtract(income).subtract(big_integer_1.default(amounts[index], 16)).toString(16);
+                    s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
+                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(income).subtract(big_integer_1.default(amounts[index], 16)));
                     return s;
                 });
             });
@@ -162,8 +162,8 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                         return computed;
                 })();
                 return _.new_obj(s, s => {
-                    s.nonce = big_integer_1.default(s.nonce, 16).add(1).toString(16);
-                    s.amount = amount.toString(16);
+                    s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
+                    s.amount = _.bigInt2hex(amount);
                     s.data[0] = "01";
                     s.data[1] = last_height;
                     return s;
@@ -173,14 +173,14 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                 if (s.token != constant_1.constant.unit || unit_base.slice(1).indexOf(s.owner) === -1)
                     return s;
                 return _.new_obj(s, s => {
-                    s.nonce = big_integer_1.default(s.nonce, 16).add(1).toString(16);
+                    s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
                     s.data[0] = "00";
                     s.data[1] = last_height;
                     return s;
                 });
             });
             const native_states = unit_used.filter(s => s.token === constant_1.constant.native);
-            const native_input = native_base_hash_parts.map(key => unit_price_map[key] || big_integer_1.default(0)).map(big => big.toString(16));
+            const native_input = native_base_hash_parts.map(key => unit_price_map[key] || big_integer_1.default(0)).map(big => _.bigInt2hex(big));
             const paid = exports.native_prove(native_base, native_states, native_input);
             const result = unit_used.map(state => {
                 if (state.token === constant_1.constant.native)
@@ -275,7 +275,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
             });
             if (unit_used)
                 return false;
-            const native_input = native_base_hash_parts.map(key => unit_price_map[key] || big_integer_1.default(0)).map(big => big.toString(16));
+            const native_input = native_base_hash_parts.map(key => unit_price_map[key] || big_integer_1.default(0)).map(big => _.bigInt2hex(big));
             const native_base_states = base_state.filter(s => s.token === constant_1.constant.native);
             const native_output_states = output_state.filter(s => s.token === constant_1.constant.native);
             const paid = exports.native_verify(native_base, native_base_states, native_input, native_output_states);
@@ -293,7 +293,7 @@ exports.req_tx_change = (base_state, requester, fee, gas) => {
             if (s.data[0] == null)
                 s.data[0] = "00";
             else
-                s.data[0] = big_integer_1.default(s.data[0], 16).add(big_integer_1.default(fee, 16)).toString(16);
+                s.data[0] = _.bigInt2hex(big_integer_1.default(s.data[0], 16).add(big_integer_1.default(fee, 16)));
             s.data[1] = gas;
             return s;
         });
@@ -316,7 +316,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last
             return s;
         return _.new_obj(s, s => {
             s.data[1] = "00";
-            s.amount = big_integer_1.default(s.amount, 16).subtract(big_integer_1.default(gas, 16)).toString(16);
+            s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(big_integer_1.default(gas, 16)));
             return s;
         });
     });
@@ -324,11 +324,11 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last
         if (s.owner != refresher)
             return s;
         return _.new_obj(s, s => {
-            s.amount = big_integer_1.default(s.amount, 16).add(big_integer_1.default(gas, 16)).toString(16);
+            s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).add(big_integer_1.default(gas, 16)));
             if (s.data[0] == null)
                 s.data[0] = fee;
             else
-                s.data[0] = big_integer_1.default(s.data[0], 16).add(big_integer_1.default(fee, 16)).toString(16);
+                s.data[0] = _.bigInt2hex(big_integer_1.default(s.data[0], 16).add(big_integer_1.default(fee, 16)));
             return s;
         });
     });
@@ -337,7 +337,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last
         if (income.eq(0))
             return s;
         return _.new_obj(s, s => {
-            s.amount = big_integer_1.default(s.amount, 16).add(income).toString(16);
+            s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).add(income));
             s.data[2] = "00";
             return s;
         });
@@ -356,7 +356,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last
         })();
         return _.new_obj(s, s => {
             s.data[1] = last_height;
-            s.amount = amount.toString(16);
+            s.amount = _.bigInt2hex(amount);
             return s;
         });
     });
@@ -373,7 +373,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
         if (fee.eq(0))
             return s;
         return _.new_obj(s, s => {
-            s.amount = big_integer_1.default(s.amount, 16).subtract(fee).toString(16);
+            s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(fee));
             s.data[0] = "00";
             return s;
         });
@@ -391,8 +391,8 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
                 return 0;
         })();
         return _.new_obj(s, s => {
-            s.amount = big_integer_1.default(s.amount, 16).add(gain).toString(16);
-            s.data[2] = big_integer_1.default(s.data[2] || "00", 16).add(gain).toString(16);
+            s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).add(gain));
+            s.data[2] = _.bigInt2hex(big_integer_1.default(s.data[2] || "00", 16).add(gain));
             return s;
         });
     });
@@ -410,7 +410,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
         })();
         return _.new_obj(s, s => {
             s.data[1] = last_height;
-            s.amount = amount.toString(16);
+            s.amount = _.bigInt2hex(amount);
             return s;
         });
     });
@@ -432,7 +432,7 @@ exports.micro_block_change = (base_state, last_height) => {
         })();
         return _.new_obj(s, s => {
             s.data[1] = last_height;
-            s.amount = amount.toString(16);
+            s.amount = _.bigInt2hex(amount);
             return s;
         });
     });

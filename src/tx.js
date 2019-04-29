@@ -95,7 +95,7 @@ exports.tx_fee = (tx) => {
     const size_sum = array.reduce((sum, item) => {
         return sum.add(Math.ceil(Buffer.from(item, 'hex').length));
     }, big_integer_1.default(0));
-    return size_sum.multiply(price).toString(16);
+    return _.bigInt2hex(size_sum.multiply(price));
 };
 exports.unit_hash = async (request, height, block_hash, nonce, refresher, output, unit_price) => {
     return await crypto_set.compute_cryptonight(_.array2hash([request, height, block_hash, nonce, refresher, output, unit_price]));
@@ -144,7 +144,7 @@ exports.get_info_from_tx = (tx) => {
         return big_integer_1.default(s.v, 16).mod(2).toJSNumber();
     });
     const ids = sign.map((s, i) => {
-        return big_integer_1.default(big_integer_1.default(s.v, 16).minus(9).minus(28 - recover_ids[i])).divide(2).toString(16);
+        return _.bigInt2hex(big_integer_1.default(big_integer_1.default(s.v, 16).minus(9).minus(28 - recover_ids[i])).divide(2));
     });
     const data_array = meta_array.concat(ids[0]);
     const meta_hash = _.array2hash(data_array);
@@ -410,8 +410,8 @@ exports.accept_ref_tx = async (ref_tx, height, block_hash, index, trie, state_db
     const req_tx = await exports.find_req_tx(ref_tx, block_db);
     const requester = exports.get_info_from_tx(req_tx)[4];
     const refresher = exports.get_info_from_tx(ref_tx)[4];
-    const gas = big_integer_1.default(req_tx.meta.request.gas, 16).multiply(ref_tx.meta.refresh.gas_share).divide(100).toString(16);
-    const fee = big_integer_1.default(req_tx.meta.request.gas, 16).subtract(big_integer_1.default(gas, 16)).toString(16);
+    const gas = _.bigInt2hex(big_integer_1.default(req_tx.meta.request.gas, 16).multiply(ref_tx.meta.refresh.gas_share).divide(100));
+    const fee = _.bigInt2hex(big_integer_1.default(req_tx.meta.request.gas, 16).subtract(big_integer_1.default(gas, 16)));
     const bases = [requester, refresher].concat(req_tx.meta.request.bases);
     const base_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));

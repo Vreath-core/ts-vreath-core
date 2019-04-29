@@ -30,11 +30,17 @@ exports.get_unicode = (str) => {
         return val.charCodeAt(0);
     });
 };
+exports.bigInt2hex = (bigint) => {
+    let hex = bigint.toString(16);
+    if (hex.length % 2 != 0)
+        hex = "0" + hex;
+    return hex;
+};
 exports.hex_sum = (hexes) => {
     const sum_hex = hexes.reduce((sum, hex) => {
         return sum.add(big_integer_1.default(hex, 16));
     }, big_integer_1.default(0));
-    return sum_hex.toString(16);
+    return exports.bigInt2hex(sum_hex);
 };
 exports.array2hash = (array) => {
     const concated = array.reduce((res, str) => {

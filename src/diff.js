@@ -1,9 +1,17 @@
 "use strict";
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const constant_1 = require("./constant");
+const _ = __importStar(require("./util"));
 const big_integer_1 = __importDefault(require("big-integer"));
 /*export const get_diff = (cumulative_diffs:number[],target_time:number,solvetimes:number[]):number=>{
     if(cumulative_diffs.length!=size+1 || solvetimes.length!=size+1) return def_diff;
@@ -26,5 +34,5 @@ const big_integer_1 = __importDefault(require("big-integer"));
 }*/
 const times = big_integer_1.default(constant_1.constant.block_time).multiply(constant_1.constant.max_blocks + 1);
 exports.get_diff = (amount) => {
-    return big_integer_1.default(amount, 16).multiply(times).toString(16);
+    return _.bigInt2hex(big_integer_1.default(amount, 16).multiply(times));
 };

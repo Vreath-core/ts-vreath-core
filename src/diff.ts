@@ -1,4 +1,5 @@
 import {constant} from './constant'
+import * as _ from './util'
 import bigInt from 'big-integer'
 
 
@@ -25,5 +26,5 @@ import bigInt from 'big-integer'
 const times = bigInt(constant.block_time).multiply(constant.max_blocks+1);
 
 export const get_diff = (amount:string)=>{
-    return bigInt(amount,16).multiply(times).toString(16);
+    return _.bigInt2hex(bigInt(amount,16).multiply(times));
 }

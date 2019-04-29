@@ -1,4 +1,5 @@
 import bigInt from 'big-integer'
+import * as _ from './util'
 
 let my_version = "0000";
 let my_net_id = "004b";
@@ -21,9 +22,9 @@ export let constant = {
     block_time:12,
     max_blocks:9,
     block_size:25000,
-    all_issue:bigInt(10).pow(24).toString(16),
+    all_issue:_.bigInt2hex(bigInt(10).pow(24)),
     cycle:126144000,
-    pow_target:bigInt(2).pow(256).toString(16),
+    pow_target:_.bigInt2hex(bigInt(2).pow(256)),
     def_pos_diff:24,
     lwma_size:8,
     unit_rate:90,

@@ -27,8 +27,8 @@ export const native_prove = (bases:string[],base_state:T.State[],input_data:stri
           return _.new_obj(
             s,
             (s)=>{
-              s.nonce = bigInt(s.nonce,16).add(1).toString(16);
-              s.amount = bigInt(s.amount,16).subtract(income).subtract(sum).toString(16);
+              s.nonce = _.bigInt2hex(bigInt(s.nonce,16).add(1));
+              s.amount = _.bigInt2hex(bigInt(s.amount,16).subtract(income).subtract(sum));
               return s;
             }
           )
@@ -40,8 +40,8 @@ export const native_prove = (bases:string[],base_state:T.State[],input_data:stri
           return _.new_obj(
             s,
             s=>{
-              s.nonce = bigInt(s.nonce,16).add(1).toString(16);
-              s.amount =bigInt(s.amount,16).subtract(income).subtract(bigInt(amounts[index],16)).toString(16);
+              s.nonce = _.bigInt2hex(bigInt(s.nonce,16).add(1));
+              s.amount = _.bigInt2hex(bigInt(s.amount,16).subtract(income).subtract(bigInt(amounts[index],16)));
               return s;
             }
           )
@@ -148,8 +148,8 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                 return _.new_obj(
                     s,
                     s=>{
-                        s.nonce = bigInt(s.nonce,16).add(1).toString(16);
-                        s.amount = amount.toString(16);
+                        s.nonce = _.bigInt2hex(bigInt(s.nonce,16).add(1));
+                        s.amount = _.bigInt2hex(amount);
                         s.data[0] = "01";
                         s.data[1] = last_height;
                         return s;
@@ -161,7 +161,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                 return _.new_obj(
                     s,
                     s=>{
-                        s.nonce = bigInt(s.nonce,16).add(1).toString(16);
+                        s.nonce = _.bigInt2hex(bigInt(s.nonce,16).add(1));
                         s.data[0] = "00";
                         s.data[1] = last_height;
                         return s;
@@ -169,7 +169,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                 )
             });
             const native_states = unit_used.filter(s=>s.token===constant.native);
-            const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>big.toString(16));
+            const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big));
             const paid = native_prove(native_base,native_states,native_input);
             const result = unit_used.map(state=>{
                 if(state.token===constant.native) return paid.filter(s=>s.token===constant.native&&s.owner===state.owner)[0];
@@ -251,7 +251,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                 return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || s.data[0]!=null || output.data[0]!="00" || output.data[1]!=last_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
             });
             if(unit_used) return false;
-            const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>big.toString(16));
+            const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big));
             const native_base_states = base_state.filter(s=>s.token===constant.native);
             const native_output_states = output_state.filter(s=>s.token===constant.native);
             const paid = native_verify(native_base,native_base_states,native_input,native_output_states);
@@ -270,7 +270,7 @@ export const req_tx_change = (base_state:T.State[],requester:string,fee:string,g
             s,
             s=>{
                 if(s.data[0]==null) s.data[0] = "00";
-                else s.data[0] = bigInt(s.data[0],16).add(bigInt(fee,16)).toString(16);
+                else s.data[0] = _.bigInt2hex(bigInt(s.data[0],16).add(bigInt(fee,16)));
                 s.data[1] = gas;
                 return s;
             }
@@ -298,7 +298,7 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
             s,
             s=>{
                 s.data[1] = "00";
-                s.amount = bigInt(s.amount,16).subtract(bigInt(gas,16)).toString(16);
+                s.amount = _.bigInt2hex(bigInt(s.amount,16).subtract(bigInt(gas,16)));
                 return s;
             }
         )
@@ -308,9 +308,9 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
         return _.new_obj(
             s,
             s=>{
-                s.amount = bigInt(s.amount,16).add(bigInt(gas,16)).toString(16);
+                s.amount = _.bigInt2hex(bigInt(s.amount,16).add(bigInt(gas,16)));
                 if(s.data[0]==null) s.data[0] = fee;
-                else s.data[0] = bigInt(s.data[0],16).add(bigInt(fee,16)).toString(16);
+                else s.data[0] = _.bigInt2hex(bigInt(s.data[0],16).add(bigInt(fee,16)));
                 return s;
             }
         )
@@ -321,7 +321,7 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
         return _.new_obj(
             s,
             s=>{
-                s.amount = bigInt(s.amount,16).add(income).toString(16);
+                s.amount = _.bigInt2hex(bigInt(s.amount,16).add(income));
                 s.data[2] = "00";
                 return s;
             }
@@ -340,7 +340,7 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
             s,
             s=>{
                 s.data[1] = last_height;
-                s.amount = amount.toString(16);
+                s.amount = _.bigInt2hex(amount);
                 return s;
             }
         )
@@ -359,7 +359,7 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
         return _.new_obj(
             s,
             s=>{
-                s.amount = bigInt(s.amount,16).subtract(fee).toString(16);
+                s.amount = _.bigInt2hex(bigInt(s.amount,16).subtract(fee));
                 s.data[0] = "00";
                 return s;
             }
@@ -376,8 +376,8 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
         return _.new_obj(
             s,
             s=>{
-                s.amount = bigInt(s.amount,16).add(gain).toString(16);
-                s.data[2] = bigInt(s.data[2]||"00",16).add(gain).toString(16);
+                s.amount = _.bigInt2hex(bigInt(s.amount,16).add(gain));
+                s.data[2] = _.bigInt2hex(bigInt(s.data[2]||"00",16).add(gain));
                 return s;
             }
         )
@@ -395,7 +395,7 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
             s,
             s=>{
                 s.data[1] = last_height;
-                s.amount = amount.toString(16);
+                s.amount = _.bigInt2hex(amount);
                 return s;
             }
         )
@@ -419,7 +419,7 @@ export const micro_block_change = (base_state:T.State[],last_height:string)=>{
             s,
             s=>{
                 s.data[1] = last_height;
-                s.amount = amount.toString(16);
+                s.amount = _.bigInt2hex(amount);
                 return s;
             }
         )

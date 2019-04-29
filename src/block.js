@@ -53,7 +53,7 @@ exports.get_info_from_block = (block) => {
     const sign = block.signature;
     const meta_data = exports.block_meta2array(block.meta);
     const recover_id = big_integer_1.default(sign.v, 16).mod(2).toJSNumber();
-    const id = big_integer_1.default(big_integer_1.default(sign.v, 16).minus(9).minus(28 - recover_id)).divide(2).toString(16);
+    const id = _.bigInt2hex(big_integer_1.default(big_integer_1.default(sign.v, 16).minus(9).minus(28 - recover_id)).divide(2));
     const raw_array = meta_data.concat(id);
     const meta_hash = _.array2hash(raw_array);
     const public_key = crypto_set.recover(meta_hash, sign.data, recover_id);
@@ -73,7 +73,7 @@ exports.search_key_block = async (block_db, last_height) => {
         else if (height === "00")
             break;
         else {
-            height = big_integer_1.default(height, 16).subtract(1).toString(16);
+            height = _.bigInt2hex(big_integer_1.default(height, 16).subtract(1));
         }
     }
     return block;
@@ -97,7 +97,7 @@ exports.search_micro_block = async (block_db, key_block, last_height) => {
             micros.push(block);
         if (height === last_height)
             break;
-        height = big_integer_1.default(height, 16).add(1).toString(16);
+        height = _.bigInt2hex(big_integer_1.default(height, 16).add(1));
     }
     return micros;
 };
@@ -127,7 +127,7 @@ exports.GetTreeroot = (pre) => {
 };
 exports.tx_fee_sum = (txs) => {
     const sum = txs.reduce((sum, tx) => sum.add(big_integer_1.default(tx_set.tx_fee(tx), 16)), big_integer_1.default(0));
-    return sum.toString(16);
+    return _.bigInt2hex(sum);
 };
 exports.pos_hash = (previoushash, address, timestamp) => {
     return _.array2hash([previoushash, address, timestamp.toString(16)]);
@@ -182,7 +182,7 @@ exports.compute_block_size = (block) => {
         return res.concat(array);
     }, []);
     const all_array = meta_array.concat(block.hash).concat(signs).concat(txs);
-    const tx_fee_sum = all_array.reduce((sum, item) => sum.add(Math.ceil(Buffer.from(item, 'hex').length)), big_integer_1.default(0)).toString(16);
+    const tx_fee_sum = _.bigInt2hex(all_array.reduce((sum, item) => sum.add(Math.ceil(Buffer.from(item, 'hex').length)), big_integer_1.default(0)));
     return tx_fee_sum;
 };
 exports.verify_key_block = async (block, block_db, trie, state_db, last_height) => {
@@ -210,9 +210,9 @@ exports.verify_key_block = async (block, block_db, trie, state_db, last_height) 
     const reduced_amount = (() => {
         const computed = big_integer_1.default(unit_validator_state.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
         if (computed.lesser(1))
-            return big_integer_1.default("00").toString(16);
+            return _.bigInt2hex(big_integer_1.default("00"));
         else
-            return computed.toString(16);
+            return _.bigInt2hex(computed);
     })();
     const right_diff = diff_1.get_diff(reduced_amount);
     const hash_for_pos = exports.pos_hash(previoushash, unit_validator, timestamp);
@@ -402,9 +402,9 @@ exports.create_key_block = async (private_key, block_db, last_height, trie, stat
     const reduced_amount = (() => {
         const computed = big_integer_1.default(unit_validator_state.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
         if (computed.lesser(1))
-            return big_integer_1.default("00").toString(16);
+            return _.bigInt2hex(big_integer_1.default("00"));
         else
-            return computed.toString(16);
+            return _.bigInt2hex(computed);
     })();
     const pos_diff = diff_1.get_diff(reduced_amount);
     const trie_root = trie.now_root();
@@ -486,7 +486,7 @@ const compute_issue = (height) => {
     if (issue.lesser(1))
         return "00";
     else
-        return issue.toString(16);
+        return _.bigInt2hex(issue);
 };
 exports.accept_key_block = async (block, block_db, last_height, trie, state_db, lock_db) => {
     const last_key = await exports.search_key_block(block_db, last_height) || exports.empty_block();
@@ -508,7 +508,7 @@ exports.accept_key_block = async (block, block_db, last_height, trie, state_db, 
     });
     const fees = last_micros.reduce((sum, b) => big_integer_1.default(sum).add(b.meta.fee_sum), big_integer_1.default(0));
     const issues = last_micros.concat(last_key).reduce((sum, b) => sum.add(big_integer_1.default(compute_issue(b.meta.height), 16)), big_integer_1.default(0));
-    const fee_sum = fees.add(issues).toString(16);
+    const fee_sum = _.bigInt2hex(fees.add(issues));
     const changed = contract.key_block_change(base_states, pre_native, new_native, fee_sum, last_height);
     const lock_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));

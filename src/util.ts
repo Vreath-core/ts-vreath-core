@@ -24,11 +24,17 @@ export const get_unicode = (str:string):number[]=>{
   });
 }
 
+export const bigInt2hex = (bigint:BigInteger):string=>{
+  let hex = bigint.toString(16);
+  if(hex.length%2!=0) hex = "0"+hex;
+  return hex;
+}
+
 export const hex_sum = (hexes:string[]):string=>{
   const sum_hex = hexes.reduce((sum:BigInteger,hex:string)=>{
     return sum.add(bigInt(hex,16));
   },bigInt(0));
-  return sum_hex.toString(16);
+  return bigInt2hex(sum_hex);
 }
 
 export const array2hash = (array:string[]):string=>{
