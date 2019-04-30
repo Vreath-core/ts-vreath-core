@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const levelup_1 = __importDefault(require("levelup"));
 const leveldown_1 = __importDefault(require("leveldown"));
-const stream_to_promise_1 = __importDefault(require("stream-to-promise"));
+const streamToPromise = require('stream-to-promise');
 class DB {
     constructor(root) {
         this.db = levelup_1.default(leveldown_1.default(root));
@@ -34,12 +34,13 @@ class DB {
     async write_obj(key, obj) {
         await this.put(key, JSON.stringify(obj));
     }
-    async filter(key_encode = 'hex', val_encode = 'utf8', check = (value) => true) {
+    async filter(key_encode = 'hex', val_encode = 'utf8', check = (key, value) => true) {
         let result = [];
         const stream = this.db.createReadStream();
-        const data = await stream_to_promise_1.default(stream);
-        const value = JSON.parse(data.toString(val_encode));
-        if (await check(value))
+        const data = await streamToPromise(stream);
+        const key = data.key.toString(key_encode);
+        const value = JSON.parse(data.value.toString(val_encode));
+        if (await check(key, value))
             result.push(value);
         return result;
         /*return new Promise<T[]>((resolve,reject)=>{
