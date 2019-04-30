@@ -21,8 +21,8 @@ class DB {
     async put(key, val, key_encode = 'hex', val_encode = 'utf8') {
         await this.db.put(Buffer.from(key, key_encode), Buffer.from(val, val_encode));
     }
-    async del(key) {
-        await this.db.del(key);
+    async del(key, key_encode = 'hex') {
+        await this.db.del(Buffer.from(key, key_encode));
     }
     async read_obj(key) {
         const read = await this.get(key);

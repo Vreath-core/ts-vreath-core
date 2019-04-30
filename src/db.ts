@@ -23,8 +23,8 @@ export class DB {
         await this.db.put(Buffer.from(key,key_encode),Buffer.from(val,val_encode));
     }
 
-    public async del(key:string){
-        await this.db.del(key);
+    public async del(key:string,key_encode:encode='hex'){
+        await this.db.del(Buffer.from(key,key_encode));
     }
 
     public async read_obj<T>(key:string):Promise<T|null>{
