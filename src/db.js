@@ -2,9 +2,17 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const levelup_1 = __importDefault(require("levelup"));
 const leveldown_1 = __importDefault(require("leveldown"));
+const P = __importStar(require("p-iteration"));
 const streamToPromise = require('stream-to-promise');
 class DB {
     constructor(root) {
@@ -37,11 +45,13 @@ class DB {
     async filter(key_encode = 'hex', val_encode = 'utf8', check = (key, value) => true) {
         let result = [];
         const stream = this.db.createReadStream();
-        const data = await streamToPromise(stream);
-        const key = data.key.toString(key_encode);
-        const value = JSON.parse(data.value.toString(val_encode));
-        if (await check(key, value))
-            result.push(value);
+        const data_array = await streamToPromise(stream);
+        await P.forEach(data_array, async (data) => {
+            const key = data.key.toString(key_encode);
+            const value = JSON.parse(data.value.toString(val_encode));
+            if (await check(key, value))
+                result.push(value);
+        });
         return result;
         /*return new Promise<T[]>((resolve,reject)=>{
             try{
