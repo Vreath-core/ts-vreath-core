@@ -185,15 +185,15 @@ const verify_tx_basic = (hash:string,sign:T.Sign[],meta_hash:string,ids:string[]
     //console.log("invalid ids");
     return false;
   }
-  else if(bigInt(version,16).lesser(constant.compatible_version)){
+  else if(bigInt(version,16).lesser(bigInt(constant.compatible_version,16))){
     //console.log("different version");
     return false;
   }
-  else if(bigInt(chain_id,16).notEquals(constant.my_chain_id)){
+  else if(bigInt(chain_id,16).notEquals(bigInt(constant.my_chain_id,16))){
     //console.log("different chain id");
     return false;
   }
-  else if(bigInt(net_id,16).notEquals(constant.my_net_id)){
+  else if(bigInt(net_id,16).notEquals(bigInt(constant.my_net_id,16))){
     //console.log("different network id");
     return false;
   }
