@@ -442,7 +442,7 @@ exports.create_key_block = async (private_key, block_db, last_height, trie, stat
 exports.create_micro_block = async (private_key, block_db, last_height, trie, txs, extra) => {
     const empty = exports.empty_block();
     const last = await block_db.read_obj(last_height) || empty;
-    const new_height = _.bigInt2hex(big_integer_1.default(last_height).add(1));
+    const new_height = _.bigInt2hex(big_integer_1.default(last_height, 16).add(1));
     const previoushash = last.hash;
     const key = await exports.search_key_block(block_db, last_height) || exports.empty_block();
     const date = new Date();

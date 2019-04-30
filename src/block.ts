@@ -448,7 +448,7 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
 export const create_micro_block = async (private_key:string,block_db:DB,last_height:string,trie:Trie,txs:T.Tx[],extra:string):Promise<T.Block>=>{
     const empty = empty_block();
     const last:T.Block = await block_db.read_obj(last_height) || empty;
-    const new_height = _.bigInt2hex(bigInt(last_height).add(1));
+    const new_height = _.bigInt2hex(bigInt(last_height,16).add(1));
     const previoushash = last.hash;
     const key = await search_key_block(block_db,last_height) || empty_block();
     const date = new Date();
