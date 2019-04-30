@@ -59,6 +59,12 @@ exports.reduce_pub = (pubs) => {
 exports.get_string = (uni) => {
     return String.fromCharCode.apply({}, uni);
 };
+exports.slice_token_part = (address) => {
+    return address.slice(0, 16);
+};
+exports.slice_hash_part = (address) => {
+    return address.slice(16, 80);
+};
 exports.hash_size_check = (hash) => {
     return Buffer.from(hash).length != Buffer.from(crypto_set.get_sha256('')).length;
 };
@@ -66,7 +72,7 @@ exports.sign_check = (hash, signature, public_key) => {
     return crypto_set.verify(hash, signature, public_key) == false;
 };
 exports.hashed_pub_check = (address, pubs) => {
-    return address.slice(16, 80) != crypto_set.get_sha256(exports.reduce_pub(pubs));
+    return address.slice(16, 80) != crypto_set.get_sha256(crypto_set.get_sha256(exports.reduce_pub(pubs)));
 };
 exports.address_check = (address, public_key, token) => {
     return address != crypto_set.generate_address(token, public_key);
@@ -77,12 +83,6 @@ exports.address_form_check = (address) => {
 exports.time_check = (timestamp) => {
     const date = new Date();
     return timestamp > Math.floor(date.getTime() / 1000);
-};
-exports.slice_token_part = (address) => {
-    return address.slice(0, 16);
-};
-exports.slice_hash_part = (address) => {
-    return address.slice(16, 80);
 };
 exports.slice_tokens = (addresses) => {
     return addresses.reduce((res, add) => {

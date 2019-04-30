@@ -54,6 +54,14 @@ export const get_string = (uni:number[]):string=>{
   return String.fromCharCode.apply({},uni);
 }
 
+export const slice_token_part = (address:string)=>{
+  return address.slice(0,16);
+}
+
+export const slice_hash_part = (address:string)=>{
+  return address.slice(16,80);
+}
+
 export const hash_size_check = (hash:string)=>{
   return Buffer.from(hash).length!=Buffer.from(crypto_set.get_sha256('')).length;
 }
@@ -63,7 +71,7 @@ export const sign_check = (hash:string,signature:string,public_key:string)=>{
 }
 
 export const hashed_pub_check = (address:string,pubs:string[])=>{
-    return address.slice(16,80)!=crypto_set.get_sha256(reduce_pub(pubs));
+    return address.slice(16,80)!=crypto_set.get_sha256(crypto_set.get_sha256(reduce_pub(pubs)));
 }
 
 export const address_check = (address:string,public_key:string,token:string)=>{
@@ -78,14 +86,6 @@ export const address_form_check = (address:string)=>{
 export const time_check = (timestamp:number)=>{
   const date = new Date();
   return timestamp>Math.floor(date.getTime()/1000);
-}
-
-export const slice_token_part = (address:string)=>{
-  return address.slice(0,16);
-}
-
-export const slice_hash_part = (address:string)=>{
-  return address.slice(16,80);
 }
 
 export const slice_tokens = (addresses:string[])=>{
