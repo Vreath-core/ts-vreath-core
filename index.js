@@ -107,7 +107,7 @@ const verify = (data, sign, public_key) => {
     return crypto_set.verify(data, sign, public_key);
 };
 const isSignature = (sign) => {
-    if (hex_check(sign.data, 64) || hex_check(sign.v, 6, true))
+    if (hex_check(sign.data, 64) || hex_check(sign.v, 7, true))
         return false;
     else
         return true;

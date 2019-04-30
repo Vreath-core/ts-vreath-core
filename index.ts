@@ -97,7 +97,7 @@ const verify = (data:string,sign:string,public_key:string)=>{
 }
 
 const isSignature = (sign:T.Sign)=>{
-    if(hex_check(sign.data,64)||hex_check(sign.v,6,true)) return false;
+    if(hex_check(sign.data,64)||hex_check(sign.v,7,true)) return false;
     else return true;
 }
 
