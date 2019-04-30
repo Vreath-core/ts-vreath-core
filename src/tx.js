@@ -206,15 +206,13 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
     const kind = meta.kind;
     const req = meta.request;
     const gas = req.gas;
-    const other_bases = req.bases;
+    const bases = req.bases;
     const pulled = exports.get_info_from_tx(tx);
     const meta_hash = pulled[0];
     const ids = pulled[2];
     const pub_keys = pulled[3];
     const requester = pulled[4];
-    const tokens = _.slice_tokens(other_bases);
-    const sender = crypto_set.generate_address(tokens[0], _.reduce_pub(pub_keys));
-    const bases = [sender].concat(other_bases);
+    const tokens = _.slice_tokens(bases);
     const requester_state = await data.read_from_trie(trie, state_db, requester, 0, state_set.CreateState("00", constant_1.constant.native, requester, "00", []));
     const base_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
@@ -226,7 +224,7 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
         //console.log("invalid kind");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(2) != -1) || requester_state == null || _.hashed_pub_check(requester, pub_keys) || requester_state.token != constant_1.constant.native || big_integer_1.default(requester_state.amount, 16).subtract(big_integer_1.default(exports.tx_fee(tx), 16)).subtract(big_integer_1.default(gas, 16)).lesser(0)) {
+    else if ((disabling != null && disabling.indexOf(2) != -1) || bases[0] != requester || requester_state == null || _.hashed_pub_check(requester, pub_keys) || requester_state.token != constant_1.constant.native || big_integer_1.default(requester_state.amount, 16).subtract(big_integer_1.default(exports.tx_fee(tx), 16)).subtract(big_integer_1.default(gas, 16)).lesser(0)) {
         //console.log("invalid requester");
         return false;
     }
@@ -269,10 +267,8 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
     const refresher = pulled[4];
     const refresher_state = await data.read_from_trie(trie, state_db, refresher, 0, state_set.CreateState("00", constant_1.constant.native, refresher));
     const unit_add = crypto_set.generate_address(constant_1.constant.unit, _.reduce_pub(pub_keys));
-    const pull_from_req = exports.get_info_from_tx(req_tx);
-    const requester = pull_from_req[4];
     const main_token = _.slice_token_part(req_tx.meta.request.bases[0]);
-    const bases = [main_token + _.slice_hash_part(requester)].concat(req_tx.meta.request.bases);
+    const bases = req_tx.meta.request.bases;
     const base_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
     });
@@ -393,7 +389,7 @@ exports.accept_req_tx = async (tx, height, block_hash, index, trie, state_db, lo
     const gas = tx.meta.request.gas;
     const requester_state = await data.read_from_trie(trie, state_db, requester, 0, state_set.CreateState("00", constant_1.constant.native, requester, "00"));
     const changed_states = contracts.req_tx_change([requester_state], requester, fee, gas);
-    const bases = tx.meta.request.bases.concat(requester).filter((val, i, array) => array.indexOf(val) === i);
+    const bases = tx.meta.request.bases;
     const base_states = await P.map(bases, async (key) => {
         if (key === requester)
             return changed_states[0];
@@ -422,7 +418,7 @@ exports.accept_ref_tx = async (ref_tx, height, block_hash, index, trie, state_db
     const refresher = exports.get_info_from_tx(ref_tx)[4];
     const gas = _.bigInt2hex(big_integer_1.default(req_tx.meta.request.gas, 16).multiply(ref_tx.meta.refresh.gas_share).divide(100));
     const fee = _.bigInt2hex(big_integer_1.default(req_tx.meta.request.gas, 16).subtract(big_integer_1.default(gas, 16)));
-    const bases = [requester, refresher].concat(req_tx.meta.request.bases);
+    const bases = req_tx.meta.request.bases;
     const base_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
     });
