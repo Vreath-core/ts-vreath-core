@@ -329,11 +329,16 @@ exports.create_req_tx = (type, bases, feeprice, gas, input, log) => {
         refresh: empty.meta.refresh
     };
     const hash = _.array2hash(exports.tx_meta2array(meta));
+    const tx_add = {
+        height: "00",
+        hash: crypto_set.get_sha256(""),
+        index: 0
+    };
     const tx = {
         hash: hash,
         signature: [],
         meta: meta,
-        additional: empty.additional
+        additional: tx_add
     };
     return tx;
 };
@@ -354,11 +359,16 @@ exports.create_ref_tx = (height, index, success, output, witness, nonce, gas_sha
         }
     };
     const hash = _.array2hash(exports.tx_meta2array(meta));
+    const tx_add = {
+        height: "00",
+        hash: crypto_set.get_sha256(""),
+        index: 0
+    };
     const tx = {
         hash: hash,
         signature: [],
         meta: meta,
-        additional: empty.additional
+        additional: tx_add
     };
     return tx;
 };

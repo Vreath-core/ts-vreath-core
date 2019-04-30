@@ -356,11 +356,17 @@ export const create_req_tx = (type:T.TxType,bases:string[],feeprice:string,gas:s
 
   const hash = _.array2hash(tx_meta2array(meta));
 
+  const tx_add:T.TxAdd = {
+    height:"00",
+    hash:crypto_set.get_sha256(""),
+    index:0
+  }
+
   const tx:T.Tx = {
     hash:hash,
     signature:[],
     meta:meta,
-    additional:empty.additional
+    additional:tx_add
   }
   return tx;
 }
@@ -381,12 +387,20 @@ export const create_ref_tx = (height:string,index:number,success:0|1,output:stri
       unit_price:unit_price
     }
   }
+
   const hash = _.array2hash(tx_meta2array(meta));
+
+  const tx_add:T.TxAdd = {
+    height:"00",
+    hash:crypto_set.get_sha256(""),
+    index:0
+  }
+
   const tx:T.Tx = {
     hash:hash,
     signature:[],
     meta:meta,
-    additional:empty.additional
+    additional:tx_add
   }
   return tx;
 }
