@@ -323,7 +323,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
     //console.log("invalid output hash");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(7)!=-1)||(success&&req_tx.meta.request.type==0&&(await output_change_check(bases,output_states)||await contract_check(main_token,bases,base_states,req_tx.meta.request.input,output_states,block_db,last_height)))||(!success&&(base_states_hashes.map((hash,i)=>hash!=output[i])||gas_share!=0))){
+  else if((disabling!=null&&disabling.indexOf(7)!=-1)||(success&&req_tx.meta.request.type==0&&(await output_change_check(bases,output_states)||await contract_check(main_token,bases,base_states,req_tx.meta.request.input,output_states,block_db,last_height)))||(!success&&(base_states_hashes.some((hash,i)=>hash!=output[i])||gas_share!=0))){
     //console.log("invalid output");
     return false;
   }
