@@ -71,7 +71,7 @@ exports.refreshed_check = async (base, trie, lock_db) => {
     });
 };
 exports.state_check = (state) => {
-    return _.address_form_check(state.owner) || _.slice_token_part(state.owner) != state.token;
+    return _.address_form_check(state.owner) || big_integer_1.default(_.slice_token_part(state.owner), 16).notEquals(big_integer_1.default(state.token, 16));
 };
 exports.tx_meta2array = (meta) => {
     const req = meta.request;
@@ -156,10 +156,10 @@ exports.get_info_from_tx = (tx) => {
     return [meta_hash, all_array, ids, pub_keys, address];
 };
 exports.contract_check = async (token, bases, base_state, input_data, output_state, block_db, last_height) => {
-    if (token === constant_1.constant.native) {
+    if (big_integer_1.default(token, 16).eq(big_integer_1.default(constant_1.constant.native, 16))) {
         return !contracts.native_verify(bases, base_state, input_data, output_state);
     }
-    else if (token === constant_1.constant.unit && block_db != null && last_height != null) {
+    else if (big_integer_1.default(token, 16).eq(big_integer_1.default(constant_1.constant.unit, 16)) && block_db != null && last_height != null) {
         return !contracts.unit_verify(bases, base_state, input_data, output_state, block_db, last_height);
     }
     else

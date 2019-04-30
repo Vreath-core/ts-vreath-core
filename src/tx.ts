@@ -71,7 +71,7 @@ export const refreshed_check = async (base:string[],trie:Trie,lock_db:DB)=>{
 }
 
 export const state_check = (state:T.State):boolean=>{
-  return _.address_form_check(state.owner) || _.slice_token_part(state.owner)!=state.token
+  return _.address_form_check(state.owner) || bigInt(_.slice_token_part(state.owner),16).notEquals(bigInt(state.token,16));
 }
 
 export const tx_meta2array = (meta:T.TxMeta):string[]=>{
@@ -164,10 +164,10 @@ export const get_info_from_tx = (tx:T.Tx):[string,string[],string[],string[],str
 }
 
 export const contract_check = async (token:string,bases:string[],base_state:T.State[],input_data:string[],output_state:T.State[],block_db?:DB,last_height?:string)=>{
-  if(token===constant.native){
+  if(bigInt(token,16).eq(bigInt(constant.native,16))){
     return !contracts.native_verify(bases,base_state,input_data,output_state);
   }
-  else if(token===constant.unit&&block_db!=null&&last_height!=null){
+  else if(bigInt(token,16).eq(bigInt(constant.unit,16))&&block_db!=null&&last_height!=null){
     return !contracts.unit_verify(bases,base_state,input_data,output_state,block_db,last_height);
   }
   else return true;
