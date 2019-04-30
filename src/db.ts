@@ -9,10 +9,10 @@ export class DB {
         this.db = levelup(leveldown(root));
     }
 
-    public async get(key:string,encode:string='utf8'):Promise<string|null>{
+    public async get(key:string,key_encode:encode='hex',val_encode:encode='utf8'):Promise<string|null>{
         try{
-            const buffer = await this.db.get(key);
-            return buffer.toString(encode);
+            const buffer = await this.db.get(Buffer.from(key,key_encode));
+            return buffer.toString(val_encode);
         }
         catch(e){
             return null;

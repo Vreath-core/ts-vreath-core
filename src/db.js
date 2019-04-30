@@ -9,10 +9,10 @@ class DB {
     constructor(root) {
         this.db = levelup_1.default(leveldown_1.default(root));
     }
-    async get(key, encode = 'utf8') {
+    async get(key, key_encode = 'hex', val_encode = 'utf8') {
         try {
-            const buffer = await this.db.get(key);
-            return buffer.toString(encode);
+            const buffer = await this.db.get(Buffer.from(key, key_encode));
+            return buffer.toString(val_encode);
         }
         catch (e) {
             return null;
