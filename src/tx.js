@@ -284,7 +284,7 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
         //console.log("invalid request hash");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(3) != -1) || !big_integer_1.default(await exports.unit_hash(req_tx.hash, height, block.hash, nonce, unit_add, _.array2hash(output), unit_price), 16).lesserOrEquals(pow_target)) {
+    else if ((disabling != null && disabling.indexOf(3) != -1) || !big_integer_1.default(await exports.unit_hash(req_tx.hash, height, block.hash, nonce, unit_add, _.array2hash(output), unit_price), 16).lesserOrEquals(big_integer_1.default(pow_target, 16))) {
         //console.log("invalid nonce");
         return false;
     }

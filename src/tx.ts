@@ -307,7 +307,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
     //console.log("invalid request hash");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(3)!=-1)||!bigInt(await unit_hash(req_tx.hash,height,block.hash,nonce,unit_add,_.array2hash(output),unit_price),16).lesserOrEquals(pow_target)){
+  else if((disabling!=null&&disabling.indexOf(3)!=-1)||!bigInt(await unit_hash(req_tx.hash,height,block.hash,nonce,unit_add,_.array2hash(output),unit_price),16).lesserOrEquals(bigInt(pow_target,16))){
     //console.log("invalid nonce");
     return false;
   }
