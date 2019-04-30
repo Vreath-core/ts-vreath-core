@@ -153,7 +153,7 @@ exports.txs_check = async (block, output_states, block_db, trie, state_db, lock_
     const txs = block.txs;
     const all_bases = txs.reduce((res, tx) => {
         const address = tx_set.get_info_from_tx(tx)[4];
-        return res.concat(address).concat(tx.meta.request.bases);
+        return res.concat(tx.meta.request.bases);
     }, []);
     if (all_bases.some((val, i, array) => array.indexOf(val) != i))
         return true;
@@ -310,6 +310,7 @@ exports.verify_micro_block = async (block, output_states, block_db, trie, state_
         const sliced = tx.meta.request.bases.map(key => _.slice_token_part(key));
         return sliced.filter((val, i, array) => array.indexOf(val) === i);
     });
+    const unit_buying_tokens_hash = _.array2hash([("0000000000000000" + constant_1.constant.unit).slice(-16), ("0000000000000000" + constant_1.constant.native).slice(-12)]);
     if (hash != _.array2hash(all_array)) {
         //console.log("invalid hash");
         return false;
@@ -378,7 +379,7 @@ exports.verify_micro_block = async (block, output_states, block_db, trie, state_
         //console.log("invalid txs");
         return false;
     }
-    else if ((big_integer_1.default(height, 16).mod(3).eq(0) && txs.some((tx, i) => tx.meta.kind === 0 && _.array2hash(tx_tokens[i]) != _.array2hash([constant_1.constant.unit, constant_1.constant.native]) || (big_integer_1.default(height, 16).mod(3).notEquals(0) && txs.some((tx, i) => tx.meta.kind === 0 && _.array2hash(tx_tokens[i]) === _.array2hash([constant_1.constant.unit, constant_1.constant.native])))))) {
+    else if ((big_integer_1.default(height, 16).mod(3).eq(0) && txs.some((tx, i) => tx.meta.kind === 0 && _.array2hash(tx_tokens[i]) != unit_buying_tokens_hash || (big_integer_1.default(height, 16).mod(3).notEquals(0) && txs.some((tx, i) => tx.meta.kind === 0 && _.array2hash(tx_tokens[i]) === unit_buying_tokens_hash))))) {
         //console.log("invalid kind of txs")
         return false;
     }
