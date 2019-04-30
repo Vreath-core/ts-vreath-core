@@ -311,7 +311,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
     //console.log("invalid nonce");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(4)!=-1)||refreshed_check(bases,trie,lock_db)){
+  else if((disabling!=null&&disabling.indexOf(4)!=-1)||await refreshed_check(bases,trie,lock_db)){
     //console.log("base states are already refreshed");
     return false;
   }

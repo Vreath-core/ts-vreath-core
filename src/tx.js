@@ -288,7 +288,7 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
         //console.log("invalid nonce");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(4) != -1) || exports.refreshed_check(bases, trie, lock_db)) {
+    else if ((disabling != null && disabling.indexOf(4) != -1) || await exports.refreshed_check(bases, trie, lock_db)) {
         //console.log("base states are already refreshed");
         return false;
     }
