@@ -296,11 +296,11 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
         //console.log("invalid refresher");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(6) != -1) || output.some((o, i) => o != _.array2hash([output_states[i].nonce, output_states[i].token, output_states[i].owner, output_states[i].amount].concat(output_states[i].data)))) {
+    else if ((disabling != null && disabling.indexOf(6) != -1) || output.length != 0 && output.some((o, i) => o != _.array2hash([output_states[i].nonce, output_states[i].token, output_states[i].owner, output_states[i].amount].concat(output_states[i].data)))) {
         //console.log("invalid output hash");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(7) != -1) || (success && req_tx.meta.request.type == 0 && (await output_change_check(bases, output_states) || await exports.contract_check(main_token, bases, base_states, req_tx.meta.request.input, output_states, block_db, last_height))) || (!success && (base_states_hashes.some((hash, i) => hash != output[i]) || gas_share != 0))) {
+    else if ((disabling != null && disabling.indexOf(7) != -1) || (success && req_tx.meta.request.type == 0 && (await output_change_check(bases, output_states) || await exports.contract_check(main_token, bases, base_states, req_tx.meta.request.input, output_states, block_db, last_height))) || (!success && (output.some((o, i) => o != base_states_hashes[i]) || gas_share != 0))) {
         //console.log("invalid output");
         return false;
     }
