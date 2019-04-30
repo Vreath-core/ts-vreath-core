@@ -144,7 +144,7 @@ exports.get_info_from_tx = (tx) => {
         return big_integer_1.default(s.v, 16).mod(2).toJSNumber();
     });
     const ids = sign.map((s, i) => {
-        return _.bigInt2hex(big_integer_1.default(big_integer_1.default(s.v, 16).minus(9).minus(28 - recover_ids[i])).divide(2));
+        return ("000000000000" + _.bigInt2hex(big_integer_1.default(big_integer_1.default(s.v, 16).minus(9).minus(28 - recover_ids[i])).divide(2))).slice(-12);
     });
     const data_array = meta_array.concat(ids[0]);
     const meta_hash = _.array2hash(data_array);
@@ -364,7 +364,6 @@ exports.create_ref_tx = (height, index, success, output, witness, nonce, gas_sha
 };
 exports.sign_tx = (tx, private_key) => {
     const sign = crypto_set.sign(tx.hash, private_key);
-    const recover_id = Number(sign[0]);
     const data = sign[1];
     const id = constant_1.constant.my_version + constant_1.constant.my_chain_id + constant_1.constant.my_net_id;
     const v = _.bigInt2hex(big_integer_1.default(id, 16).multiply(2).add(8).add(big_integer_1.default(28).subtract(big_integer_1.default(sign[0], 16))));
