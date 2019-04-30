@@ -326,7 +326,7 @@ exports.verify_micro_block = async (block, output_states, block_db, trie, state_
         //console.log("invalid validator signature");
         return false;
     }
-    else if (kind != 0) {
+    else if (kind != 1) {
         //console.log("invalid kind");
         return false;
     }

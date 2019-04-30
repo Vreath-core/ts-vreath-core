@@ -331,7 +331,7 @@ export const verify_micro_block = async (block:T.Block,output_states:T.State[],b
         //console.log("invalid validator signature");
         return false;
     }
-    else if(kind!=0){
+    else if(kind!=1){
         //console.log("invalid kind");
         return false;
     }
