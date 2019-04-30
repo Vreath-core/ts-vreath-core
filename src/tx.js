@@ -366,10 +366,11 @@ exports.sign_tx = (tx, private_key) => {
     const sign = crypto_set.sign(tx.hash, private_key);
     const recover_id = Number(sign[0]);
     const data = sign[1];
-    const id = big_integer_1.default(("0000" + constant_1.constant.my_version).slice(-4) + ("0000" + constant_1.constant.my_chain_id).slice(-4) + ("0000" + constant_1.constant.my_net_id).slice(-4), 16).toJSNumber();
+    const id = constant_1.constant.my_version + constant_1.constant.my_chain_id + constant_1.constant.my_net_id;
+    const v = _.bigInt2hex(big_integer_1.default(id, 16).multiply(2).add(8).add(big_integer_1.default(28).subtract(big_integer_1.default(sign[0], 16))));
     const signature = {
         data: data,
-        v: (id * 2 + 8 + 28 - recover_id).toString(16)
+        v: v
     };
     return _.new_obj(tx, tx => {
         tx.signature.push(signature);

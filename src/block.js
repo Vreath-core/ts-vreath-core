@@ -425,9 +425,10 @@ exports.create_key_block = async (private_key, block_db, last_height, trie, stat
     const meta_array = exports.block_meta2array(meta).concat(id);
     const meta_hash = _.array2hash(meta_array);
     const signed = crypto_set.sign(meta_hash, private_key);
+    const v = _.bigInt2hex(big_integer_1.default(id, 16).multiply(2).add(8).add(big_integer_1.default(28).subtract(big_integer_1.default(signed[0], 16))));
     const sign = {
         data: signed[1],
-        v: signed[0]
+        v: v
     };
     const all_array = meta_array.concat(sign.v);
     const hash = _.array2hash(all_array);
@@ -463,9 +464,10 @@ exports.create_micro_block = async (private_key, block_db, last_height, trie, tx
     const meta_array = exports.block_meta2array(meta).concat(id);
     const meta_hash = _.array2hash(meta_array);
     const signed = crypto_set.sign(meta_hash, private_key);
+    const v = _.bigInt2hex(big_integer_1.default(id, 16).multiply(2).add(8).add(big_integer_1.default(28).subtract(big_integer_1.default(signed[0], 16))));
     const sign = {
         data: signed[1],
-        v: signed[0]
+        v: v
     };
     const all_array = meta_array.concat(sign.v);
     const hash = _.array2hash(all_array);

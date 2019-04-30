@@ -395,10 +395,11 @@ export const sign_tx = (tx:T.Tx,private_key:string)=>{
   const sign = crypto_set.sign(tx.hash,private_key);
   const recover_id = Number(sign[0]);
   const data = sign[1];
-  const id = bigInt(("0000"+constant.my_version).slice(-4)+("0000"+constant.my_chain_id).slice(-4)+("0000"+constant.my_net_id).slice(-4),16).toJSNumber();
+  const id = constant.my_version+constant.my_chain_id+constant.my_net_id;
+  const v = _.bigInt2hex(bigInt(id,16).multiply(2).add(8).add(bigInt(28).subtract(bigInt(sign[0],16))));
   const signature:T.Sign = {
     data:data,
-    v:(id*2+8+28-recover_id).toString(16)
+    v:v
   }
   return _.new_obj(
     tx,
