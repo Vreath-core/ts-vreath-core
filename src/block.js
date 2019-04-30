@@ -378,7 +378,7 @@ exports.verify_micro_block = async (block, output_states, block_db, trie, state_
         //console.log("too many micro blocks");
         return false;
     }
-    else if (exports.txs_check(block, output_states, block_db, trie, state_db, lock_db, last_height)) {
+    else if (await exports.txs_check(block, output_states, block_db, trie, state_db, lock_db, last_height)) {
         //console.log("invalid txs");
         return false;
     }

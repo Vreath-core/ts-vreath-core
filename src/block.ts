@@ -383,7 +383,7 @@ export const verify_micro_block = async (block:T.Block,output_states:T.State[],b
         //console.log("too many micro blocks");
         return false;
     }
-    else if(txs_check(block,output_states,block_db,trie,state_db,lock_db,last_height)){
+    else if(await txs_check(block,output_states,block_db,trie,state_db,lock_db,last_height)){
         //console.log("invalid txs");
         return false;
     }
