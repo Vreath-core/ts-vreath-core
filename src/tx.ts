@@ -173,11 +173,11 @@ export const contract_check = async (token:string,bases:string[],base_state:T.St
   else return true;
 }
 
-const verify_tx_basic = (hash:string,sign:T.Sign[],meta_hash:string,infos:string[],ids:string[],pub_keys:string[],address:string)=>{
+const verify_tx_basic = (hash:string,sign:T.Sign[],meta_hash:string,ids:string[],pub_keys:string[],address:string)=>{
   const version = ids[0].slice(0,4);
   const chain_id = ids[0].slice(4,8);
   const net_id = ids[0].slice(8,12);
-  if(hash!=_.array2hash(infos)){
+  if(hash!=meta_hash){
     //console.log("invalid hash");
     return false;
   }
@@ -201,7 +201,7 @@ const verify_tx_basic = (hash:string,sign:T.Sign[],meta_hash:string,infos:string
     //console.log("invalid address");
     return false;
   }
-  else if(sign.length===0||sign.some((s,i)=>_.sign_check(meta_hash,s.data,pub_keys[i]))){
+  else if(sign.length===0||sign.some((s,i)=>_.sign_check(hash,s.data,pub_keys[i]))){
     //console.log("invalid signature");
     return false;
   }
@@ -219,7 +219,6 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
 
   const pulled = get_info_from_tx(tx);
   const meta_hash = pulled[0];
-  const infos = pulled[1];
   const ids = pulled[2];
   const pub_keys = pulled[3];
   const requester = pulled[4];
@@ -234,7 +233,7 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
     return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("00",_.slice_token_part(key),key,"00",[]));
   });
 
-  if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,ids,pub_keys,requester)){
+  if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,ids,pub_keys,requester)){
     return false;
   }
   else if((disabling!=null&&disabling.indexOf(1)!=-1)||kind!=0){
@@ -284,7 +283,6 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
 
   const pulled = get_info_from_tx(tx);
   const meta_hash = pulled[0];
-  const infos = pulled[1];
   const ids = pulled[2];
   const pub_keys = pulled[3];
   const refresher = pulled[4];
@@ -302,7 +300,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
   });
   const base_states_hashes = base_states.map(s=>_.array2hash([s.nonce,s.token,s.owner,s.amount].concat(s.data)));
 
-  if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,infos,ids,pub_keys,refresher)){
+  if((disabling!=null&&disabling.indexOf(0)!=-1)||!verify_tx_basic(tx.hash,tx.signature,meta_hash,ids,pub_keys,refresher)){
     return false;
   }
   else if((disabling!=null&&disabling.indexOf(1)!=-1)||kind!=1){
@@ -354,7 +352,8 @@ export const create_req_tx = (type:T.TxType,bases:string[],feeprice:string,gas:s
     refresh:empty.meta.refresh
   }
 
-  const hash = _.array2hash(tx_meta2array(meta));
+  const id = constant.my_version+constant.my_chain_id+constant.my_net_id;
+  const hash = _.array2hash(tx_meta2array(meta).concat(id));
 
   const tx_add:T.TxAdd = {
     height:"00",
@@ -388,7 +387,8 @@ export const create_ref_tx = (height:string,index:number,success:0|1,output:stri
     }
   }
 
-  const hash = _.array2hash(tx_meta2array(meta));
+  const id = constant.my_version+constant.my_chain_id+constant.my_net_id;
+  const hash = _.array2hash(tx_meta2array(meta).concat(id));
 
   const tx_add:T.TxAdd = {
     height:"00",
@@ -406,9 +406,9 @@ export const create_ref_tx = (height:string,index:number,success:0|1,output:stri
 }
 
 export const sign_tx = (tx:T.Tx,private_key:string)=>{
+  const id = constant.my_version+constant.my_chain_id+constant.my_net_id;
   const sign = crypto_set.sign(tx.hash,private_key);
   const data = sign[1];
-  const id = constant.my_version+constant.my_chain_id+constant.my_net_id;
   const v = _.bigInt2hex(bigInt(id,16).multiply(2).add(8).add(bigInt(28).subtract(bigInt(sign[0],16))));
   const signature:T.Sign = {
     data:data,
