@@ -79,20 +79,16 @@ exports.search_key_block = async (block_db, last_height) => {
     return block;
 };
 exports.search_micro_block = async (block_db, key_block, last_height) => {
-    const raw_block_hash = _.array2hash(exports.block_meta2array(key_block.meta));
-    const recover_id = big_integer_1.default(key_block.signature.v, 16).mod(2).toJSNumber();
-    const key_public = crypto_set.recover(raw_block_hash, key_block.signature.data, recover_id);
+    const key_public = exports.get_info_from_block(key_block)[4];
     let height = key_block.meta.height;
     let block;
-    let raw_hash;
     let public_key;
     let micros = [];
     while (1) {
         block = await block_db.read_obj(height);
         if (block == null)
             continue;
-        raw_hash = _.array2hash(exports.block_meta2array(block.meta));
-        public_key = crypto_set.recover(raw_hash, block.signature.data, big_integer_1.default(block.signature.v, 16).mod(2).toJSNumber());
+        public_key = exports.get_info_from_block(block)[4];
         if (block.meta.kind === 1 && public_key === key_public)
             micros.push(block);
         if (height === last_height)

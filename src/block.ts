@@ -73,19 +73,15 @@ export const search_key_block = async (block_db:DB,last_height:string)=>{
 }
 
 export const search_micro_block = async (block_db:DB,key_block:T.Block,last_height:string)=>{
-    const raw_block_hash = _.array2hash(block_meta2array(key_block.meta));
-    const recover_id = bigInt(key_block.signature.v,16).mod(2).toJSNumber();
-    const key_public = crypto_set.recover(raw_block_hash,key_block.signature.data,recover_id);
+    const key_public = get_info_from_block(key_block)[4];
     let height = key_block.meta.height;
     let block:T.Block | null;
-    let raw_hash:string;
     let public_key:string;
     let micros:T.Block[] = [];
     while(1){
         block = await block_db.read_obj(height);
         if(block==null) continue;
-        raw_hash = _.array2hash(block_meta2array(block.meta));
-        public_key = crypto_set.recover(raw_hash,block.signature.data,bigInt(block.signature.v,16).mod(2).toJSNumber());
+        public_key = get_info_from_block(block)[4];
         if(block.meta.kind===1&&public_key===key_public) micros.push(block);
         if(height===last_height) break;
         height = _.bigInt2hex(bigInt(height,16).add(1));
