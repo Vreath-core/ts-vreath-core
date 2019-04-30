@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const levelup_1 = __importDefault(require("levelup"));
 const leveldown_1 = __importDefault(require("leveldown"));
+const stream_to_promise_1 = __importDefault(require("stream-to-promise"));
 class DB {
     constructor(root) {
         this.db = levelup_1.default(leveldown_1.default(root));
@@ -33,27 +34,29 @@ class DB {
     async write_obj(key, obj) {
         await this.put(key, JSON.stringify(obj));
     }
-    async filter(key_encode = 'hex', val_encode = 'utf8', check = (key, value) => true) {
+    async filter(key_encode = 'hex', val_encode = 'utf8', check = (value) => true) {
         let result = [];
         const stream = this.db.createReadStream();
-        return new Promise((resolve, reject) => {
-            try {
-                stream.on('data', async (data) => {
-                    if (data.key == null || data.value == null)
-                        return result;
-                    const key = data.key.toString(key_encode);
-                    const value = JSON.parse(data.value.toString(val_encode));
-                    if (await check(key, value))
-                        result.push(value);
-                });
-                stream.on('end', (data) => {
-                    resolve(result);
-                });
+        const data = await stream_to_promise_1.default(stream);
+        const value = JSON.parse(data.toString(val_encode));
+        if (await check(value))
+            result.push(value);
+        return result;
+        /*return new Promise<T[]>((resolve,reject)=>{
+            try{
+              stream.on('data',async (data:{key:Buffer,value:Buffer})=>{
+                if(data.key==null||data.value==null) return result;
+                const key = data.key.toString(key_encode);
+                const value:T = JSON.parse(data.value.toString(val_encode));
+                if(await check(key,value)) result.push(value);
+              });
+
+              stream.on('end',(data:{key:string,value:any})=>{
+                resolve(result);
+              });
             }
-            catch (e) {
-                reject(e);
-            }
-        });
+            catch(e){reject(e)}
+          });*/
     }
     leveldb() {
         return this.db;

@@ -23,6 +23,7 @@
     "@types/leveldown": "^4.0.0",
     "@types/levelup": "^3.1.0",
     "@types/lodash": "^4.14.116",
+    "@types/stream-to-promise": "^2.2.0",
     "@types/util.promisify": "^1.0.0",
     "big-integer": "^1.6.43",
     "leveldown": "^4.0.1",
@@ -32,6 +33,7 @@
     "node-cryptonight-lite": "git+https://github.com/Vreath-core/node-cryptonight-lite.git",
     "p-iteration": "^1.1.5",
     "rlp": "^2.0.0",
+    "stream-to-promise": "^2.2.0",
     "typed-promisify": "^0.4.0"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 import levelup, { LevelUp } from 'levelup';
 import leveldown, { LevelDown } from 'leveldown';
+import streamToPromise from 'stream-to-promise'
 
 type encode = "utf8" | "hex" | "ascii" | "base64";
 
@@ -37,10 +38,15 @@ export class DB {
         await this.put(key,JSON.stringify(obj));
     }
 
-    public async filter<T>(key_encode:encode='hex',val_encode:encode='utf8',check:(key:string,value:T)=>Promise<boolean>|boolean=(key:string,value:T)=>true){
+    public async filter<T>(key_encode:encode='hex',val_encode:encode='utf8',check:(value:T)=>Promise<boolean>|boolean=(value:T)=>true){
         let result:T[] = [];
         const stream = this.db.createReadStream();
-        return new Promise<T[]>((resolve,reject)=>{
+        const data = await streamToPromise(stream);
+        const value:T = JSON.parse(data.toString(val_encode));
+        if(await check(value)) result.push(value);
+        return result;
+
+        /*return new Promise<T[]>((resolve,reject)=>{
             try{
               stream.on('data',async (data:{key:Buffer,value:Buffer})=>{
                 if(data.key==null||data.value==null) return result;
@@ -54,7 +60,7 @@ export class DB {
               });
             }
             catch(e){reject(e)}
-          });
+          });*/
     }
 
     public leveldb(){
