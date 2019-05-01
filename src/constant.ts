@@ -25,7 +25,7 @@ export let constant = {
     all_issue:_.bigInt2hex(bigInt(10).pow(24)),
     cycle:126144000,
     pow_target:_.bigInt2hex(bigInt(2).pow(256)),
-    def_pos_diff:_.bigInt2hex(bigInt(24)),
+    def_pos_diff:_.bigInt2hex(bigInt(24).pow(12)),
     lwma_size:8,
     unit_rate:90,
     compatible_version:compatible_version,

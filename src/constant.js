@@ -28,7 +28,7 @@ exports.constant = {
     all_issue: _.bigInt2hex(big_integer_1.default(10).pow(24)),
     cycle: 126144000,
     pow_target: _.bigInt2hex(big_integer_1.default(2).pow(256)),
-    def_pos_diff: _.bigInt2hex(big_integer_1.default(24)),
+    def_pos_diff: _.bigInt2hex(big_integer_1.default(24).pow(12)),
     lwma_size: 8,
     unit_rate: 90,
     compatible_version: compatible_version,
