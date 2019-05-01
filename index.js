@@ -656,10 +656,10 @@ const tx2pool = async (pool_db, tx, output_states, block_db, trie, state_db, loc
 exports.pool = {
     tx2pool: tx2pool
 };
-exports.compute_diff = (amount) => {
-    if (hex_check(amount, 10, true))
+exports.compute_diff = async (block_db, last_height) => {
+    if (hex_check(last_height, 8, true))
         throw error;
-    return diff_1.get_diff(amount);
+    return await diff_1.get_diff(block_db, last_height);
 };
 const isUnit = (unit) => {
     return !hex_check(unit[0], 8, true) && !uint_check(unit[1], 8) && !hex_check(unit[2], 8, true) && !hex_check(unit[3], 40) && !hex_check(unit[4], 10, true);

@@ -630,9 +630,9 @@ export const pool = {
     tx2pool:tx2pool
 }
 
-export const compute_diff = (amount:string)=>{
-    if(hex_check(amount,10,true)) throw error;
-    return get_diff(amount);
+export const compute_diff = async (block_db:DB,last_height:string)=>{
+    if(hex_check(last_height,8,true)) throw error;
+    return await get_diff(block_db,last_height);
 }
 
 

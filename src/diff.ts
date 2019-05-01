@@ -1,30 +1,60 @@
+import * as T from './types'
+import  {DB} from './db'
 import {constant} from './constant'
 import * as _ from './util'
-import bigInt from 'big-integer'
+import bigInt, { BigInteger } from 'big-integer'
 
 
-/*export const get_diff = (cumulative_diffs:number[],target_time:number,solvetimes:number[]):number=>{
-    if(cumulative_diffs.length!=size+1 || solvetimes.length!=size+1) return def_diff;
-    let pre_time:number = math.chain(solvetimes[0]).subtract(target_time).done();
-    let this_time:number = 0;
-    let L:number = 0;
+const size = constant.lwma_size;
+const def_diff = constant.def_pos_diff;
+const target_time = constant.block_time*(constant.max_blocks+1);
+
+const get_lwma_infos = async (block_db:DB,last_height:string)=>{
+    let blocks:T.Block[] = [];
+    let block:T.Block|null = null;
+    let height = bigInt(last_height,16);
+    while(height.notEquals(0)){
+        if(blocks.length>=size) break;
+        block = await block_db.read_obj(_.bigInt2hex(height));
+        if(block==null||block.meta.kind!=0) continue;
+        blocks.push(block);
+        height = height.subtract(1);
+    }
+    const infos = blocks.reduce((res:{times:number[],cumulative_diffs:BigInteger[]},block,i)=>{
+        res.times.push(block.meta.timestamp);
+        res.cumulative_diffs.push(bigInt(res.cumulative_diffs[i-1]||0).add(block.meta.pos_diff));
+        return res;
+    },{times:[],cumulative_diffs:[]});
+    return infos;
+
+}
+
+export const get_diff = async (block_db:DB,last_height:string):Promise<string>=>{
+    const info = await get_lwma_infos(block_db,last_height);
+    const cumulative_diffs = info.cumulative_diffs;
+    const solvetimes = info.times;
+    if(cumulative_diffs.length!=size+1 || solvetimes.length!=size+1) return _.bigInt2hex(bigInt(def_diff));
+    let pre_time = bigInt(solvetimes[0]).subtract(target_time);
+    let this_time = bigInt(0);
+    let L = bigInt(0);
     let i:number;
     for(i=1; i<=size; i++){
-        if(math.chain(solvetimes[i]).larger(pre_time).done() as boolean) this_time = solvetimes[i];
-        else this_time = math.chain(pre_time).add(1).done();
-        L = math.chain(L).add(math.multiply(i,math.min(math.multiply(6,target_time),math.subtract(this_time,pre_time)))).done();
+        if(!bigInt(solvetimes[i]).lesserOrEquals(pre_time)) this_time = bigInt(solvetimes[i]);
+        else this_time = bigInt(pre_time).add(1);
+        L = bigInt(L).add(bigInt(i).multiply(bigInt.min(bigInt(6).multiply(target_time),bigInt(this_time).subtract(pre_time))));
         pre_time = this_time;
     }
-    if(math.chain(size).multiply(size).multiply(target_time).divide(20).larger(L).done() as boolean) L = math.chain(size).multiply(size).multiply(target_time).divide(20).done();
-    let avg_D:number = math.chain(cumulative_diffs[size]).subtract(cumulative_diffs[0]).divide(size).done();
-    let next_D:number = 0;
-    if(math.chain(2000000).multiply(size).multiply(size).multiply(target_time).smaller(avg_D).done() as boolean) next_D = math.chain(avg_D).divide(200).divide(L).multiply(size).multiply(size+1).multiply(target_time).multiply(99).done();
-    else next_D = math.chain(avg_D).multiply(size).multiply(size+1).multiply(target_time).multiply(99).divide(200).divide(L).done();
-    return next_D;
-}*/
-
+    if(!bigInt(size).multiply(size).multiply(target_time).divide(20).lesserOrEquals(L)) L = bigInt(size).multiply(size).multiply(target_time).divide(20);
+    let avg_D = bigInt(cumulative_diffs[size]).subtract(cumulative_diffs[0]).divide(size);
+    let next_D = bigInt(0);
+    if(bigInt(2000000).multiply(size).multiply(size).multiply(target_time).lesser(avg_D)) next_D = bigInt(avg_D).divide(200).divide(L).multiply(size).multiply(size+1).multiply(target_time).multiply(99);
+    else next_D = bigInt(avg_D).multiply(size).multiply(size+1).multiply(target_time).multiply(99).divide(200).divide(L);
+    return _.bigInt2hex(next_D);
+}
+/*
 const times = bigInt(constant.block_time).multiply(constant.max_blocks+1);
 
 export const get_diff = (amount:string)=>{
     return _.bigInt2hex(bigInt(amount,16).multiply(times));
 }
+*/

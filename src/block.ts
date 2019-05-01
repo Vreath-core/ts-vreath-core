@@ -202,7 +202,7 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
         if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
         else return _.bigInt2hex(computed);
     })();
-    const right_diff = get_diff(unit_validator_state.amount);
+    const right_diff = await get_diff(block_db,last_height);
     const hash_for_pos = pos_hash(previoushash,unit_validator,timestamp);
 
     const last:T.Block = await block_db.read_obj(last_height) || empty_block();
@@ -408,7 +408,7 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
         if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
         else return _.bigInt2hex(computed);
     })();
-    const pos_diff = get_diff(reduced_amount);
+    const pos_diff = await get_diff(block_db,last_height);
     const trie_root = trie.now_root();
     const date = new Date();
     const timestamp = Math.floor(date.getTime()/1000);
