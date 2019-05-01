@@ -396,6 +396,7 @@ export const verify_micro_block = async (block:T.Block,output_states:T.State[],b
 
 export const create_key_block = async (private_key:string,block_db:DB,last_height:string,trie:Trie,state_db:DB,extra:string):Promise<T.Block>=>{
     const empty = empty_block();
+    const new_height = _.bigInt2hex(bigInt(last_height,16).add(1));
     const last:T.Block = await block_db.read_obj(last_height) || empty;
     const previoushash = last.hash
     const public_key = crypto_set.private2public(private_key);
@@ -403,11 +404,6 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
     const unit_validator_state:T.State = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",unit_validator,constant.unit,"00",["01","00"]));
     const pre_height = unit_validator_state.data[1];
     const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
-    const reduced_amount = (()=>{
-        const computed = bigInt(unit_validator_state.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
-        if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
-        else return _.bigInt2hex(computed);
-    })();
     const pos_diff = await get_diff(block_db,last_height);
     const trie_root = trie.now_root();
     const date = new Date();
@@ -415,7 +411,7 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
 
     const meta:T.BlockMeta = {
         kind:0,
-        height:last_height,
+        height:new_height,
         previoushash:previoushash,
         timestamp:timestamp,
         pos_diff:pos_diff,
