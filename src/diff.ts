@@ -22,7 +22,7 @@ const get_lwma_infos = async (block_db:DB,last_height:string)=>{
     }
     const infos = blocks.reduce((res:{times:number[],cumulative_diffs:BigInteger[]},block,i)=>{
         res.times.push(block.meta.timestamp);
-        res.cumulative_diffs.push(bigInt(res.cumulative_diffs[i-1]||0).add(block.meta.pos_diff));
+        res.cumulative_diffs.push(bigInt(res.cumulative_diffs[i-1]||0).add(bigInt(block.meta.pos_diff,16)));
         return res;
     },{times:[],cumulative_diffs:[]});
     return infos;

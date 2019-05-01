@@ -31,7 +31,7 @@ const get_lwma_infos = async (block_db, last_height) => {
     }
     const infos = blocks.reduce((res, block, i) => {
         res.times.push(block.meta.timestamp);
-        res.cumulative_diffs.push(big_integer_1.default(res.cumulative_diffs[i - 1] || 0).add(block.meta.pos_diff));
+        res.cumulative_diffs.push(big_integer_1.default(res.cumulative_diffs[i - 1] || 0).add(big_integer_1.default(block.meta.pos_diff, 16)));
         return res;
     }, { times: [], cumulative_diffs: [] });
     return infos;
