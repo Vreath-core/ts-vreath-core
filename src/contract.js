@@ -92,7 +92,7 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
         default: return false;
     }
 };
-exports.unit_prove = async (bases, base_state, input_data, block_db, last_height) => {
+exports.unit_prove = async (bases, base_state, input_data, block_db, new_height) => {
     const unit_base = bases.filter(str => _.slice_token_part(str) === constant_1.constant.unit);
     const native_base = bases.filter(str => _.slice_token_part(str) === constant_1.constant.native);
     const unit_states = base_state.filter(s => s.token === constant_1.constant.unit);
@@ -153,7 +153,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                 if (flag === "00")
                     return s;
                 const pre_height = s.data[1];
-                const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
+                const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
                 const amount = (() => {
                     const computed = (big_integer_1.default(s.amount, 16).add(unit_sum)).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
                     if (computed.lesser(1))
@@ -165,7 +165,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                     s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
                     s.amount = _.bigInt2hex(amount);
                     s.data[0] = "01";
-                    s.data[1] = last_height;
+                    s.data[1] = new_height;
                     return s;
                 });
             });
@@ -175,7 +175,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
                 return _.new_obj(s, s => {
                     s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
                     s.data[0] = "00";
-                    s.data[1] = last_height;
+                    s.data[1] = new_height;
                     return s;
                 });
             });
@@ -192,7 +192,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, last_height
         default: return base_state;
     }
 };
-exports.unit_verify = async (bases, base_state, input_data, output_state, block_db, last_height) => {
+exports.unit_verify = async (bases, base_state, input_data, output_state, block_db, new_height) => {
     const unit_base = bases.filter(str => _.slice_token_part(str) === constant_1.constant.unit);
     const native_base = bases.filter(str => _.slice_token_part(str) === constant_1.constant.native);
     const unit_states = base_state.filter(s => s.token === constant_1.constant.unit);
@@ -255,7 +255,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 if (pre_flag === "00" || new_flag != "01")
                     return true;
                 const pre_height = s.data[1];
-                const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
+                const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
                 const amount = (() => {
                     const computed = (big_integer_1.default(s.amount, 16).add(unit_sum)).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
                     if (computed.lesser(1))
@@ -263,7 +263,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                     else
                         return computed;
                 })();
-                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || amount.notEquals(big_integer_1.default(output.amount, 16)) || pre_flag === "00" || new_flag != "01" || output.data[1] != last_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
+                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || amount.notEquals(big_integer_1.default(output.amount, 16)) || pre_flag === "00" || new_flag != "01" || output.data[1] != new_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
             });
             if (unit_bought)
                 return false;
@@ -271,7 +271,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 if (s.token != constant_1.constant.unit || unit_base.slice(1).indexOf(s.owner) === -1)
                     return false;
                 const output = output_state[i];
-                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || s.data[0] != null || output.data[0] != "00" || output.data[1] != last_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
+                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || s.data[0] != null || output.data[0] != "00" || output.data[1] != new_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
             });
             if (unit_used)
                 return false;
@@ -310,7 +310,7 @@ exports.req_tx_change = (base_state, requester, fee, gas) => {
     return gained;
 };
 //requester, refresher, bases
-exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last_height) => {
+exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, new_height) => {
     const reqed = base_state.map(s => {
         if (s.owner != requester)
             return s;
@@ -346,7 +346,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last
         if (s.token != constant_1.constant.unit || bases.indexOf(s.owner) === -1 || s.data[0] != "01")
             return s;
         const pre_height = s.data[1];
-        const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
+        const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
@@ -355,7 +355,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last
                 return computed;
         })();
         return _.new_obj(s, s => {
-            s.data[1] = last_height;
+            s.data[1] = new_height;
             s.amount = _.bigInt2hex(amount);
             return s;
         });
@@ -417,12 +417,12 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
     return reduced;
 };
 //unit-validator
-exports.micro_block_change = (base_state, last_height) => {
+exports.micro_block_change = (base_state, new_height) => {
     return base_state.map(s => {
         if (s.token != constant_1.constant.unit)
             return s;
         const pre_height = s.data[1];
-        const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
+        const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
@@ -431,7 +431,7 @@ exports.micro_block_change = (base_state, last_height) => {
                 return computed;
         })();
         return _.new_obj(s, s => {
-            s.data[1] = last_height;
+            s.data[1] = new_height;
             s.amount = _.bigInt2hex(amount);
             return s;
         });

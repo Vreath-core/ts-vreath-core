@@ -593,9 +593,9 @@ const accept_key_block = async (block:T.Block,block_db:DB,last_height:string,tri
     await block_set.accept_key_block(block,block_db,last_height,trie,state_db,lock_db);
 }
 
-const accept_micro_block = async (block:T.Block,block_db:DB,last_height:string,trie:Trie,state_db:DB,lock_db:DB)=>{
-    if(!isBlock(block)||hex_check(last_height,8,true)) throw error;
-    await block_set.accept_micro_block(block,block_db,last_height,trie,state_db,lock_db);
+const accept_micro_block = async (block:T.Block,block_db:DB,trie:Trie,state_db:DB,lock_db:DB)=>{
+    if(!isBlock(block)) throw error;
+    await block_set.accept_micro_block(block,block_db,trie,state_db,lock_db);
 }
 
 export const block = {

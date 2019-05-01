@@ -622,10 +622,10 @@ const accept_key_block = async (block, block_db, last_height, trie, state_db, lo
         throw error;
     await block_set.accept_key_block(block, block_db, last_height, trie, state_db, lock_db);
 };
-const accept_micro_block = async (block, block_db, last_height, trie, state_db, lock_db) => {
-    if (!isBlock(block) || hex_check(last_height, 8, true))
+const accept_micro_block = async (block, block_db, trie, state_db, lock_db) => {
+    if (!isBlock(block))
         throw error;
-    await block_set.accept_micro_block(block, block_db, last_height, trie, state_db, lock_db);
+    await block_set.accept_micro_block(block, block_db, trie, state_db, lock_db);
 };
 exports.block = {
     isBlock: isBlock,

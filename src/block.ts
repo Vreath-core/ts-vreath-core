@@ -525,15 +525,15 @@ export const accept_key_block = async (block:T.Block,block_db:DB,last_height:str
     });
 }
 
-export const accept_micro_block = async (block:T.Block,block_db:DB,last_height:string,trie:Trie,state_db:DB,lock_db:DB)=>{
+export const accept_micro_block = async (block:T.Block,block_db:DB,trie:Trie,state_db:DB,lock_db:DB)=>{
     await P.forEach(block.txs, async (tx,i)=>{
-        if(tx.meta.kind===0) await tx_set.accept_req_tx(tx,last_height,block.hash,i,trie,state_db,lock_db);
-        else if(tx.meta.kind===1) await tx_set.accept_ref_tx(tx,last_height,block.hash,i,trie,state_db,lock_db,block_db);
+        if(tx.meta.kind===0) await tx_set.accept_req_tx(tx,block.meta.height,block.hash,i,trie,state_db,lock_db);
+        else if(tx.meta.kind===1) await tx_set.accept_ref_tx(tx,block.meta.height,block.hash,i,trie,state_db,lock_db,block_db);
     });
     const public_key = get_info_from_block(block)[3];
     const unit_validator = crypto_set.generate_address(constant.unit,public_key);
     const unit_state = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",constant.unit,unit_validator,"00",["01","00"]));
-    const changed = contract.micro_block_change([unit_state],last_height);
+    const changed = contract.micro_block_change([unit_state],block.meta.height);
     const lock_state = await data.read_from_trie(trie,lock_db,unit_validator,1,lock_set.CreateLock(unit_validator));
     await data.write_trie(trie,state_db,lock_db,changed[0],lock_state);
 }
