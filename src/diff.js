@@ -24,10 +24,10 @@ const get_lwma_infos = async (block_db, last_height) => {
         if (blocks.length >= size)
             break;
         block = await block_db.read_obj(_.bigInt2hex(height));
+        height = height.subtract(1);
         if (block == null || block.meta.kind != 0)
             continue;
         blocks.push(block);
-        height = height.subtract(1);
     }
     const infos = blocks.reduce((res, block, i) => {
         res.times.push(block.meta.timestamp);
