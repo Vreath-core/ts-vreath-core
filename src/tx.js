@@ -232,7 +232,7 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
         //console.log("invalid token");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(4) != -1) || bases.some((key, i, array) => array.indexOf(key) != i) || base_states.some(s => tokens.indexOf(s.token) === -1) || bases.length != base_states.length) {
+    else if ((disabling != null && disabling.indexOf(4) != -1) || bases.some((key, i, array) => array.indexOf(key) != i) || base_states.some(s => tokens.indexOf(("0000000000000000" + s.token).slice(-16)) === -1) || bases.length != base_states.length) {
         //console.log("invalid base");
         return false;
     }
