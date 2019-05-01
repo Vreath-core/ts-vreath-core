@@ -210,7 +210,7 @@ exports.verify_key_block = async (block, block_db, trie, state_db, last_height) 
         else
             return _.bigInt2hex(computed);
     })();
-    const right_diff = diff_1.get_diff(reduced_amount);
+    const right_diff = diff_1.get_diff(unit_validator_state.amount);
     const hash_for_pos = exports.pos_hash(previoushash, unit_validator, timestamp);
     const last = await block_db.read_obj(last_height) || exports.empty_block();
     const right_previoushash = last.hash;

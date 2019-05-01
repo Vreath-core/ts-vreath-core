@@ -202,7 +202,7 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
         if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
         else return _.bigInt2hex(computed);
     })();
-    const right_diff = get_diff(reduced_amount);
+    const right_diff = get_diff(unit_validator_state.amount);
     const hash_for_pos = pos_hash(previoushash,unit_validator,timestamp);
 
     const last:T.Block = await block_db.read_obj(last_height) || empty_block();
