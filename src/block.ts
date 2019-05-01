@@ -516,7 +516,7 @@ export const accept_key_block = async (block:T.Block,block_db:DB,last_height:str
     const fees = last_micros.reduce((sum,b)=>bigInt(sum).add(b.meta.fee_sum),bigInt(0));
     const issues = last_micros.concat(last_key).reduce((sum,b)=>sum.add(bigInt(compute_issue(b.meta.height),16)),bigInt(0));
     const fee_sum = _.bigInt2hex(fees.add(issues));
-    const changed =contract.key_block_change(base_states,pre_native,new_native,fee_sum,last_height);
+    const changed =contract.key_block_change(base_states,pre_native,new_native,fee_sum,block.meta.height);
     const lock_states = await P.map(bases, async key=>{
         return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));
     });

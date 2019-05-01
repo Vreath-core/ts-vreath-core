@@ -363,7 +363,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, new_
     return reduced;
 };
 //native-requesters, native-refreshers, native-validator_1, native-validator_2, unit-validator_1, unit-validator_2
-exports.key_block_change = (base_state, validator_1, validator_2, fee, last_height) => {
+exports.key_block_change = (base_state, validator_1, validator_2, fee, new_height) => {
     const fee_1 = big_integer_1.default(fee, 16).multiply(4).divide(10);
     const fee_2 = big_integer_1.default(fee, 16).multiply(6).divide(10);
     const paid = base_state.map(s => {
@@ -400,7 +400,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
         if (s.token != constant_1.constant.unit)
             return s;
         const pre_height = s.data[1];
-        const reduce = big_integer_1.default(last_height, 16).subtract(big_integer_1.default(pre_height, 16));
+        const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
@@ -409,7 +409,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, last_heig
                 return computed;
         })();
         return _.new_obj(s, s => {
-            s.data[1] = last_height;
+            s.data[1] = new_height;
             s.amount = _.bigInt2hex(amount);
             return s;
         });

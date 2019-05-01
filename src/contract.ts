@@ -349,7 +349,7 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
 }
 
 //native-requesters, native-refreshers, native-validator_1, native-validator_2, unit-validator_1, unit-validator_2
-export const key_block_change = (base_state:T.State[],validator_1:string,validator_2:string,fee:string,last_height:string)=>{
+export const key_block_change = (base_state:T.State[],validator_1:string,validator_2:string,fee:string,new_height:string)=>{
     const fee_1 = bigInt(fee,16).multiply(4).divide(10);
     const fee_2 = bigInt(fee,16).multiply(6).divide(10);
     const paid = base_state.map(s=>{
@@ -385,7 +385,7 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
     const reduced = gained.map(s=>{
         if(s.token!=constant.unit) return s;
         const pre_height = s.data[1];
-        const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
+        const reduce = bigInt(new_height,16).subtract(bigInt(pre_height,16));
         const amount = (()=>{
             const computed = bigInt(s.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
             if(computed.lesser(1)) return bigInt("00");
@@ -394,7 +394,7 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
         return _.new_obj(
             s,
             s=>{
-                s.data[1] = last_height;
+                s.data[1] = new_height;
                 s.amount = _.bigInt2hex(amount);
                 return s;
             }
