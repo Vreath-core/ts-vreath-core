@@ -40,7 +40,7 @@ const uint_check = (num, size) => {
         return true;
     const num_int = big_integer_1.default(num);
     const max_int = big_integer_1.default(2).pow(size).subtract(1);
-    if (num > 0 || max_int.lesser(num_int))
+    if (num < 0 || max_int.lesser(num_int))
         return true;
     return false;
 };

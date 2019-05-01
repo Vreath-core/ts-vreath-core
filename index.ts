@@ -29,7 +29,7 @@ const uint_check = (num:number,size:8|16|32|64|256)=>{
     if(num==null || typeof num != 'number' || !Number.isInteger(num) || size==null || typeof size != 'number' || !Number.isInteger(size) || [8,16,32,64,256].indexOf(size)===-1) return true;
     const num_int = bigInt(num);
     const max_int = bigInt(2).pow(size).subtract(1);
-    if(num>0||max_int.lesser(num_int)) return true;
+    if(num<0||max_int.lesser(num_int)) return true;
     return false;
 }
 
