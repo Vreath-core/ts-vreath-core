@@ -105,7 +105,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
             const native_validator = native_base[0];
             const unit_base_hash_parts = unit_base.map(add=>_.slice_hash_part(add));
             const native_base_hash_parts = native_base.map(add=>_.slice_hash_part(add));
-            if(unit_base.length!=units.length+1||_.slice_hash_part(unit_validator)!=_.slice_hash_part(native_validator)||unit_miners.some(add=>_.slice_token_part(add)!=constant.unit||native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add))===-1)) return base_state;
+            if(unit_base.length!=units.length+1||_.slice_hash_part(unit_validator)!=_.slice_hash_part(native_validator)||unit_miners.some(add=>bigInt(_.slice_token_part(add),16).notEquals(bigInt(constant.unit,16))||native_base_hash_parts.indexOf(_.slice_hash_part(add))===-1)) return base_state;
             const unit_verify = P.some(units,async (unit,i)=>{
                 const ref_block:T.Block|null = await block_db.read_obj(unit[0]);
                 if(ref_block==null) return true;
@@ -200,7 +200,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
             const native_validator = native_base[0];
             const unit_base_hash_parts = unit_base.map(add=>_.slice_hash_part(add));
             const native_base_hash_parts = native_base.map(add=>_.slice_hash_part(add));
-            if(unit_base.length!=units.length+1||_.slice_hash_part(unit_validator)!=_.slice_hash_part(native_validator)||unit_miners.some(add=>_.slice_token_part(add)!=constant.unit||native_base_hash_parts.slice(1).indexOf(_.slice_hash_part(add))===-1)) return false;
+            if(unit_base.length!=units.length+1||_.slice_hash_part(unit_validator)!=_.slice_hash_part(native_validator)||unit_miners.some(add=>bigInt(_.slice_token_part(add),16).notEquals(bigInt(constant.unit,16))||native_base_hash_parts.indexOf(_.slice_hash_part(add))===-1)) return false;
             const unit_verify = P.some(units,async (unit,i)=>{
                 const ref_block:T.Block|null = await block_db.read_obj(unit[0]);
                 if(ref_block==null) return true;
