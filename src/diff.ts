@@ -33,7 +33,7 @@ export const get_diff = async (block_db:DB,last_height:string):Promise<string>=>
     const info = await get_lwma_infos(block_db,last_height);
     const cumulative_diffs = info.cumulative_diffs;
     const solvetimes = info.times;
-    if(cumulative_diffs.length!=size+1 || solvetimes.length!=size+1) return _.bigInt2hex(bigInt(def_diff));
+    if(cumulative_diffs.length!=size+1 || solvetimes.length!=size+1) return def_diff;
     let pre_time = bigInt(solvetimes[0]).subtract(target_time);
     let this_time = bigInt(0);
     let L = bigInt(0);

@@ -41,7 +41,7 @@ exports.get_diff = async (block_db, last_height) => {
     const cumulative_diffs = info.cumulative_diffs;
     const solvetimes = info.times;
     if (cumulative_diffs.length != size + 1 || solvetimes.length != size + 1)
-        return _.bigInt2hex(big_integer_1.default(def_diff));
+        return def_diff;
     let pre_time = big_integer_1.default(solvetimes[0]).subtract(target_time);
     let this_time = big_integer_1.default(0);
     let L = big_integer_1.default(0);
