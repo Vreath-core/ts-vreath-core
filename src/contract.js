@@ -113,7 +113,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
             const native_base_hash_parts = native_base.map(add => _.slice_hash_part(add));
             if (unit_base.length != units.length + 1 || _.slice_hash_part(unit_validator) != _.slice_hash_part(native_validator) || unit_miners.some(add => big_integer_1.default(_.slice_token_part(add), 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || native_base_hash_parts.indexOf(_.slice_hash_part(add)) === -1))
                 return base_state;
-            const unit_verify = P.some(units, async (unit, i) => {
+            const unit_verify = await P.some(units, async (unit, i) => {
                 const ref_block = await block_db.read_obj(unit[0]);
                 if (ref_block == null)
                     return true;
@@ -130,7 +130,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
                 const output_hash = _.array2hash(ref_tx.meta.refresh.output);
                 const iden = _.array2hash([req_tx.hash, height, req_block.hash, unit[3], output_hash]);
                 const hash = await tx_set.unit_hash(req_tx.hash, req_block.hash, height, unit[2], unit[3], output_hash, unit[4]);
-                return !big_integer_1.default(hash, 16).lesserOrEquals(constant_1.constant.pow_target) || unit_base_hash_parts[i + 1] != iden || unit_states[i].data.length != 0;
+                return !big_integer_1.default(hash, 16).lesserOrEquals(big_integer_1.default(constant_1.constant.unit, 16)) || unit_base_hash_parts[i + 1] != iden || unit_states[i + 1].data.length != 0;
             });
             if (unit_verify)
                 return base_state;
@@ -213,7 +213,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
             const native_base_hash_parts = native_base.map(add => _.slice_hash_part(add));
             if (unit_base.length != units.length + 1 || _.slice_hash_part(unit_validator) != _.slice_hash_part(native_validator) || unit_miners.some(add => big_integer_1.default(_.slice_token_part(add), 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || native_base_hash_parts.indexOf(_.slice_hash_part(add)) === -1))
                 return false;
-            const unit_verify = P.some(units, async (unit, i) => {
+            const unit_verify = await P.some(units, async (unit, i) => {
                 const ref_block = await block_db.read_obj(unit[0]);
                 if (ref_block == null)
                     return true;
@@ -230,7 +230,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 const output_hash = _.array2hash(ref_tx.meta.refresh.output);
                 const iden = await _.array2hash([req_tx.hash, height, req_block.hash, unit[3], output_hash]);
                 const hash = await tx_set.unit_hash(req_tx.hash, height, req_block.hash, unit[2], unit[3], output_hash, unit[4]);
-                return !big_integer_1.default(hash, 16).lesserOrEquals(constant_1.constant.pow_target) || unit_base_hash_parts[i + 1] != iden || unit_states[i].data.length != 0;
+                return !big_integer_1.default(hash, 16).lesserOrEquals(big_integer_1.default(constant_1.constant.unit, 16)) || unit_base_hash_parts[i + 1] != iden || unit_states[i + 1].data.length != 0;
             });
             if (unit_verify)
                 return false;
