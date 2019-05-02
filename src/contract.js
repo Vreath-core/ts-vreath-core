@@ -95,7 +95,7 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
 exports.unit_prove = async (bases, base_state, input_data, block_db, new_height) => {
     const unit_base = bases.filter(str => big_integer_1.default(_.slice_token_part(str), 16).eq(big_integer_1.default(constant_1.constant.unit, 16)));
     const native_base = bases.filter(str => big_integer_1.default(_.slice_token_part(str), 16).eq(big_integer_1.default(constant_1.constant.native, 16)));
-    const unit_states = base_state.filter(s => s.token === constant_1.constant.unit);
+    const unit_states = base_state.filter(s => big_integer_1.default(s.token, 16).eq(big_integer_1.default(constant_1.constant.unit, 16)));
     const units = input_data.slice(1).reduce((res, val, i, array) => {
         if (i % 5 === 0) {
             const unit = [array[i], Number(array[i + 1]), array[i + 2], array[i + 3], array[i + 4]];
