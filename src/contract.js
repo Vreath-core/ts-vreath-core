@@ -145,7 +145,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
                     return res;
                 }
             }, {});
-            const unit_sum = units.length;
+            const unit_sum = big_integer_1.default(constant_1.constant.one_hex, 16).multiply(units.length);
             const unit_bought = base_state.map(s => {
                 if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.owner != unit_base[0])
                     return s;
@@ -245,7 +245,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                     return res;
                 }
             }, {});
-            const unit_sum = units.length;
+            const unit_sum = big_integer_1.default(constant_1.constant.one_hex, 16).multiply(units.length);
             const unit_bought = base_state.some((s, i) => {
                 if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.owner != unit_base[0])
                     return false;

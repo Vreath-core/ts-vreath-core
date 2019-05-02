@@ -133,7 +133,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                 return res;
                 }
             },{});
-            const unit_sum = units.length;
+            const unit_sum = bigInt(constant.one_hex,16).multiply(units.length);
             const unit_bought = base_state.map(s=>{
                 if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||s.owner!=unit_base[0]) return s;
                 const flag = s.data[0];
@@ -228,7 +228,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                     return res;
                 }
             },{});
-            const unit_sum = units.length;
+            const unit_sum = bigInt(constant.one_hex,16).multiply(units.length);
             const unit_bought = base_state.some((s,i)=>{
                 if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||s.owner!=unit_base[0]) return false;
                 const output = output_state[i];
