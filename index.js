@@ -427,10 +427,10 @@ const accept_req_tx = async (tx, height, block_hash, index, trie, state_db, lock
         throw error;
     await tx_set.accept_req_tx(tx, height, block_hash, index, trie, state_db, lock_db);
 };
-const accept_ref_tx = async (tx, height, block_hash, index, trie, state_db, lock_db, block_db) => {
-    if (!isTx(tx) || hex_check(height, 8, true) || hex_check(block_hash, 32) || uint_check(index, 8))
+const accept_ref_tx = async (tx, output_states, height, block_hash, index, trie, state_db, lock_db, block_db) => {
+    if (!isTx(tx) || hex_check(height, 8, true) || output_states.some(s => !isState(s)) || hex_check(block_hash, 32) || uint_check(index, 8))
         throw error;
-    await tx_set.accept_ref_tx(tx, height, block_hash, index, trie, state_db, lock_db, block_db);
+    await tx_set.accept_ref_tx(tx, output_states, height, block_hash, index, trie, state_db, lock_db, block_db);
 };
 exports.tx = {
     empty_tx: tx_set.empty_tx(),
@@ -622,10 +622,10 @@ const accept_key_block = async (block, block_db, last_height, trie, state_db, lo
         throw error;
     await block_set.accept_key_block(block, block_db, last_height, trie, state_db, lock_db);
 };
-const accept_micro_block = async (block, block_db, trie, state_db, lock_db) => {
+const accept_micro_block = async (block, output_states, block_db, trie, state_db, lock_db) => {
     if (!isBlock(block))
         throw error;
-    await block_set.accept_micro_block(block, block_db, trie, state_db, lock_db);
+    await block_set.accept_micro_block(block, output_states, block_db, trie, state_db, lock_db);
 };
 exports.block = {
     isBlock: isBlock,

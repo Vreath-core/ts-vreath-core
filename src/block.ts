@@ -525,10 +525,13 @@ export const accept_key_block = async (block:T.Block,block_db:DB,last_height:str
     });
 }
 
-export const accept_micro_block = async (block:T.Block,block_db:DB,trie:Trie,state_db:DB,lock_db:DB)=>{
+export const accept_micro_block = async (block:T.Block,output_states:T.State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB)=>{
+    let length_sum = 0;
     await P.forEach(block.txs, async (tx,i)=>{
+        const output = output_states.slice(length_sum,length_sum+tx.meta.request.bases.length);
+        length_sum = length_sum+tx.meta.request.bases.length;
         if(tx.meta.kind===0) await tx_set.accept_req_tx(tx,block.meta.height,block.hash,i,trie,state_db,lock_db);
-        else if(tx.meta.kind===1) await tx_set.accept_ref_tx(tx,block.meta.height,block.hash,i,trie,state_db,lock_db,block_db);
+        else if(tx.meta.kind===1) await tx_set.accept_ref_tx(tx,output,block.meta.height,block.hash,i,trie,state_db,lock_db,block_db);
     });
     const public_key = get_info_from_block(block)[3];
     const unit_validator = crypto_set.generate_address(constant.unit,public_key);

@@ -404,9 +404,9 @@ const accept_req_tx = async (tx:T.Tx,height:string,block_hash:string,index:numbe
     await tx_set.accept_req_tx(tx,height,block_hash,index,trie,state_db,lock_db);
 }
 
-const accept_ref_tx = async (tx:T.Tx,height:string,block_hash:string,index:number,trie:Trie,state_db:DB,lock_db:DB,block_db:DB):Promise<void>=>{
-    if(!isTx(tx)||hex_check(height,8,true)||hex_check(block_hash,32)||uint_check(index,8)) throw error;
-    await tx_set.accept_ref_tx(tx,height,block_hash,index,trie,state_db,lock_db,block_db);
+const accept_ref_tx = async (tx:T.Tx,output_states:T.State[],height:string,block_hash:string,index:number,trie:Trie,state_db:DB,lock_db:DB,block_db:DB):Promise<void>=>{
+    if(!isTx(tx)||hex_check(height,8,true)||output_states.some(s=>!isState(s))||hex_check(block_hash,32)||uint_check(index,8)) throw error;
+    await tx_set.accept_ref_tx(tx,output_states,height,block_hash,index,trie,state_db,lock_db,block_db);
 }
 
 
@@ -593,9 +593,9 @@ const accept_key_block = async (block:T.Block,block_db:DB,last_height:string,tri
     await block_set.accept_key_block(block,block_db,last_height,trie,state_db,lock_db);
 }
 
-const accept_micro_block = async (block:T.Block,block_db:DB,trie:Trie,state_db:DB,lock_db:DB)=>{
+const accept_micro_block = async (block:T.Block,output_states:T.State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB)=>{
     if(!isBlock(block)) throw error;
-    await block_set.accept_micro_block(block,block_db,trie,state_db,lock_db);
+    await block_set.accept_micro_block(block,output_states,block_db,trie,state_db,lock_db);
 }
 
 export const block = {

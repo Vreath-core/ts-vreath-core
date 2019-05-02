@@ -323,7 +323,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
     //console.log("invalid output hash");
     return false;
   }
-  else if((disabling!=null&&disabling.indexOf(7)!=-1)||(success&&req_tx.meta.request.type==0&&(await output_change_check(bases,output_states)||await contract_check(main_token,bases,base_states,req_tx.meta.request.input,output_states,block_db,last_height)))||(!success&&(output.some((o,i)=>o!=base_states_hashes[i])||gas_share!=0))){
+  else if((disabling!=null&&disabling.indexOf(7)!=-1)||(success&&req_tx.meta.request.type==0&&(await output_change_check(bases,output_states)||await contract_check(main_token,bases,base_states,req_tx.meta.request.input,output_states,block_db,req_tx.additional.height)))||(!success&&(output.some((o,i)=>o!=base_states_hashes[i])||gas_share!=0))){
     //console.log("invalid output");
     return false;
   }
@@ -454,7 +454,7 @@ export const accept_req_tx = async (tx:T.Tx,height:string,block_hash:string,inde
   });
 }
 
-export const accept_ref_tx = async (ref_tx:T.Tx,height:string,block_hash:string,index:number,trie:Trie,state_db:DB,lock_db:DB,block_db:DB)=>{
+export const accept_ref_tx = async (ref_tx:T.Tx,output_states:T.State[],height:string,block_hash:string,index:number,trie:Trie,state_db:DB,lock_db:DB,block_db:DB)=>{
   const req_tx = await find_req_tx(ref_tx,block_db);
   const requester = get_info_from_tx(req_tx)[4];
   const refresher = get_info_from_tx(ref_tx)[4];
@@ -462,10 +462,7 @@ export const accept_ref_tx = async (ref_tx:T.Tx,height:string,block_hash:string,
   const fee = _.bigInt2hex(bigInt(req_tx.meta.request.gas,16).subtract(bigInt(gas,16)));
 
   const bases = req_tx.meta.request.bases;
-  const base_states = await P.map(bases, async key=>{
-    return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("00",_.slice_token_part(key),key,"00",[]));
-  });
-  const changed = await contracts.ref_tx_change(bases,base_states,requester,refresher,fee,gas,height);
+  const changed = await contracts.ref_tx_change(bases,output_states,requester,refresher,fee,gas,height);
 
   const lock_states = await P.map(bases, async key=>{
     return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));

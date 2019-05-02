@@ -300,7 +300,7 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
         //console.log("invalid output hash");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(7) != -1) || (success && req_tx.meta.request.type == 0 && (await output_change_check(bases, output_states) || await exports.contract_check(main_token, bases, base_states, req_tx.meta.request.input, output_states, block_db, last_height))) || (!success && (output.some((o, i) => o != base_states_hashes[i]) || gas_share != 0))) {
+    else if ((disabling != null && disabling.indexOf(7) != -1) || (success && req_tx.meta.request.type == 0 && (await output_change_check(bases, output_states) || await exports.contract_check(main_token, bases, base_states, req_tx.meta.request.input, output_states, block_db, req_tx.additional.height))) || (!success && (output.some((o, i) => o != base_states_hashes[i]) || gas_share != 0))) {
         //console.log("invalid output");
         return false;
     }
@@ -412,17 +412,14 @@ exports.accept_req_tx = async (tx, height, block_hash, index, trie, state_db, lo
         await data.write_trie(trie, state_db, lock_db, base_states[i], added[i]);
     });
 };
-exports.accept_ref_tx = async (ref_tx, height, block_hash, index, trie, state_db, lock_db, block_db) => {
+exports.accept_ref_tx = async (ref_tx, output_states, height, block_hash, index, trie, state_db, lock_db, block_db) => {
     const req_tx = await exports.find_req_tx(ref_tx, block_db);
     const requester = exports.get_info_from_tx(req_tx)[4];
     const refresher = exports.get_info_from_tx(ref_tx)[4];
     const gas = _.bigInt2hex(big_integer_1.default(req_tx.meta.request.gas, 16).multiply(ref_tx.meta.refresh.gas_share).divide(100));
     const fee = _.bigInt2hex(big_integer_1.default(req_tx.meta.request.gas, 16).subtract(big_integer_1.default(gas, 16)));
     const bases = req_tx.meta.request.bases;
-    const base_states = await P.map(bases, async (key) => {
-        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
-    });
-    const changed = await contracts.ref_tx_change(bases, base_states, requester, refresher, fee, gas, height);
+    const changed = await contracts.ref_tx_change(bases, output_states, requester, refresher, fee, gas, height);
     const lock_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));
     });
