@@ -130,7 +130,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
                 const output_hash = _.array2hash(ref_tx.meta.refresh.output);
                 const iden = _.array2hash([req_tx.hash, height, req_block.hash, unit[3], output_hash]);
                 const hash = await tx_set.unit_hash(req_tx.hash, req_block.hash, height, unit[2], unit[3], output_hash, unit[4]);
-                return !big_integer_1.default(hash, 16).lesserOrEquals(big_integer_1.default(constant_1.constant.unit, 16)) || unit_base_hash_parts[i + 1] != iden || unit_states[i + 1].data.length != 0;
+                return !big_integer_1.default(hash, 16).lesserOrEquals(big_integer_1.default(constant_1.constant.pow_target, 16)) || unit_base_hash_parts[i + 1] != iden || unit_states[i + 1].data.length != 0;
             });
             if (unit_verify)
                 return base_state;
@@ -230,7 +230,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 const output_hash = _.array2hash(ref_tx.meta.refresh.output);
                 const iden = await _.array2hash([req_tx.hash, height, req_block.hash, unit[3], output_hash]);
                 const hash = await tx_set.unit_hash(req_tx.hash, height, req_block.hash, unit[2], unit[3], output_hash, unit[4]);
-                return !big_integer_1.default(hash, 16).lesserOrEquals(big_integer_1.default(constant_1.constant.unit, 16)) || unit_base_hash_parts[i + 1] != iden || unit_states[i + 1].data.length != 0;
+                return !big_integer_1.default(hash, 16).lesserOrEquals(big_integer_1.default(constant_1.constant.pow_target, 16)) || unit_base_hash_parts[i + 1] != iden || unit_states[i + 1].data.length != 0;
             });
             if (unit_verify)
                 return false;
