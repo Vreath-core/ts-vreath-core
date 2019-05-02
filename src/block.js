@@ -514,12 +514,13 @@ exports.accept_key_block = async (block, block_db, last_height, trie, state_db, 
 exports.accept_micro_block = async (block, output_states, block_db, trie, state_db, lock_db) => {
     let length_sum = 0;
     await P.forEach(block.txs, async (tx, i) => {
-        const output = output_states.slice(length_sum, length_sum + tx.meta.request.bases.length);
-        length_sum = length_sum + tx.meta.request.bases.length;
         if (tx.meta.kind === 0)
             await tx_set.accept_req_tx(tx, block.meta.height, block.hash, i, trie, state_db, lock_db);
-        else if (tx.meta.kind === 1)
+        else if (tx.meta.kind === 1) {
+            const output = output_states.slice(length_sum, length_sum + tx.meta.refresh.output.length);
+            length_sum = length_sum + tx.meta.refresh.output.length;
             await tx_set.accept_ref_tx(tx, output, block.meta.height, block.hash, i, trie, state_db, lock_db, block_db);
+        }
     });
     const public_key = exports.get_info_from_block(block)[3];
     const unit_validator = crypto_set.generate_address(constant_1.constant.unit, public_key);
