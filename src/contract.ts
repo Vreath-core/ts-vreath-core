@@ -184,7 +184,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
 export const unit_verify = async (bases:string[],base_state:T.State[],input_data:string[],output_state:T.State[],block_db:DB,new_height:string)=>{
     const unit_base = bases.filter(str=>bigInt(_.slice_token_part(str),16).eq(bigInt(constant.unit,16)));
     const native_base = bases.filter(str=>bigInt(_.slice_token_part(str),16).eq(bigInt(constant.native,16)));
-    const unit_states = base_state.filter(s=>s.token===constant.unit);
+    const unit_states = base_state.filter(s=>bigInt(s.token,16).eq(bigInt(constant.unit,16)));
     const units:T.Unit[] = input_data.slice(1).reduce((res:T.Unit[],val,i,array)=>{
         if(i%5===0){
             const unit:T.Unit = [array[i],Number(array[i+1]),array[i+2],array[i+3],array[i+4]];
