@@ -31,7 +31,7 @@ exports.native_prove = (bases, base_state, input_data) => {
             if (big_integer_1.default(remiter_state.amount, 16).subtract(sum).subtract(fee).subtract(gas).subtract(income).lesser(0) || receivers.length != amounts.length)
                 return base_state;
             const remited = base_state.map(s => {
-                if (s.token != native || s.owner != remiter)
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || s.owner != remiter)
                     return s;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, (s) => {
@@ -42,7 +42,7 @@ exports.native_prove = (bases, base_state, input_data) => {
             });
             const recieved = remited.map(s => {
                 const index = receivers.indexOf(s.owner);
-                if (s.token != native || index === -1)
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || index === -1)
                     return s;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, s => {
@@ -70,7 +70,7 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
             if (big_integer_1.default(remiter_state.amount, 16).subtract(sum).subtract(fee).subtract(gas).lesser(0) || receivers.length != amounts.length)
                 return false;
             const remited = base_state.some((s, i) => {
-                if (s.token != native || s.owner != remiter)
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || s.owner != remiter)
                     return false;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 const output = output_state[i];
@@ -80,7 +80,7 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
                 return false;
             const recieved = base_state.map((s, i) => {
                 const index = receivers.indexOf(s.owner);
-                if (s.token != native || index === -1)
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || index === -1)
                     return false;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 const output = output_state[i];
@@ -147,7 +147,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
             }, {});
             const unit_sum = units.length;
             const unit_bought = base_state.map(s => {
-                if (s.token != constant_1.constant.unit || s.owner != unit_base[0])
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.owner != unit_base[0])
                     return s;
                 const flag = s.data[0];
                 if (flag === "00")
@@ -170,7 +170,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
                 });
             });
             const unit_used = unit_bought.map(s => {
-                if (s.token != constant_1.constant.unit || unit_base.slice(1).indexOf(s.owner) === -1)
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || unit_base.slice(1).indexOf(s.owner) === -1)
                     return s;
                 return _.new_obj(s, s => {
                     s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
@@ -247,7 +247,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
             }, {});
             const unit_sum = units.length;
             const unit_bought = base_state.some((s, i) => {
-                if (s.token != constant_1.constant.unit || s.owner != unit_base[0])
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.owner != unit_base[0])
                     return false;
                 const output = output_state[i];
                 const pre_flag = s.data[0];
@@ -268,7 +268,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
             if (unit_bought)
                 return false;
             const unit_used = base_state.some((s, i) => {
-                if (s.token != constant_1.constant.unit || unit_base.slice(1).indexOf(s.owner) === -1)
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || unit_base.slice(1).indexOf(s.owner) === -1)
                     return false;
                 const output = output_state[i];
                 return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || s.data[0] != null || output.data[0] != "00" || output.data[1] != new_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
@@ -343,7 +343,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, new_
         });
     });
     const reduced = gained.map(s => {
-        if (s.token != constant_1.constant.unit || bases.indexOf(s.owner) === -1 || s.data[0] != "01")
+        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || bases.indexOf(s.owner) === -1 || s.data[0] != "01")
             return s;
         const pre_height = s.data[1];
         const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
@@ -367,7 +367,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, new_heigh
     const fee_1 = big_integer_1.default(fee, 16).multiply(4).divide(10);
     const fee_2 = big_integer_1.default(fee, 16).multiply(6).divide(10);
     const paid = base_state.map(s => {
-        if (s.token != constant_1.constant.native)
+        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.native, 16)))
             return s;
         const fee = big_integer_1.default(s.data[0] || "00", 16);
         if (fee.eq(0))
@@ -380,7 +380,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, new_heigh
     });
     const gained = paid.map(s => {
         const i = [validator_1, validator_2].indexOf(s.owner);
-        if (s.token != constant_1.constant.native || i === -1)
+        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.native, 16)) || i === -1)
             return s;
         const gain = (() => {
             if (i === 0)
@@ -397,7 +397,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, new_heigh
         });
     });
     const reduced = gained.map(s => {
-        if (s.token != constant_1.constant.unit)
+        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.data[0] != "01")
             return s;
         const pre_height = s.data[1];
         const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
@@ -419,7 +419,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, new_heigh
 //unit-validator
 exports.micro_block_change = (base_state, new_height) => {
     return base_state.map(s => {
-        if (s.token != constant_1.constant.unit)
+        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.data[0] != "01")
             return s;
         const pre_height = s.data[1];
         const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));

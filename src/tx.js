@@ -393,7 +393,7 @@ exports.accept_req_tx = async (tx, height, block_hash, index, trie, state_db, lo
     const base_states = await P.map(bases, async (key) => {
         if (key === requester)
             return changed_states[0];
-        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", constant_1.constant.native, key, "00"));
+        return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00"));
     });
     const lock_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));
