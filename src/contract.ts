@@ -70,15 +70,15 @@ export const native_verify = (bases:string[],base_state:T.State[],input_data:str
                 if(bigInt(s.token,16).notEquals(bigInt(native,16))||s.owner!=remiter) return false;
                 const income = bigInt(s.data[2]||"00",16);
                 const output = output_state[i];
-                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || bigInt(s.amount,16).subtract(income).subtract(sum).notEquals(bigInt(output.amount,16));
+                return bigInt(output.nonce,16).lesser(bigInt(s.nonce,16)) || s.owner!=output.owner || bigInt(s.amount,16).subtract(income).subtract(sum).notEquals(bigInt(output.amount,16));
             });
             if(remited) return false;
-            const recieved = base_state.map((s,i)=>{
+            const recieved = base_state.some((s,i)=>{
                 const index = receivers.indexOf(s.owner);
                 if(bigInt(s.token,16).notEquals(bigInt(native,16))||index===-1) return false;
                 const income = bigInt(s.data[2]||"00",16);
                 const output = output_state[i];
-                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || bigInt(s.amount,16).subtract(income).add(bigInt(amounts[index],16)).notEquals(bigInt(output.amount,16));
+                return bigInt(output.nonce,16).lesser(bigInt(s.nonce,16)) || s.owner!=output.owner || bigInt(s.amount,16).subtract(income).add(bigInt(amounts[index],16)).notEquals(bigInt(output.amount,16));
             });
             if(recieved) return false;
             return true;
@@ -242,7 +242,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                     if(computed.lesser(1)) return bigInt("00");
                     else return computed;
                 })();
-                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || amount.notEquals(bigInt(output.amount,16)) || pre_flag==="00" || new_flag!="01" || output.data[1]!=new_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
+                return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || amount.notEquals(bigInt(output.amount,16)) || pre_flag==="00" || new_flag!="01" || output.data[1]!=new_height || bigInt(output.data[1],16).notEquals(bigInt(s.data[1],16));
             });
             if(unit_bought) return false;
             const unit_used = base_state.some((s,i)=>{
@@ -251,9 +251,9 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                 return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || s.data[0]!=null || output.data[0]!="00" || output.data[1]!=new_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
             });
             if(unit_used) return false;
-            const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big));
-            const native_base_states = base_state.filter(s=>s.token===constant.native);
-            const native_output_states = output_state.filter(s=>s.token===constant.native);
+            const native_input = ["00"].concat(native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big)));
+            const native_base_states = base_state.filter(s=>bigInt(s.token,16).eq(bigInt(constant.native,16)));
+            const native_output_states = output_state.filter(s=>bigInt(s.token,16).eq(bigInt(constant.native,16)));
             const paid = native_verify(native_base,native_base_states,native_input,native_output_states);
             if(!paid) return false;
             return true;

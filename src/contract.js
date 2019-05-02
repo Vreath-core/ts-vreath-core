@@ -74,17 +74,17 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
                     return false;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 const output = output_state[i];
-                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).subtract(sum).notEquals(big_integer_1.default(output.amount, 16));
+                return big_integer_1.default(output.nonce, 16).lesser(big_integer_1.default(s.nonce, 16)) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).subtract(sum).notEquals(big_integer_1.default(output.amount, 16));
             });
             if (remited)
                 return false;
-            const recieved = base_state.map((s, i) => {
+            const recieved = base_state.some((s, i) => {
                 const index = receivers.indexOf(s.owner);
                 if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || index === -1)
                     return false;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 const output = output_state[i];
-                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).add(big_integer_1.default(amounts[index], 16)).notEquals(big_integer_1.default(output.amount, 16));
+                return big_integer_1.default(output.nonce, 16).lesser(big_integer_1.default(s.nonce, 16)) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).add(big_integer_1.default(amounts[index], 16)).notEquals(big_integer_1.default(output.amount, 16));
             });
             if (recieved)
                 return false;
@@ -263,7 +263,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                     else
                         return computed;
                 })();
-                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || amount.notEquals(big_integer_1.default(output.amount, 16)) || pre_flag === "00" || new_flag != "01" || output.data[1] != new_height || big_integer_1.default(output.data[1], 16).lesserOrEquals(big_integer_1.default(s.data[1], 16));
+                return big_integer_1.default(output.nonce, 16).subtract(big_integer_1.default(s.nonce, 16)).notEquals(1) || s.owner != output.owner || amount.notEquals(big_integer_1.default(output.amount, 16)) || pre_flag === "00" || new_flag != "01" || output.data[1] != new_height || big_integer_1.default(output.data[1], 16).notEquals(big_integer_1.default(s.data[1], 16));
             });
             if (unit_bought)
                 return false;
@@ -275,9 +275,9 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
             });
             if (unit_used)
                 return false;
-            const native_input = native_base_hash_parts.map(key => unit_price_map[key] || big_integer_1.default(0)).map(big => _.bigInt2hex(big));
-            const native_base_states = base_state.filter(s => s.token === constant_1.constant.native);
-            const native_output_states = output_state.filter(s => s.token === constant_1.constant.native);
+            const native_input = ["00"].concat(native_base_hash_parts.map(key => unit_price_map[key] || big_integer_1.default(0)).map(big => _.bigInt2hex(big)));
+            const native_base_states = base_state.filter(s => big_integer_1.default(s.token, 16).eq(big_integer_1.default(constant_1.constant.native, 16)));
+            const native_output_states = output_state.filter(s => big_integer_1.default(s.token, 16).eq(big_integer_1.default(constant_1.constant.native, 16)));
             const paid = exports.native_verify(native_base, native_base_states, native_input, native_output_states);
             if (!paid)
                 return false;
