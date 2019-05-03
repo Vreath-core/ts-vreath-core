@@ -134,7 +134,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
             });
             if (unit_verify)
                 return base_state;
-            const unit_price_map = units.reduce((res, unit) => {
+            let unit_price_map = units.reduce((res, unit) => {
                 const hash = _.slice_hash_part(unit[3]);
                 if (res[hash] == null) {
                     res[hash] = big_integer_1.default(unit[4], 16);
@@ -180,6 +180,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
                 });
             });
             const native_states = unit_used.filter(s => s.token === constant_1.constant.native);
+            unit_price_map[_.slice_hash_part(native_validator)] = big_integer_1.default(0);
             const native_input = native_base_hash_parts.map(key => unit_price_map[key] || big_integer_1.default(0)).map(big => _.bigInt2hex(big));
             const paid = exports.native_prove(native_base, native_states, native_input);
             const result = unit_used.map(state => {
@@ -234,7 +235,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
             });
             if (unit_verify)
                 return false;
-            const unit_price_map = units.reduce((res, unit) => {
+            let unit_price_map = units.reduce((res, unit) => {
                 const hash = _.slice_hash_part(unit[3]);
                 if (res[hash] == null) {
                     res[hash] = big_integer_1.default(unit[4], 16);
@@ -275,6 +276,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
             });
             if (unit_used)
                 return false;
+            unit_price_map[_.slice_hash_part(native_validator)] = big_integer_1.default(0);
             const native_input = ["00"].concat(native_base_hash_parts.map(key => unit_price_map[key] || big_integer_1.default(0)).map(big => _.bigInt2hex(big)));
             const native_base_states = base_state.filter(s => big_integer_1.default(s.token, 16).eq(big_integer_1.default(constant_1.constant.native, 16)));
             const native_output_states = output_state.filter(s => big_integer_1.default(s.token, 16).eq(big_integer_1.default(constant_1.constant.native, 16)));

@@ -122,7 +122,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                 return !bigInt(hash,16).lesserOrEquals(bigInt(constant.pow_target,16)) || unit_base_hash_parts[i+1]!=iden || unit_states[i+1].data.length!=0;
             });
             if(unit_verify) return base_state;
-            const unit_price_map:{[key:string]:BigInteger} = units.reduce((res:{[key:string]:BigInteger},unit)=>{
+            let unit_price_map:{[key:string]:BigInteger} = units.reduce((res:{[key:string]:BigInteger},unit)=>{
                 const hash = _.slice_hash_part(unit[3]);
                 if(res[hash]==null){
                 res[hash] = bigInt(unit[4],16);
@@ -169,6 +169,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                 )
             });
             const native_states = unit_used.filter(s=>s.token===constant.native);
+            unit_price_map[_.slice_hash_part(native_validator)] = bigInt(0);
             const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big));
             const paid = native_prove(native_base,native_states,native_input);
             const result = unit_used.map(state=>{
@@ -217,7 +218,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                 return !bigInt(hash,16).lesserOrEquals(bigInt(constant.pow_target,16)) || unit_base_hash_parts[i+1]!=iden || unit_states[i+1].data.length!=0;
             });
             if(unit_verify) return false;
-            const unit_price_map:{[key:string]:BigInteger} = units.reduce((res:{[key:string]:BigInteger},unit)=>{
+            let unit_price_map:{[key:string]:BigInteger} = units.reduce((res:{[key:string]:BigInteger},unit)=>{
                 const hash = _.slice_hash_part(unit[3]);
                 if(res[hash]==null){
                     res[hash] = bigInt(unit[4],16);
@@ -251,6 +252,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                 return bigInt(output.nonce,16).subtract(bigInt(s.nonce,16)).notEquals(1) || s.owner!=output.owner || s.data[0]!=null || output.data[0]!="00" || output.data[1]!=new_height || bigInt(output.data[1],16).lesserOrEquals(bigInt(s.data[1],16));
             });
             if(unit_used) return false;
+            unit_price_map[_.slice_hash_part(native_validator)] = bigInt(0);
             const native_input = ["00"].concat(native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big)));
             const native_base_states = base_state.filter(s=>bigInt(s.token,16).eq(bigInt(constant.native,16)));
             const native_output_states = output_state.filter(s=>bigInt(s.token,16).eq(bigInt(constant.native,16)));
