@@ -170,7 +170,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
             });
             const native_states = unit_used.filter(s=>s.token===constant.native);
             unit_price_map[_.slice_hash_part(native_validator)] = bigInt(0);
-            const native_input = native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big));
+            const native_input = ["00"].concat(native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big)));
             const paid = native_prove(native_base,native_states,native_input);
             const result = unit_used.map(state=>{
                 if(state.token===constant.native) return paid.filter(s=>s.token===constant.native&&s.owner===state.owner)[0];
