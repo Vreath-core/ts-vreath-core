@@ -196,7 +196,7 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
 
     const unit_validator_state:T.State = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",unit_validator,constant.unit,"00",["01","00"]));
     const pre_height = unit_validator_state.data[1];
-    const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
+    const reduce = bigInt.max(bigInt(block.meta.height,16).subtract(bigInt(pre_height,16)),bigInt(1));
     const reduced_amount = (()=>{
         const computed = bigInt(unit_validator_state.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
         if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
@@ -399,11 +399,6 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
     const new_height = _.bigInt2hex(bigInt(last_height,16).add(1));
     const last:T.Block = await block_db.read_obj(last_height) || empty;
     const previoushash = last.hash
-    const public_key = crypto_set.private2public(private_key);
-    const unit_validator = crypto_set.generate_address(constant.unit,public_key);
-    const unit_validator_state:T.State = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",unit_validator,constant.unit,"00",["01","00"]));
-    const pre_height = unit_validator_state.data[1];
-    const reduce = bigInt(last_height,16).subtract(bigInt(pre_height,16));
     const pos_diff = await get_diff(block_db,last_height);
     const trie_root = trie.now_root();
     const date = new Date();

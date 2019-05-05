@@ -139,7 +139,7 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                 const flag = s.data[0];
                 if(flag==="00") return s;
                 const pre_height = s.data[1];
-                const reduce = bigInt(new_height,16).subtract(bigInt(pre_height,16));
+                const reduce = bigInt.max(bigInt(new_height,16).subtract(bigInt(pre_height,16)),bigInt(1));
                 const amount = (()=>{
                     const computed = (bigInt(s.amount,16).add(unit_sum)).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
                     if(computed.lesser(1)) return bigInt("00");
@@ -237,7 +237,7 @@ export const unit_verify = async (bases:string[],base_state:T.State[],input_data
                 const new_flag = output.data[0];
                 if(pre_flag==="00"||new_flag!="01") return true;
                 const pre_height = s.data[1];
-                const reduce = bigInt(new_height,16).subtract(bigInt(pre_height,16));
+                const reduce = bigInt.max(bigInt(new_height,16).subtract(bigInt(pre_height,16)),bigInt(1));
                 const amount = (()=>{
                     const computed = (bigInt(s.amount,16).add(unit_sum)).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
                     if(computed.lesser(1)) return bigInt("00");
@@ -332,7 +332,7 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
     const reduced = gained.map(s=>{
         if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||bases.indexOf(s.owner)===-1||s.data[0]!="01") return s;
         const pre_height = s.data[1];
-        const reduce = bigInt(new_height,16).subtract(bigInt(pre_height,16));
+        const reduce = bigInt.max(bigInt(new_height,16).subtract(bigInt(pre_height,16)),bigInt(1));
         const amount = (()=>{
             const computed = bigInt(s.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
             if(computed.lesser(1)) return bigInt("00");
@@ -387,7 +387,7 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
     const reduced = gained.map(s=>{
         if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||s.data[0]!="01") return s;
         const pre_height = s.data[1];
-        const reduce = bigInt(new_height,16).subtract(bigInt(pre_height,16));
+        const reduce = bigInt.max(bigInt(new_height,16).subtract(bigInt(pre_height,16)),bigInt(1));
         const amount = (()=>{
             const computed = bigInt(s.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
             if(computed.lesser(1)) return bigInt("00");
@@ -411,7 +411,7 @@ export const micro_block_change = (base_state:T.State[],new_height:string)=>{
     return base_state.map(s=>{
         if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||s.data[0]!="01") return s;
         const pre_height = s.data[1];
-        const reduce = bigInt(new_height,16).subtract(bigInt(pre_height,16));
+        const reduce = bigInt.max(bigInt(new_height,16).subtract(bigInt(pre_height,16)),bigInt(1));
         const amount = (()=>{
             const computed = bigInt(s.amount,16).multiply(bigInt(constant.unit_rate).pow(reduce)).divide(bigInt(100).pow(reduce));
             if(computed.lesser(1)) return bigInt("00");

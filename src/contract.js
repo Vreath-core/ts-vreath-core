@@ -153,7 +153,7 @@ exports.unit_prove = async (bases, base_state, input_data, block_db, new_height)
                 if (flag === "00")
                     return s;
                 const pre_height = s.data[1];
-                const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
+                const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));
                 const amount = (() => {
                     const computed = (big_integer_1.default(s.amount, 16).add(unit_sum)).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
                     if (computed.lesser(1))
@@ -256,7 +256,7 @@ exports.unit_verify = async (bases, base_state, input_data, output_state, block_
                 if (pre_flag === "00" || new_flag != "01")
                     return true;
                 const pre_height = s.data[1];
-                const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
+                const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));
                 const amount = (() => {
                     const computed = (big_integer_1.default(s.amount, 16).add(unit_sum)).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
                     if (computed.lesser(1))
@@ -348,7 +348,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, new_
         if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || bases.indexOf(s.owner) === -1 || s.data[0] != "01")
             return s;
         const pre_height = s.data[1];
-        const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
+        const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
@@ -402,7 +402,7 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, new_heigh
         if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.data[0] != "01")
             return s;
         const pre_height = s.data[1];
-        const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
+        const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
@@ -424,7 +424,7 @@ exports.micro_block_change = (base_state, new_height) => {
         if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.data[0] != "01")
             return s;
         const pre_height = s.data[1];
-        const reduce = big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16));
+        const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));
         const amount = (() => {
             const computed = big_integer_1.default(s.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
             if (computed.lesser(1))
