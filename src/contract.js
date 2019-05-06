@@ -47,7 +47,7 @@ exports.native_prove = (bases, base_state, input_data) => {
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, s => {
                     s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
-                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(income).subtract(big_integer_1.default(amounts[index], 16)));
+                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(income).add(big_integer_1.default(amounts[index], 16)));
                     return s;
                 });
             });

@@ -41,7 +41,7 @@ export const native_prove = (bases:string[],base_state:T.State[],input_data:stri
             s,
             s=>{
               s.nonce = _.bigInt2hex(bigInt(s.nonce,16).add(1));
-              s.amount = _.bigInt2hex(bigInt(s.amount,16).subtract(income).subtract(bigInt(amounts[index],16)));
+              s.amount = _.bigInt2hex(bigInt(s.amount,16).subtract(income).add(bigInt(amounts[index],16)));
               return s;
             }
           )

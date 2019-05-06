@@ -224,7 +224,7 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
         //console.log("invalid kind");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(2) != -1) || _.slice_hash_part(bases[0]) != _.slice_hash_part(requester) || requester_state == null || _.hashed_pub_check(requester, pub_keys) || requester_state.token != constant_1.constant.native || big_integer_1.default(requester_state.amount, 16).subtract(big_integer_1.default(exports.tx_fee(tx), 16)).subtract(big_integer_1.default(gas, 16)).lesser(0)) {
+    else if ((disabling != null && disabling.indexOf(2) != -1) || _.slice_hash_part(bases[0]) != _.slice_hash_part(requester) || requester_state == null || _.hashed_pub_check(requester, pub_keys) || big_integer_1.default(requester_state.token, 16).notEquals(big_integer_1.default(constant_1.constant.native, 16)) || big_integer_1.default(requester_state.amount, 16).subtract(big_integer_1.default(exports.tx_fee(tx), 16)).subtract(big_integer_1.default(gas, 16)).lesser(0)) {
         //console.log("invalid requester");
         return false;
     }
