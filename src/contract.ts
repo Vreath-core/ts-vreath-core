@@ -168,12 +168,12 @@ export const unit_prove = async (bases:string[],base_state:T.State[],input_data:
                     }
                 )
             });
-            const native_states = unit_used.filter(s=>s.token===constant.native);
+            const native_states = unit_used.filter(s=>bigInt(s.token,16).eq(bigInt(constant.native,16)));
             unit_price_map[_.slice_hash_part(native_validator)] = bigInt(0);
             const native_input = ["00"].concat(native_base_hash_parts.map(key=>unit_price_map[key]||bigInt(0)).map(big=>_.bigInt2hex(big)));
             const paid = native_prove(native_base,native_states,native_input);
             const result = unit_used.map(state=>{
-                if(state.token===constant.native) return paid.filter(s=>s.token===constant.native&&s.owner===state.owner)[0];
+                if(bigInt(state.token,16).eq(bigInt(constant.native,16))) return paid.filter(s=>bigInt(s.token,16).eq(bigInt(constant.native,16))&&s.owner===state.owner)[0];
                 else return state;
             });
             return result;
