@@ -144,16 +144,18 @@ export const pos_hash = (previoushash:string,address:string,timestamp:number)=>{
 export const txs_check = async (block:T.Block,output_states:T.State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB,last_height:string)=>{
     const txs = block.txs;
     const all_bases = txs.reduce((res:string[],tx)=>{
-        const address = tx_set.get_info_from_tx(tx)[4];
         return res.concat(tx.meta.request.bases);
     },[]);
+    let length_sum = 0;
     if(all_bases.some((val,i,array)=>array.indexOf(val)!=i)) return true;
     return await P.some(txs,async (tx:T.Tx)=>{
         if(tx.meta.kind===0){
             return await tx_set.verify_req_tx(tx,trie,state_db,lock_db)===false;
         }
         else if(tx.meta.kind===1){
-            return await tx_set.verify_ref_tx(tx,output_states,block_db,trie,state_db,lock_db,last_height)===false;
+            const output = output_states.slice(length_sum,length_sum+tx.meta.refresh.output.length);
+            length_sum = length_sum+tx.meta.refresh.output.length;
+            return await tx_set.verify_ref_tx(tx,output,block_db,trie,state_db,lock_db,last_height)===false;
         }
         else return true;
     });

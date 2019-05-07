@@ -201,7 +201,7 @@ const verify_tx_basic = (hash, sign, meta_hash, ids, pub_keys, address) => {
         return true;
     }
 };
-exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
+exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling = []) => {
     const meta = tx.meta;
     const kind = meta.kind;
     const req = meta.request;
@@ -217,26 +217,26 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
     const base_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
     });
-    if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, ids, pub_keys, requester)) {
+    if (disabling.indexOf(0) === -1 && !verify_tx_basic(tx.hash, tx.signature, meta_hash, ids, pub_keys, requester)) {
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(1) != -1) || kind != 0) {
+    else if (disabling.indexOf(1) === -1 && kind != 0) {
         //console.log("invalid kind");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(2) != -1) || _.slice_hash_part(bases[0]) != _.slice_hash_part(requester) || requester_state == null || _.hashed_pub_check(requester, pub_keys) || big_integer_1.default(requester_state.token, 16).notEquals(big_integer_1.default(constant_1.constant.native, 16)) || big_integer_1.default(requester_state.amount, 16).subtract(big_integer_1.default(exports.tx_fee(tx), 16)).subtract(big_integer_1.default(gas, 16)).lesser(0)) {
+    else if (disabling.indexOf(2) === -1 && _.slice_hash_part(bases[0]) != _.slice_hash_part(requester) || requester_state == null || _.hashed_pub_check(requester, pub_keys) || big_integer_1.default(requester_state.token, 16).notEquals(big_integer_1.default(constant_1.constant.native, 16)) || big_integer_1.default(requester_state.amount, 16).subtract(big_integer_1.default(exports.tx_fee(tx), 16)).subtract(big_integer_1.default(gas, 16)).lesser(0)) {
         //console.log("invalid requester");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(3) != -1) || tokens.length < 1 || tokens.length > 5) {
+    else if (disabling.indexOf(3) === -1 && tokens.length < 1 || tokens.length > 5) {
         //console.log("invalid token");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(4) != -1) || bases.some((key, i, array) => array.indexOf(key) != i) || base_states.some(s => tokens.indexOf(("0000000000000000" + s.token).slice(-16)) === -1) || bases.length != base_states.length) {
+    else if (disabling.indexOf(4) === -1 && bases.some((key, i, array) => array.indexOf(key) != i) || base_states.some(s => tokens.indexOf(("0000000000000000" + s.token).slice(-16)) === -1) || bases.length != base_states.length) {
         //console.log("invalid base");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(5) != -1) || await exports.requested_check(bases, trie, lock_db)) {
+    else if (disabling.indexOf(5) === -1 && await exports.requested_check(bases, trie, lock_db)) {
         //console.log("base states are already requested");
         return false;
     }
@@ -244,7 +244,7 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling) => {
         return true;
     }
 };
-exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock_db, last_height, disabling) => {
+exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock_db, last_height, disabling = []) => {
     const meta = tx.meta;
     const kind = meta.kind;
     const ref = meta.refresh;
@@ -273,34 +273,34 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", []));
     });
     const base_states_hashes = base_states.map(s => _.array2hash([s.nonce, s.token, s.owner, s.amount].concat(s.data)));
-    if ((disabling != null && disabling.indexOf(0) != -1) || !verify_tx_basic(tx.hash, tx.signature, meta_hash, ids, pub_keys, refresher)) {
+    if (disabling.indexOf(0) === -1 && !verify_tx_basic(tx.hash, tx.signature, meta_hash, ids, pub_keys, refresher)) {
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(1) != -1) || kind != 1) {
+    else if (disabling.indexOf(1) === -1 && kind != 1) {
         //console.log("invalid kind");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(2) != -1) || req_tx == null) {
+    else if (disabling.indexOf(2) === -1 && req_tx == null) {
         //console.log("invalid request hash");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(3) != -1) || !big_integer_1.default(await exports.unit_hash(req_tx.hash, height, block.hash, nonce, unit_add, _.array2hash(output), unit_price), 16).lesserOrEquals(big_integer_1.default(pow_target, 16))) {
+    else if (disabling.indexOf(3) === -1 && !big_integer_1.default(await exports.unit_hash(req_tx.hash, height, block.hash, nonce, unit_add, _.array2hash(output), unit_price), 16).lesserOrEquals(big_integer_1.default(pow_target, 16))) {
         //console.log("invalid nonce");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(4) != -1) || await exports.refreshed_check(bases, trie, lock_db)) {
+    else if (disabling.indexOf(4) === -1 && await exports.refreshed_check(bases, trie, lock_db)) {
         //console.log("base states are already refreshed");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(5) != -1) || refresher_state == null || _.hashed_pub_check(refresher, pub_keys) || big_integer_1.default(refresher_state.amount, 16).add(gas).subtract(fee).lesser(0)) {
+    else if (disabling.indexOf(5) === -1 && (refresher_state == null || _.hashed_pub_check(refresher, pub_keys) || big_integer_1.default(refresher_state.amount, 16).add(gas).subtract(fee).lesser(0))) {
         //console.log("invalid refresher");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(6) != -1) || output.length != 0 && output.some((o, i) => o != _.array2hash([output_states[i].nonce, output_states[i].token, output_states[i].owner, output_states[i].amount].concat(output_states[i].data)))) {
+    else if (disabling.indexOf(6) === -1 && output.length != 0 && output.some((o, i) => o != _.array2hash([output_states[i].nonce, output_states[i].token, output_states[i].owner, output_states[i].amount].concat(output_states[i].data)))) {
         //console.log("invalid output hash");
         return false;
     }
-    else if ((disabling != null && disabling.indexOf(7) != -1) || (success && req_tx.meta.request.type == 0 && (await output_change_check(bases, output_states) || await exports.contract_check(main_token, bases, base_states, req_tx.meta.request.input, output_states, block_db, req_tx.additional.height))) || (!success && (output.some((o, i) => o != base_states_hashes[i]) || gas_share != 0))) {
+    else if (disabling.indexOf(7) === -1 && (success && req_tx.meta.request.type == 0 && (await output_change_check(bases, output_states) || await exports.contract_check(main_token, bases, base_states, req_tx.meta.request.input, output_states, block_db, req_tx.additional.height))) || (!success && (output.some((o, i) => o != base_states_hashes[i]) || gas_share != 0))) {
         //console.log("invalid output");
         return false;
     }

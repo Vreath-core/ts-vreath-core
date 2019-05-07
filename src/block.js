@@ -152,9 +152,9 @@ exports.pos_hash = (previoushash, address, timestamp) => {
 exports.txs_check = async (block, output_states, block_db, trie, state_db, lock_db, last_height) => {
     const txs = block.txs;
     const all_bases = txs.reduce((res, tx) => {
-        const address = tx_set.get_info_from_tx(tx)[4];
         return res.concat(tx.meta.request.bases);
     }, []);
+    let length_sum = 0;
     if (all_bases.some((val, i, array) => array.indexOf(val) != i))
         return true;
     return await P.some(txs, async (tx) => {
@@ -162,7 +162,9 @@ exports.txs_check = async (block, output_states, block_db, trie, state_db, lock_
             return await tx_set.verify_req_tx(tx, trie, state_db, lock_db) === false;
         }
         else if (tx.meta.kind === 1) {
-            return await tx_set.verify_ref_tx(tx, output_states, block_db, trie, state_db, lock_db, last_height) === false;
+            const output = output_states.slice(length_sum, length_sum + tx.meta.refresh.output.length);
+            length_sum = length_sum + tx.meta.refresh.output.length;
+            return await tx_set.verify_ref_tx(tx, output, block_db, trie, state_db, lock_db, last_height) === false;
         }
         else
             return true;
