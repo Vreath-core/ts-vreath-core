@@ -257,7 +257,7 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
     const unit_price = ref.unit_price;
     const block = await block_db.read_obj(height) || block_set.empty_block();
     const pow_target = constant_1.constant.pow_target;
-    const req_tx = block.txs[index];
+    const req_tx = await exports.find_req_tx(tx, block_db);
     const gas = big_integer_1.default(req_tx.meta.request.gas, 16).multiply(gas_share).divide(100);
     const fee = big_integer_1.default(req_tx.meta.request.gas, 16).subtract(gas);
     const pulled = exports.get_info_from_tx(tx);
@@ -280,7 +280,7 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
         //console.log("invalid kind");
         return false;
     }
-    else if (disabling.indexOf(2) === -1 && req_tx == null) {
+    else if (disabling.indexOf(2) === -1 && req_tx.hash == "") {
         //console.log("invalid request hash");
         return false;
     }
