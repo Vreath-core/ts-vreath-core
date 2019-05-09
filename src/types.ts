@@ -28,6 +28,7 @@ export type TxType = 0;
 
 export type Request = {
   type:TxType;//1 bit
+  nonce:string;//8 byte hex
   feeprice:string;//10 byte
   gas:string;//10 byte
   bases:string[];//40 byte * n

@@ -23,6 +23,7 @@ const P = __importStar(require("p-iteration"));
 exports.empty_tx = () => {
     const request = {
         type: 0,
+        nonce: "",
         feeprice: "",
         gas: "",
         bases: [],
@@ -85,7 +86,7 @@ exports.tx_meta2array = (meta) => {
     let gas_share = ref.gas_share.toString(16);
     if (gas_share.length % 2 != 0)
         gas_share = "0" + gas_share;
-    return [kind, type, req.feeprice, req.gas, req.log, ref.height, index, success, ref.nonce, gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness);
+    return [kind, type, req.nonce, req.feeprice, req.gas, req.log, ref.height, index, success, ref.nonce, gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness);
 };
 exports.tx_fee = (tx) => {
     const price = tx.meta.request.feeprice;
@@ -205,6 +206,7 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling = []) => {
     const meta = tx.meta;
     const kind = meta.kind;
     const req = meta.request;
+    const nonce = req.nonce;
     const gas = req.gas;
     const bases = req.bases;
     const pulled = exports.get_info_from_tx(tx);
@@ -240,6 +242,10 @@ exports.verify_req_tx = async (tx, trie, state_db, lock_db, disabling = []) => {
         //console.log("base states are already requested");
         return false;
     }
+    else if (disabling.indexOf(6) === -1 && big_integer_1.default(base_states[0].nonce, 16).notEquals(big_integer_1.default(nonce, 16))) {
+        //console.log("invalid nonce");
+        return false;
+    }
     else {
         return true;
     }
@@ -249,7 +255,6 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
     const kind = meta.kind;
     const ref = meta.refresh;
     const height = ref.height;
-    const index = ref.index;
     const success = ref.success;
     const output = ref.output;
     const nonce = ref.nonce;
@@ -308,12 +313,13 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
         return true;
     }
 };
-exports.create_req_tx = (type, bases, feeprice, gas, input, log) => {
+exports.create_req_tx = (type, nonce, bases, feeprice, gas, input, log) => {
     const empty = exports.empty_tx();
     const meta = {
         kind: 0,
         request: {
             type: type,
+            nonce: nonce,
             feeprice: feeprice,
             gas: gas,
             bases: bases,

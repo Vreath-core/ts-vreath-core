@@ -284,7 +284,7 @@ const isTxMeta = (meta:T.TxMeta):meta is T.TxMeta =>{
     const empty = tx_set.empty_tx();
     if(kind===0){
         const empty_ref = empty.meta.refresh;
-        return !(req.type!=0||hex_check(req.feeprice,10,true)||hex_check(req.gas,10,true)||req.bases.some(key=>hex_check(key,40))||req.input.some(str=>hex_check(str))||hex_check(req.log)||ref.height!=empty_ref.height||ref.index!=empty_ref.index||ref.success!=empty_ref.success||ref.output.length!=0||ref.witness.length!=0||ref.nonce!=empty_ref.nonce||ref.gas_share!=empty_ref.gas_share||ref.unit_price!=empty_ref.unit_price);
+        return !(req.type!=0||hex_check(req.nonce,8,true)||hex_check(req.feeprice,10,true)||hex_check(req.gas,10,true)||req.bases.some(key=>hex_check(key,40))||req.input.some(str=>hex_check(str))||hex_check(req.log)||ref.height!=empty_ref.height||ref.index!=empty_ref.index||ref.success!=empty_ref.success||ref.output.length!=0||ref.witness.length!=0||ref.nonce!=empty_ref.nonce||ref.gas_share!=empty_ref.gas_share||ref.unit_price!=empty_ref.unit_price);
     }
     else if(kind===1){
         const empty_req = empty.meta.request;
@@ -376,9 +376,9 @@ const verify_ref_tx = async (ref_tx:T.Tx,output_states:T.State[],block_db:DB,tri
     else return await tx_set.verify_ref_tx(ref_tx,output_states,block_db,trie,state_db,lock_db,last_height,disabling);
 }
 
-const create_req_tx = (type:T.TxType,bases:string[],feeprice:string,gas:string,input:string[],log:string,private_key:string)=>{
-    if(type!=0||bases.some(key=>hex_check(key,40))||hex_check(feeprice,10,true)||hex_check(gas,10,true)||input.some(str=>hex_check(str))||hex_check(log)||hex_check(private_key,32)) throw error;
-    const tx = tx_set.create_req_tx(type,bases,feeprice,gas,input,log);
+const create_req_tx = (type:T.TxType,nonce:string,bases:string[],feeprice:string,gas:string,input:string[],log:string,private_key:string)=>{
+    if(type!=0||hex_check(nonce,8,true)||bases.some(key=>hex_check(key,40))||hex_check(feeprice,10,true)||hex_check(gas,10,true)||input.some(str=>hex_check(str))||hex_check(log)||hex_check(private_key,32)) throw error;
+    const tx = tx_set.create_req_tx(type,nonce,bases,feeprice,gas,input,log);
     const signed = tx_set.sign_tx(tx,private_key);
     if(!isTx(signed)||signed.meta.kind!=0) throw new Error('invalid req_tx');
     return signed;

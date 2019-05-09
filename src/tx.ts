@@ -16,6 +16,7 @@ import * as P from 'p-iteration'
 export const empty_tx = ():T.Tx=>{
   const request:T.Request = {
     type:0,
+    nonce:"",
     feeprice:"",
     gas:"",
     bases:[],
@@ -84,7 +85,7 @@ export const tx_meta2array = (meta:T.TxMeta):string[]=>{
   const success = "0"+ref.success.toString(16);
   let gas_share = ref.gas_share.toString(16);
   if(gas_share.length%2!=0) gas_share = "0"+gas_share;
-  return [kind,type,req.feeprice,req.gas,req.log,ref.height,index,success,ref.nonce,gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness);
+  return [kind,type,req.nonce,req.feeprice,req.gas,req.log,ref.height,index,success,ref.nonce,gas_share].concat(req.bases).concat(req.input).concat(ref.output).concat(ref.witness);
 }
 
 export const tx_fee = (tx:T.Tx):string=>{
@@ -214,6 +215,7 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
   const meta = tx.meta;
   const kind = meta.kind;
   const req = meta.request;
+  const nonce = req.nonce;
   const gas = req.gas;
   const bases = req.bases;
 
@@ -254,6 +256,10 @@ export const verify_req_tx = async (tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,dis
     //console.log("base states are already requested");
     return false;
   }
+  else if(disabling.indexOf(6)===-1&&bigInt(base_states[0].nonce,16).notEquals(bigInt(nonce,16))){
+    //console.log("invalid nonce");
+    return false;
+  }
   else{
     return true;
   }
@@ -266,7 +272,6 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
   const ref = meta.refresh;
 
   const height = ref.height;
-  const index = ref.index;
   const success = ref.success;
   const output = ref.output;
   const nonce = ref.nonce;
@@ -333,12 +338,13 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
 }
 
 
-export const create_req_tx = (type:T.TxType,bases:string[],feeprice:string,gas:string,input:string[],log:string)=>{
+export const create_req_tx = (type:T.TxType,nonce:string,bases:string[],feeprice:string,gas:string,input:string[],log:string)=>{
   const empty = empty_tx();
   const meta:T.TxMeta = {
     kind:0,
     request:{
       type:type,
+      nonce:nonce,
       feeprice:feeprice,
       gas:gas,
       bases:bases,
