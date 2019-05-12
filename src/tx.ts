@@ -281,6 +281,7 @@ export const verify_ref_tx = async (tx:T.Tx,output_states:T.State[],block_db:DB,
   const block:T.Block = await block_db.read_obj(height) || block_set.empty_block();
   const pow_target = constant.pow_target;
   const req_tx = await find_req_tx(tx,block_db);
+  if(req_tx.hash==="") return false;
   const gas = bigInt(req_tx.meta.request.gas,16).multiply(gas_share).divide(100);
   const fee = bigInt(req_tx.meta.request.gas,16).subtract(gas);
 

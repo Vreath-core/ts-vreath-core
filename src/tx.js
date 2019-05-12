@@ -263,6 +263,8 @@ exports.verify_ref_tx = async (tx, output_states, block_db, trie, state_db, lock
     const block = await block_db.read_obj(height) || block_set.empty_block();
     const pow_target = constant_1.constant.pow_target;
     const req_tx = await exports.find_req_tx(tx, block_db);
+    if (req_tx.hash === "")
+        return false;
     const gas = big_integer_1.default(req_tx.meta.request.gas, 16).multiply(gas_share).divide(100);
     const fee = big_integer_1.default(req_tx.meta.request.gas, 16).subtract(gas);
     const pulled = exports.get_info_from_tx(tx);
