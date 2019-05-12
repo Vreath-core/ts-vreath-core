@@ -139,7 +139,8 @@ export const find_req_tx = async (ref_tx:T.Tx,block_db:DB)=>{
   const height = ref_tx.meta.refresh.height;
   const index = ref_tx.meta.refresh.index;
   const block:T.Block = await block_db.read_obj(height) || block_set.empty_block();
-  const req_tx = block.txs[index] || empty_tx();
+  const req_tx:T.Tx|null = block.txs[index];
+  if(req_tx==null || req_tx.meta.kind!=0) return empty_tx();
   return req_tx;
 }
 
