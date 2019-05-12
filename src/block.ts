@@ -148,6 +148,17 @@ export const txs_check = async (block:T.Block,output_states:T.State[],block_db:D
     },[]);
     let length_sum = 0;
     if(all_bases.some((val,i,array)=>array.indexOf(val)!=i)) return true;
+    const addtionals:T.TxAdd[] = txs.map((tx,i)=>{
+        return {
+            height:block.meta.height,
+            hash:block.hash,
+            index:i
+        }
+    });
+    if(txs.some((tx,i)=>{
+        const add = addtionals[i];
+        return bigInt(tx.additional.height,16).notEquals(bigInt(add.height,16))||tx.additional.hash!=add.hash||tx.additional.index!=add.index
+    })) return true;
     return await P.some(txs,async (tx:T.Tx)=>{
         if(tx.meta.kind===0){
             return await tx_set.verify_req_tx(tx,trie,state_db,lock_db)===false;
