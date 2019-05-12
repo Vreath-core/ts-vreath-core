@@ -33,10 +33,9 @@ exports.native_prove = (bases, base_state, input_data) => {
             const remited = base_state.map(s => {
                 if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || s.owner != remiter)
                     return s;
-                const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, (s) => {
                     s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
-                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(income).subtract(sum));
+                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(sum));
                     return s;
                 });
             });
@@ -44,14 +43,23 @@ exports.native_prove = (bases, base_state, input_data) => {
                 const index = receivers.indexOf(s.owner);
                 if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || index === -1)
                     return s;
-                const income = big_integer_1.default(s.data[2] || "00", 16);
                 return _.new_obj(s, s => {
                     s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
-                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(income).add(big_integer_1.default(amounts[index], 16)));
+                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).add(big_integer_1.default(amounts[index], 16)));
                     return s;
                 });
             });
-            return recieved;
+            const sub_income = recieved.map(s => {
+                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)))
+                    return s;
+                const income = big_integer_1.default(s.data[2] || "00", 16);
+                return _.new_obj(s, s => {
+                    s.nonce = _.bigInt2hex(big_integer_1.default(s.nonce, 16).add(1));
+                    s.amount = _.bigInt2hex(big_integer_1.default(s.amount, 16).subtract(income));
+                    return s;
+                });
+            });
+            return sub_income;
         default: return base_state;
     }
 };
@@ -69,24 +77,21 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
             const gas = big_integer_1.default(remiter_state.data[1] || "00", 16);
             if (big_integer_1.default(remiter_state.amount, 16).subtract(sum).subtract(fee).subtract(gas).lesser(0) || receivers.length != amounts.length)
                 return false;
-            const remited = base_state.some((s, i) => {
-                if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || s.owner != remiter)
-                    return false;
-                const income = big_integer_1.default(s.data[2] || "00", 16);
-                const output = output_state[i];
-                return big_integer_1.default(output.nonce, 16).lesser(big_integer_1.default(s.nonce, 16)) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).subtract(sum).notEquals(big_integer_1.default(output.amount, 16));
-            });
-            if (remited)
-                return false;
-            const recieved = base_state.some((s, i) => {
+            const amount_check = base_state.some((s, i) => {
                 const index = receivers.indexOf(s.owner);
                 if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(native, 16)) || index === -1)
                     return false;
+                const remit_sum = (() => {
+                    if (s.owner === remiter)
+                        return sum;
+                    else
+                        return big_integer_1.default(0);
+                })();
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 const output = output_state[i];
-                return big_integer_1.default(output.nonce, 16).lesser(big_integer_1.default(s.nonce, 16)) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).add(big_integer_1.default(amounts[index], 16)).notEquals(big_integer_1.default(output.amount, 16));
+                return big_integer_1.default(output.nonce, 16).lesser(big_integer_1.default(s.nonce, 16)) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).subtract(sum).add(big_integer_1.default(amounts[index], 16)).notEquals(big_integer_1.default(output.amount, 16));
             });
-            if (recieved)
+            if (amount_check)
                 return false;
             return true;
         default: return false;
