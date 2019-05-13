@@ -14,7 +14,7 @@ const get_lwma_infos = async (block_db:DB,last_height:string)=>{
     let block:T.Block|null = null;
     let height = bigInt(last_height,16);
     while(height.notEquals(0)){
-        if(blocks.length>=size) break;
+        if(blocks.length>=size+1) break;
         block = await block_db.read_obj(_.bigInt2hex(height));
         height = height.subtract(1);
         if(block==null||block.meta.kind!=0) continue;
