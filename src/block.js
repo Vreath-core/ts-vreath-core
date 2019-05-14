@@ -324,7 +324,7 @@ exports.verify_micro_block = async (block, output_states, block_db, trie, state_
         const sliced = tx.meta.request.bases.map(key => _.slice_token_part(key));
         return sliced.filter((val, i, array) => array.indexOf(val) === i);
     });
-    const unit_buying_tokens_hash = _.array2hash([("0000000000000000" + constant_1.constant.unit).slice(-16), ("0000000000000000" + constant_1.constant.native).slice(-12)]);
+    const unit_buying_tokens_hash = _.array2hash([("0000000000000000" + constant_1.constant.unit).slice(-16), ("0000000000000000" + constant_1.constant.native).slice(-16)]);
     if (hash != _.array2hash(all_array)) {
         //console.log("invalid hash");
         return false;
