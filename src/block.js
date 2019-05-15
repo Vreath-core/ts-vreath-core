@@ -224,7 +224,13 @@ exports.verify_key_block = async (block, block_db, trie, state_db, last_height) 
         else
             return _.bigInt2hex(computed);
     })();
-    const right_diff = diff_1.get_diff(reduced_amount);
+    const pre_key_block = await exports.search_key_block(block_db, last_height);
+    if (pre_key_block == null)
+        return false;
+    const pre_validator_pub = exports.get_info_from_block(pre_key_block)[3];
+    const pre_unit_validator = crypto_set.generate_address(constant_1.constant.unit, pre_validator_pub);
+    const pre_unit_validator_state = await data.read_from_trie(trie, state_db, pre_unit_validator, 0, state_set.CreateState("00", constant_1.constant.unit, pre_unit_validator, "00", ["01", "00"]));
+    const right_diff = diff_1.get_diff(pre_unit_validator_state.amount);
     const hash_for_pos = exports.pos_hash(previoushash, unit_validator, timestamp);
     const last = await block_db.read_obj(last_height) || exports.empty_block();
     const right_previoushash = last.hash;
@@ -406,19 +412,11 @@ exports.create_key_block = async (private_key, block_db, last_height, trie, stat
     const new_height = _.bigInt2hex(big_integer_1.default(last_height, 16).add(1));
     const last = await block_db.read_obj(last_height) || empty;
     const previoushash = last.hash;
-    const pub_key = crypto_set.private2public(private_key);
-    const unit_validator = crypto_set.generate_address(constant_1.constant.unit, pub_key);
-    const unit_validator_state = await data.read_from_trie(trie, state_db, unit_validator, 0, state_set.CreateState("00", unit_validator, constant_1.constant.unit, "00", ["01", "00"]));
-    const pre_height = unit_validator_state.data[1];
-    const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));
-    const reduced_amount = (() => {
-        const computed = big_integer_1.default(unit_validator_state.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
-        if (computed.lesser(1))
-            return _.bigInt2hex(big_integer_1.default("00"));
-        else
-            return _.bigInt2hex(computed);
-    })();
-    const pos_diff = diff_1.get_diff(reduced_amount);
+    const pre_key_block = await exports.search_key_block(block_db, last_height) || exports.empty_block();
+    const pre_validator_pub = exports.get_info_from_block(pre_key_block)[3];
+    const pre_unit_validator = crypto_set.generate_address(constant_1.constant.unit, pre_validator_pub);
+    const pre_unit_validator_state = await data.read_from_trie(trie, state_db, pre_unit_validator, 0, state_set.CreateState("00", constant_1.constant.unit, pre_unit_validator, "00", ["01", "00"]));
+    const pos_diff = diff_1.get_diff(pre_unit_validator_state.amount);
     const trie_root = trie.now_root();
     const date = new Date();
     const timestamp = Math.floor(date.getTime() / 1000);
