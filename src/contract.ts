@@ -359,7 +359,7 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
 }
 
 //native-requesters, native-refreshers, native-validator_1, native-validator_2, unit-validator_1, unit-validator_2
-export const key_block_change = (base_state:T.State[],validator_1:string,validator_2:string,fee:string,new_height:string)=>{
+export const key_block_change = (base_state:T.State[],validator_1:string,validator_2:string,fee:string,new_height:string,locks:T.Lock[])=>{
     const fee_1 = bigInt(fee,16).multiply(4).divide(10);
     const fee_2 = bigInt(fee,16).multiply(6).divide(10);
     const paid = base_state.map(s=>{
@@ -392,8 +392,11 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
             }
         )
     });
+    const lock_owners = locks.map(l=>l.address);
     const reduced = gained.map(s=>{
-        if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||s.data[0]!="01") return s;
+        const i = lock_owners.indexOf(s.owner);
+        const lock = locks[i];
+        if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||s.data[0]!="01"||lock.state===1) return s;
         const pre_height = s.data[1];
         const reduce = bigInt.max(bigInt(new_height,16).subtract(bigInt(pre_height,16)),bigInt(1));
         const amount = (()=>{
@@ -415,9 +418,12 @@ export const key_block_change = (base_state:T.State[],validator_1:string,validat
 
 
 //unit-validator
-export const micro_block_change = (base_state:T.State[],new_height:string)=>{
+export const micro_block_change = (base_state:T.State[],new_height:string,locks:T.Lock[])=>{
+    const lock_owners = locks.map(l=>l.address);
     return base_state.map(s=>{
-        if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||s.data[0]!="01") return s;
+        const i = lock_owners.indexOf(s.owner);
+        const lock = locks[i];
+        if(bigInt(s.token,16).notEquals(bigInt(constant.unit,16))||s.data[0]!="01"||lock.state===1) return s;
         const pre_height = s.data[1];
         const reduce = bigInt.max(bigInt(new_height,16).subtract(bigInt(pre_height,16)),bigInt(1));
         const amount = (()=>{

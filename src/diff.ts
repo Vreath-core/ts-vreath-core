@@ -9,7 +9,7 @@ const size = constant.lwma_size;
 const def_diff = constant.def_pos_diff;
 const target_time = constant.block_time*(constant.max_blocks+1);
 
-const get_lwma_infos = async (block_db:DB,last_height:string)=>{
+/*const get_lwma_infos = async (block_db:DB,last_height:string)=>{
     let blocks:T.Block[] = [];
     let block:T.Block|null = null;
     let height = bigInt(last_height,16);
@@ -50,11 +50,10 @@ export const get_diff = async (block_db:DB,last_height:string):Promise<string>=>
     if(bigInt(2000000).multiply(size).multiply(size).multiply(target_time).lesser(avg_D)) next_D = bigInt(avg_D).divide(200).divide(L).multiply(size).multiply(size+1).multiply(target_time).multiply(99);
     else next_D = bigInt(avg_D).multiply(size).multiply(size+1).multiply(target_time).multiply(99).divide(200).divide(L);
     return _.bigInt2hex(next_D);
-}
-/*
+}*/
+
 const times = bigInt(constant.block_time).multiply(constant.max_blocks+1);
 
 export const get_diff = (amount:string)=>{
     return _.bigInt2hex(bigInt(amount,16).multiply(times));
 }
-*/

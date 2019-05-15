@@ -502,19 +502,19 @@ const ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last_h
     return output;
 };
 //native-requesters, native-refreshers, native-validator_1, native-validator_2, unit-validator_1, unit-validator_2
-const key_block_change = (base_state, validator_1, validator_2, fee, last_height) => {
-    if (base_state.some(s => !isState(s)) || hex_check(validator_1, 40) || hex_check(validator_2, 40) || hex_check(fee, 10, true) || hex_check(last_height, 8, true))
+const key_block_change = (base_state, validator_1, validator_2, fee, last_height, locks) => {
+    if (base_state.some(s => !isState(s)) || hex_check(validator_1, 40) || hex_check(validator_2, 40) || hex_check(fee, 10, true) || hex_check(last_height, 8, true) || locks.some(l => !isLock(l)))
         throw error;
-    const output = contract.key_block_change(base_state, validator_1, validator_2, fee, last_height);
+    const output = contract.key_block_change(base_state, validator_1, validator_2, fee, last_height, locks);
     if (output.some(s => !isState(s)))
         throw output_state_error;
     return output;
 };
 //unit-validator
-const micro_block_change = (base_state, last_height) => {
-    if (base_state.some(s => !isState(s)) || hex_check(last_height, 8, true))
+const micro_block_change = (base_state, last_height, locks) => {
+    if (base_state.some(s => !isState(s)) || hex_check(last_height, 8, true) || locks.some(l => !isLock(l)))
         throw error;
-    const output = contract.micro_block_change(base_state, last_height);
+    const output = contract.micro_block_change(base_state, last_height, locks);
     if (output.some(s => !isState(s)))
         throw output_state_error;
     return output;
@@ -656,10 +656,10 @@ const tx2pool = async (pool_db, tx, output_states, block_db, trie, state_db, loc
 exports.pool = {
     tx2pool: tx2pool
 };
-exports.compute_diff = async (block_db, last_height) => {
-    if (hex_check(last_height, 8, true))
+exports.compute_diff = (amount) => {
+    if (hex_check(amount, 10, true))
         throw error;
-    return await diff_1.get_diff(block_db, last_height);
+    return diff_1.get_diff(amount);
 };
 const isUnit = (unit) => {
     return !hex_check(unit[0], 8, true) && !uint_check(unit[1], 8) && !hex_check(unit[2], 8, true) && !hex_check(unit[3], 40) && !hex_check(unit[4], 10, true);

@@ -370,7 +370,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, new_
     return reduced;
 };
 //native-requesters, native-refreshers, native-validator_1, native-validator_2, unit-validator_1, unit-validator_2
-exports.key_block_change = (base_state, validator_1, validator_2, fee, new_height) => {
+exports.key_block_change = (base_state, validator_1, validator_2, fee, new_height, locks) => {
     const fee_1 = big_integer_1.default(fee, 16).multiply(4).divide(10);
     const fee_2 = big_integer_1.default(fee, 16).multiply(6).divide(10);
     const paid = base_state.map(s => {
@@ -403,8 +403,11 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, new_heigh
             return s;
         });
     });
+    const lock_owners = locks.map(l => l.address);
     const reduced = gained.map(s => {
-        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.data[0] != "01")
+        const i = lock_owners.indexOf(s.owner);
+        const lock = locks[i];
+        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.data[0] != "01" || lock.state === 1)
             return s;
         const pre_height = s.data[1];
         const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));
@@ -424,9 +427,12 @@ exports.key_block_change = (base_state, validator_1, validator_2, fee, new_heigh
     return reduced;
 };
 //unit-validator
-exports.micro_block_change = (base_state, new_height) => {
+exports.micro_block_change = (base_state, new_height, locks) => {
+    const lock_owners = locks.map(l => l.address);
     return base_state.map(s => {
-        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.data[0] != "01")
+        const i = lock_owners.indexOf(s.owner);
+        const lock = locks[i];
+        if (big_integer_1.default(s.token, 16).notEquals(big_integer_1.default(constant_1.constant.unit, 16)) || s.data[0] != "01" || lock.state === 1)
             return s;
         const pre_height = s.data[1];
         const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));

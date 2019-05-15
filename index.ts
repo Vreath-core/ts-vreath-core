@@ -478,18 +478,18 @@ const ref_tx_change = (bases:string[],base_state:T.State[],requester:string,refr
 }
 
 //native-requesters, native-refreshers, native-validator_1, native-validator_2, unit-validator_1, unit-validator_2
-const key_block_change = (base_state:T.State[],validator_1:string,validator_2:string,fee:string,last_height:string)=>{
-    if(base_state.some(s=>!isState(s))||hex_check(validator_1,40)||hex_check(validator_2,40)||hex_check(fee,10,true)||hex_check(last_height,8,true)) throw error;
-    const output = contract.key_block_change(base_state,validator_1,validator_2,fee,last_height);
+const key_block_change = (base_state:T.State[],validator_1:string,validator_2:string,fee:string,last_height:string,locks:T.Lock[])=>{
+    if(base_state.some(s=>!isState(s))||hex_check(validator_1,40)||hex_check(validator_2,40)||hex_check(fee,10,true)||hex_check(last_height,8,true)||locks.some(l=>!isLock(l))) throw error;
+    const output = contract.key_block_change(base_state,validator_1,validator_2,fee,last_height,locks);
     if(output.some(s=>!isState(s))) throw output_state_error;
     return output;
 }
 
 
 //unit-validator
-const micro_block_change = (base_state:T.State[],last_height:string)=>{
-    if(base_state.some(s=>!isState(s))||hex_check(last_height,8,true)) throw error;
-    const output = contract.micro_block_change(base_state,last_height);
+const micro_block_change = (base_state:T.State[],last_height:string,locks:T.Lock[])=>{
+    if(base_state.some(s=>!isState(s))||hex_check(last_height,8,true)||locks.some(l=>!isLock(l))) throw error;
+    const output = contract.micro_block_change(base_state,last_height,locks);
     if(output.some(s=>!isState(s))) throw output_state_error;
     return output;
 }
@@ -630,9 +630,9 @@ export const pool = {
     tx2pool:tx2pool
 }
 
-export const compute_diff = async (block_db:DB,last_height:string)=>{
-    if(hex_check(last_height,8,true)) throw error;
-    return await get_diff(block_db,last_height);
+export const compute_diff = (amount:string)=>{
+    if(hex_check(amount,10,true)) throw error;
+    return get_diff(amount);
 }
 
 

@@ -224,7 +224,7 @@ exports.verify_key_block = async (block, block_db, trie, state_db, last_height) 
         else
             return _.bigInt2hex(computed);
     })();
-    const right_diff = await diff_1.get_diff(block_db, last_height);
+    const right_diff = diff_1.get_diff(reduced_amount);
     const hash_for_pos = exports.pos_hash(previoushash, unit_validator, timestamp);
     const last = await block_db.read_obj(last_height) || exports.empty_block();
     const right_previoushash = last.hash;
@@ -406,7 +406,19 @@ exports.create_key_block = async (private_key, block_db, last_height, trie, stat
     const new_height = _.bigInt2hex(big_integer_1.default(last_height, 16).add(1));
     const last = await block_db.read_obj(last_height) || empty;
     const previoushash = last.hash;
-    const pos_diff = await diff_1.get_diff(block_db, last_height);
+    const pub_key = crypto_set.private2public(private_key);
+    const unit_validator = crypto_set.generate_address(constant_1.constant.unit, pub_key);
+    const unit_validator_state = await data.read_from_trie(trie, state_db, unit_validator, 0, state_set.CreateState("00", unit_validator, constant_1.constant.unit, "00", ["01", "00"]));
+    const pre_height = unit_validator_state.data[1];
+    const reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_height, 16)), big_integer_1.default(1));
+    const reduced_amount = (() => {
+        const computed = big_integer_1.default(unit_validator_state.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(reduce)).divide(big_integer_1.default(100).pow(reduce));
+        if (computed.lesser(1))
+            return _.bigInt2hex(big_integer_1.default("00"));
+        else
+            return _.bigInt2hex(computed);
+    })();
+    const pos_diff = diff_1.get_diff(reduced_amount);
     const trie_root = trie.now_root();
     const date = new Date();
     const timestamp = Math.floor(date.getTime() / 1000);
@@ -512,10 +524,10 @@ exports.accept_key_block = async (block, block_db, last_height, trie, state_db, 
     const fees = last_micros.reduce((sum, b) => big_integer_1.default(sum).add(b.meta.fee_sum), big_integer_1.default(0));
     const issues = last_micros.concat(last_key).reduce((sum, b) => sum.add(big_integer_1.default(compute_issue(b.meta.height), 16)), big_integer_1.default(0));
     const fee_sum = _.bigInt2hex(fees.add(issues));
-    const changed = contract.key_block_change(base_states, pre_native, new_native, fee_sum, block.meta.height);
     const lock_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));
     });
+    const changed = contract.key_block_change(base_states, pre_native, new_native, fee_sum, block.meta.height, lock_states);
     await P.forEach(bases, async (key, i) => {
         await data.write_trie(trie, state_db, lock_db, changed[i], lock_states[i]);
     });
@@ -534,7 +546,7 @@ exports.accept_micro_block = async (block, output_states, block_db, trie, state_
     const public_key = exports.get_info_from_block(block)[3];
     const unit_validator = crypto_set.generate_address(constant_1.constant.unit, public_key);
     const unit_state = await data.read_from_trie(trie, state_db, unit_validator, 0, state_set.CreateState("00", constant_1.constant.unit, unit_validator, "00", ["01", "00"]));
-    const changed = contract.micro_block_change([unit_state], block.meta.height);
     const lock_state = await data.read_from_trie(trie, lock_db, unit_validator, 1, lock_set.CreateLock(unit_validator));
+    const changed = contract.micro_block_change([unit_state], block.meta.height, [lock_state]);
     await data.write_trie(trie, state_db, lock_db, changed[0], lock_state);
 };
