@@ -195,7 +195,7 @@ exports.compute_block_size = (block) => {
     const tx_fee_sum = _.bigInt2hex(all_array.reduce((sum, item) => sum.add(Math.ceil(Buffer.from(item, 'hex').length)), big_integer_1.default(0)));
     return tx_fee_sum;
 };
-exports.verify_key_block = async (block, block_db, trie, state_db, last_height) => {
+exports.verify_key_block = async (block, block_db, trie, state_db, lock_db, last_height) => {
     const hash = block.hash;
     const sign = block.signature;
     const meta = block.meta;
@@ -213,6 +213,7 @@ exports.verify_key_block = async (block, block_db, trie, state_db, last_height) 
     const all_array = info[1];
     const id = info[2];
     const validator_pub = info[3];
+    const native_validator = info[4];
     const unit_validator = crypto_set.generate_address(constant_1.constant.unit, validator_pub);
     const unit_validator_state = await data.read_from_trie(trie, state_db, unit_validator, 0, state_set.CreateState("00", unit_validator, constant_1.constant.unit, "00", ["01", "00"]));
     const pre_height = unit_validator_state.data[1];
@@ -237,6 +238,10 @@ exports.verify_key_block = async (block, block_db, trie, state_db, last_height) 
     const right_trie_root = trie.now_root();
     if (hash != _.array2hash(all_array) || !big_integer_1.default(hash_for_pos, 16).lesserOrEquals(big_integer_1.default(2).pow(256).multiply(big_integer_1.default(reduced_amount, 16)).divide(big_integer_1.default(right_diff, 16)))) {
         //console.log("invalid hash");
+        return false;
+    }
+    else if (await tx_set.requested_check([native_validator], trie, lock_db)) {
+        //console.log("invalid validator");
         return false;
     }
     else if (_.sign_check(meta_hash, sign.data, validator_pub)) {

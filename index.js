@@ -589,10 +589,10 @@ const compute_block_size = (block) => {
         throw error;
     return block_set.compute_block_size(block);
 };
-const verify_key_block = async (block, block_db, trie, state_db, last_height) => {
+const verify_key_block = async (block, block_db, trie, state_db, lock_db, last_height) => {
     if (!isBlock(block) || block.meta.kind != 0 || hex_check(last_height))
         throw error;
-    const verified = block_set.verify_key_block(block, block_db, trie, state_db, last_height);
+    const verified = block_set.verify_key_block(block, block_db, trie, state_db, lock_db, last_height);
     return verified;
 };
 const verify_micro_block = async (block, output_states, block_db, trie, state_db, lock_db, last_height) => {

@@ -562,9 +562,9 @@ const compute_block_size = (block:T.Block)=>{
     return block_set.compute_block_size(block);
 }
 
-const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state_db:DB,last_height:string)=>{
+const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state_db:DB,lock_db:DB,last_height:string)=>{
     if(!isBlock(block)||block.meta.kind!=0||hex_check(last_height)) throw error;
-    const verified = block_set.verify_key_block(block,block_db,trie,state_db,last_height);
+    const verified = block_set.verify_key_block(block,block_db,trie,state_db,lock_db,last_height);
     return verified;
 }
 
