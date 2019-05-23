@@ -231,7 +231,15 @@ exports.verify_key_block = async (block, block_db, trie, state_db, lock_db, last
     const pre_validator_pub = exports.get_info_from_block(pre_key_block)[3];
     const pre_unit_validator = crypto_set.generate_address(constant_1.constant.unit, pre_validator_pub);
     const pre_unit_validator_state = await data.read_from_trie(trie, state_db, pre_unit_validator, 0, state_set.CreateState("00", constant_1.constant.unit, pre_unit_validator, "00", ["01", "00"]));
-    const right_diff = diff_1.get_diff(pre_unit_validator_state.amount);
+    const pre_reduce = big_integer_1.default.max(big_integer_1.default(block.meta.height, 16).subtract(big_integer_1.default(pre_unit_validator_state.data[1], 16)), big_integer_1.default(1));
+    const pre_reduced_amount = (() => {
+        const computed = big_integer_1.default(pre_unit_validator_state.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(pre_reduce)).divide(big_integer_1.default(100).pow(pre_reduce));
+        if (computed.lesser(1))
+            return _.bigInt2hex(big_integer_1.default("00"));
+        else
+            return _.bigInt2hex(computed);
+    })();
+    const right_diff = diff_1.get_diff(pre_reduced_amount);
     const hash_for_pos = exports.pos_hash(previoushash, unit_validator, timestamp);
     const last = await block_db.read_obj(last_height) || exports.empty_block();
     const right_previoushash = last.hash;
@@ -421,7 +429,15 @@ exports.create_key_block = async (private_key, block_db, last_height, trie, stat
     const pre_validator_pub = exports.get_info_from_block(pre_key_block)[3];
     const pre_unit_validator = crypto_set.generate_address(constant_1.constant.unit, pre_validator_pub);
     const pre_unit_validator_state = await data.read_from_trie(trie, state_db, pre_unit_validator, 0, state_set.CreateState("00", constant_1.constant.unit, pre_unit_validator, "00", ["01", "00"]));
-    const pos_diff = diff_1.get_diff(pre_unit_validator_state.amount);
+    const pre_reduce = big_integer_1.default.max(big_integer_1.default(new_height, 16).subtract(big_integer_1.default(pre_unit_validator_state.data[1], 16)), big_integer_1.default(1));
+    const pre_reduced_amount = (() => {
+        const computed = big_integer_1.default(pre_unit_validator_state.amount, 16).multiply(big_integer_1.default(constant_1.constant.unit_rate).pow(pre_reduce)).divide(big_integer_1.default(100).pow(pre_reduce));
+        if (computed.lesser(1))
+            return _.bigInt2hex(big_integer_1.default("00"));
+        else
+            return _.bigInt2hex(computed);
+    })();
+    const pos_diff = diff_1.get_diff(pre_reduced_amount);
     const trie_root = trie.now_root();
     const date = new Date();
     const timestamp = Math.floor(date.getTime() / 1000);

@@ -222,7 +222,13 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
     const pre_validator_pub = get_info_from_block(pre_key_block)[3];
     const pre_unit_validator = crypto_set.generate_address(constant.unit,pre_validator_pub);
     const pre_unit_validator_state = await data.read_from_trie(trie,state_db,pre_unit_validator,0,state_set.CreateState("00",constant.unit,pre_unit_validator,"00",["01","00"]));
-    const right_diff = get_diff(pre_unit_validator_state.amount);
+    const pre_reduce = bigInt.max(bigInt(block.meta.height,16).subtract(bigInt(pre_unit_validator_state.data[1],16)),bigInt(1));
+    const pre_reduced_amount = (()=>{
+        const computed = bigInt(pre_unit_validator_state.amount,16).multiply(bigInt(constant.unit_rate).pow(pre_reduce)).divide(bigInt(100).pow(pre_reduce));
+        if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
+        else return _.bigInt2hex(computed);
+    })();
+    const right_diff = get_diff(pre_reduced_amount);
     const hash_for_pos = pos_hash(previoushash,unit_validator,timestamp);
 
     const last:T.Block = await block_db.read_obj(last_height) || empty_block();
@@ -427,7 +433,13 @@ export const create_key_block = async (private_key:string,block_db:DB,last_heigh
     const pre_validator_pub = get_info_from_block(pre_key_block)[3];
     const pre_unit_validator = crypto_set.generate_address(constant.unit,pre_validator_pub);
     const pre_unit_validator_state = await data.read_from_trie(trie,state_db,pre_unit_validator,0,state_set.CreateState("00",constant.unit,pre_unit_validator,"00",["01","00"]));
-    const pos_diff = get_diff(pre_unit_validator_state.amount);
+    const pre_reduce = bigInt.max(bigInt(new_height,16).subtract(bigInt(pre_unit_validator_state.data[1],16)),bigInt(1));
+    const pre_reduced_amount = (()=>{
+        const computed = bigInt(pre_unit_validator_state.amount,16).multiply(bigInt(constant.unit_rate).pow(pre_reduce)).divide(bigInt(100).pow(pre_reduce));
+        if(computed.lesser(1)) return _.bigInt2hex(bigInt("00"));
+        else return _.bigInt2hex(computed);
+    })();
+    const pos_diff = get_diff(pre_reduced_amount);
     const trie_root = trie.now_root();
     const date = new Date();
     const timestamp = Math.floor(date.getTime()/1000);
