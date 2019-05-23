@@ -55,5 +55,5 @@ export const get_diff = async (block_db:DB,last_height:string):Promise<string>=>
 const times = bigInt(constant.block_time).multiply(constant.max_blocks+1);
 
 export const get_diff = (amount:string)=>{
-    return _.bigInt2hex(bigInt(amount,16).multiply(times));
+    return _.bigInt2hex(bigInt(amount,16).multiply(times).divide(10));
 }
