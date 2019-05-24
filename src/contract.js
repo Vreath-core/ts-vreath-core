@@ -317,7 +317,7 @@ exports.req_tx_change = (base_state, requester, fee, gas) => {
     return gained;
 };
 //requester, refresher, bases
-exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, new_height) => {
+exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, new_height, income_map) => {
     const reqed = base_state.map(s => {
         if (s.owner != requester)
             return s;
@@ -340,7 +340,7 @@ exports.ref_tx_change = (bases, base_state, requester, refresher, fee, gas, new_
         });
     });
     const gained = refed.map(s => {
-        const income = big_integer_1.default(s.data[2] || "00", 16);
+        const income = big_integer_1.default(s.data[2] || "00", 16).add(big_integer_1.default(income_map[s.owner] || "00", 16));
         if (income.eq(0))
             return s;
         return _.new_obj(s, s => {

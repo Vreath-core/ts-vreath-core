@@ -470,7 +470,12 @@ export const accept_ref_tx = async (ref_tx:T.Tx,output_states:T.State[],height:s
   const fee = _.bigInt2hex(bigInt(req_tx.meta.request.gas,16).subtract(bigInt(gas,16)));
 
   const bases = req_tx.meta.request.bases;
-  const changed = await contracts.ref_tx_change(bases,output_states,requester,refresher,fee,gas,height);
+  const native_base_states = await P.map(bases.filter(key=>bigInt(_.slice_token_part(key),16).eq(bigInt(constant.native,16))), async key=>await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("00",_.slice_token_part(key),key,"00",[])));
+  const income_map:{[key:string]:string} = native_base_states.reduce((res:{[key:string]:string},s)=>{
+    res[s.owner] = s.data[2] || "00";
+    return res;
+  },{});
+  const changed = await contracts.ref_tx_change(bases,output_states,requester,refresher,fee,gas,height,income_map);
 
   const lock_states = await P.map(bases, async key=>{
     return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));

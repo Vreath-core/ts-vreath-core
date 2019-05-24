@@ -470,9 +470,9 @@ const req_tx_change = (base_state:T.State[],requester:string,fee:string,gas:stri
 }
 
 //requester, refresher, bases
-const ref_tx_change = (bases:string[],base_state:T.State[],requester:string,refresher:string,fee:string,gas:string,last_height:string)=>{
-    if(bases.some(key=>hex_check(key,40))||base_state.some(s=>!isState(s))||hex_check(requester,40)||hex_check(refresher,40)||hex_check(fee,10,true)||hex_check(gas,10,true)||hex_check(last_height,8,true)) throw error;
-    const output = contract.ref_tx_change(bases,base_state,requester,refresher,fee,gas,last_height);
+const ref_tx_change = (bases:string[],base_state:T.State[],requester:string,refresher:string,fee:string,gas:string,last_height:string,income_map:{[key:string]:string})=>{
+    if(bases.some(key=>hex_check(key,40))||base_state.some(s=>!isState(s))||hex_check(requester,40)||hex_check(refresher,40)||hex_check(fee,10,true)||hex_check(gas,10,true)||hex_check(last_height,8,true)||Object.keys(income_map).some(key=>hex_check(key,40))||Object.values(income_map).some(amount=>hex_check(amount,10,true))) throw error;
+    const output = contract.ref_tx_change(bases,base_state,requester,refresher,fee,gas,last_height,income_map);
     if(output.some(s=>!isState(s))) throw output_state_error;
     return output;
 }

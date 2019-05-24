@@ -205,7 +205,6 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
     const all_array = info[1];
     const id = info[2];
     const validator_pub = info[3];
-    const native_validator = info[4];
     const unit_validator = crypto_set.generate_address(constant.unit,validator_pub);
 
     const unit_validator_state:T.State = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",unit_validator,constant.unit,"00",["01","00"]));
@@ -239,10 +238,6 @@ export const verify_key_block = async (block:T.Block,block_db:DB,trie:Trie,state
 
     if(hash!=_.array2hash(all_array)||!bigInt(hash_for_pos,16).lesserOrEquals(bigInt(2).pow(256).multiply(bigInt(reduced_amount,16)).divide(bigInt(right_diff,16)))){
         //console.log("invalid hash");
-        return false;
-    }
-    else if(await tx_set.requested_check([native_validator],trie,lock_db)){
-        //console.log("invalid validator");
         return false;
     }
     else if(_.sign_check(meta_hash,sign.data,validator_pub)){

@@ -301,7 +301,7 @@ export const req_tx_change = (base_state:T.State[],requester:string,fee:string,g
 }
 
 //requester, refresher, bases
-export const ref_tx_change = (bases:string[],base_state:T.State[],requester:string,refresher:string,fee:string,gas:string,new_height:string)=>{
+export const ref_tx_change = (bases:string[],base_state:T.State[],requester:string,refresher:string,fee:string,gas:string,new_height:string,income_map:{[key:string]:string})=>{
     const reqed = base_state.map(s=>{
         if(s.owner!=requester) return s;
         return _.new_obj(
@@ -326,7 +326,7 @@ export const ref_tx_change = (bases:string[],base_state:T.State[],requester:stri
         )
     });
     const gained = refed.map(s=>{
-        const income = bigInt(s.data[2]||"00",16);
+        const income = bigInt(s.data[2]||"00",16).add(bigInt(income_map[s.owner]||"00",16));
         if(income.eq(0)) return s;
         return _.new_obj(
             s,
