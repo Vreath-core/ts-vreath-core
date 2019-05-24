@@ -60,5 +60,9 @@ export const get_diff = async (block_db:DB,last_height:string):Promise<string>=>
 }*/
 const times = big_integer_1.default(constant_1.constant.block_time).multiply(constant_1.constant.max_blocks + 1);
 exports.get_diff = (amount) => {
-    return _.bigInt2hex(big_integer_1.default(amount, 16).multiply(times).divide(10));
+    const computed = big_integer_1.default(amount, 16).multiply(times).divide(1);
+    if (computed.lesser(1))
+        return _.bigInt2hex(big_integer_1.default(1));
+    else
+        return _.bigInt2hex(computed);
 };
