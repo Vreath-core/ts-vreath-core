@@ -5,10 +5,17 @@ const streamToPromise = require('stream-to-promise');
 
 type encode = "utf8" | "hex" | "ascii" | "base64";
 
+export interface db_able {
+    get(key:Buffer):Promise<Buffer>;
+    put(key:Buffer,val:Buffer):Promise<void>;
+    del(key:Buffer):Promise<void>;
+    createReadStream():void
+}
+
 export class DB {
-    private db:LevelUp<LevelDown>;
-    constructor(root:string){
-        this.db = levelup(leveldown(root));
+    private db:db_able;
+    constructor(_db:db_able){
+        this.db = _db;
     }
 
     public async get(key:string,key_encode:encode='hex',val_encode:encode='utf8'):Promise<string|null>{

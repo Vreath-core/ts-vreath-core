@@ -1,7 +1,4 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
@@ -10,13 +7,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const levelup_1 = __importDefault(require("levelup"));
-const leveldown_1 = __importDefault(require("leveldown"));
 const P = __importStar(require("p-iteration"));
 const streamToPromise = require('stream-to-promise');
 class DB {
-    constructor(root) {
-        this.db = levelup_1.default(leveldown_1.default(root));
+    constructor(_db) {
+        this.db = _db;
     }
     async get(key, key_encode = 'hex', val_encode = 'utf8') {
         try {
