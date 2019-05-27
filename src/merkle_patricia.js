@@ -11,13 +11,13 @@ const Merkle = require('merkle-patricia-tree/secure');
 const rlp = __importStar(require("rlp"));
 const util_1 = require("util");
 exports.en_key = (key) => {
-    return rlp.encode(key).toString('hex');
+    const val = rlp.encode(key.to_str()).toString('hex');
 };
 exports.de_key = (key) => {
-    return rlp.decode(Buffer.from(key, 'hex')).toString('utf-8');
+    const val = rlp.decode(Buffer.from(key.to_str(), 'hex')).toString('utf-8');
 };
 exports.en_value = (value) => {
-    return rlp.encode(JSON.stringify(value)).toString('hex');
+    const val = rlp.encode(JSON.stringify(value)).toString('hex');
 };
 exports.de_value = (value) => {
     return JSON.parse(rlp.decode(Buffer.from(value, 'hex')).toString());
@@ -25,9 +25,9 @@ exports.de_value = (value) => {
 class Trie {
     constructor(db, root = "") {
         if (root === "")
-            this.trie = new Merkle(db.leveldb());
+            this.trie = new Merkle(db.db);
         else
-            this.trie = new Merkle(db.leveldb(), Buffer.from(root, 'hex'));
+            this.trie = new Merkle(db.db, Buffer.from(root, 'hex'));
     }
     async get(key) {
         const result = await util_1.promisify(this.trie.get).bind(this.trie)(key);

@@ -1,3 +1,5 @@
+import * as T from './types'
+import * as Err from './error'
 import * as crypto_set from './crypto_set'
 import {cloneDeep} from 'lodash'
 import bigInt, { BigInteger } from 'big-integer'
@@ -94,4 +96,120 @@ export const slice_tokens = (addresses:string[])=>{
     if(res.indexOf(sliced)===-1) return res.concat(sliced);
     else return res;
   },[]);
+}
+
+class Result<T,E> implements T.Result<T,E> {
+  constructor(readonly ok:T,readonly err?:E){}
+}
+
+
+export class Hex implements T.Hex {
+  readonly value:string;
+  readonly size:number;
+  readonly variable_length:boolean;
+
+  constructor(readonly _value:string,readonly _size:number,readonly _variable_length:boolean){
+    this.value = _value;
+    this.size = _size;
+    this.variable_length = _variable_length;
+  }
+
+  public form_verify():Result<boolean,Err.HexError>{
+    if(this.value==null || typeof this.value != 'string' || Buffer.from(this.value,'hex').length*2!=this.value.length || this.value.length%2!=0) return new Result(false,new Err.HexError("invalid hex value"));
+    if(this.size!=null&&((this.variable_length!=true&&this.value.length!=this.size*2)||(this.variable_length===true&&this.value.length>this.size*2))) return new Result(false,new Err.HexError("hex doesn't meet the constraint"));
+    const array = this.value.split('');
+    const exp = new RegExp('[a-f0-9]');
+    const exp_test = array.some(str=>{
+      return !exp.test(str);
+    });
+    if(exp_test) return new Result(false,new Err.HexError("hex doesn't meet regexp"));
+    else return new Result(true);
+  }
+
+  public print(){
+    console.log(this.value);
+  }
+
+  public to_num(){
+    return parseInt(this.value,16);
+  }
+
+  public to_str(){
+    //if(hex.length%2!=0) hex = "0"+hex;
+    return this.value;
+  }
+
+  public eq(another:T.Hex):boolean{
+    return bigInt(this.value,16).eq(bigInt(another.value,16));
+  }
+
+  public larger(another:T.Hex){
+    return !bigInt(this.value,16).lesserOrEquals(bigInt(another.value,16));
+  }
+
+  public largerOrEq(another:T.Hex){
+    return !bigInt(this.value,16).lesser(bigInt(another.value,16));
+  }
+
+  public smaller(another:T.Hex){
+    return bigInt(this.value,16).lesser(bigInt(another.value,16));
+  }
+
+  public smallerOrEq(another:T.Hex){
+    return bigInt(this.value,16).lesserOrEquals(bigInt(another.value,16));
+  }
+}
+
+export class HexArithmetic implements T.HexArithmetic {
+  private static _instance:HexArithmetic;
+  private constructor(){}
+
+  public static get instance():HexArithmetic{
+    if (!this._instance) {
+      this._instance = new HexArithmetic();
+    }
+    return this._instance;
+  }
+
+  private bigInt2hex(bigint:BigInteger):string{
+    let hex = bigint.toString(16);
+    if(hex.length%2!=0) hex = "0"+hex;
+    return hex;
+  }
+
+  private get_size(str:string):number{
+    const len = str.length;
+    return Math.floor(len/2);
+  }
+
+  private abst(one:Hex,two:Hex,fn_name:'add'|'subtract'|'multiply'|'divide'|'mod'):Result<Hex,Err.HexError>{
+    const fn = bigInt(one.to_str(),16)[fn_name]
+    const new_value = fn(bigInt(two.to_str(),16));
+    const str = this.bigInt2hex(new_value);
+    const size = this.get_size(str);
+    const hex = new Hex(str,size,true);
+    const verified = hex.form_verify();
+    if(verified.ok===false&&verified.err!=null) return new Result(hex,verified.err);
+    else return new Result(hex);
+  }
+
+  public add(one:Hex,two:Hex){
+    return this.abst(one,two,'add');
+  }
+
+  public sub(one:Hex,two:Hex){
+    return this.abst(one,two,'subtract');
+  }
+
+  public mul(one:Hex,two:Hex){
+    return this.abst(one,two,'multiply');
+  }
+
+  public div(one:Hex,two:Hex){
+    return this.abst(one,two,'divide');
+  }
+
+  public mod(one:Hex,two:Hex){
+    return this.abst(one,two,'mod');
+  }
 }

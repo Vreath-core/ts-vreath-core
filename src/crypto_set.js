@@ -1,7 +1,14 @@
 "use strict";
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const ffi = require('../ffi-vreath/lib/index');
-//import * as crypto from 'crypto'
+const _ = __importStar(require("./util"));
 const cryptonight = require('node-cryptonight-lite').hash;
 exports.get_sha256 = (hex) => {
     return ffi.get_sha256(hex);
@@ -48,3 +55,49 @@ exports.compute_cryptonight = (data) => {
     const hash = cryptonight(Buffer.from(data, 'hex'));
     return hash.toString('hex');
 };
+class Hash {
+    constructor(_value) {
+        this.size = 32;
+        this.valriable_length = false;
+        this.value = _value;
+    }
+    from_hex(hex) {
+        const hash = ffi.get_sha256(hex);
+        this.value = hash;
+    }
+}
+exports.Hash = Hash;
+class PrivateKey extends _.Hex {
+    constructor(_value) {
+        super(_value, 32, false);
+    }
+    generate() {
+        const privKey = ffi.generate_key();
+        super.value = privKey;
+    }
+}
+exports.PrivateKey = PrivateKey;
+class PublicKey {
+    constructor(_value) {
+        this.size = 33;
+        this.valriable_length = false;
+        this.value = _value;
+    }
+}
+exports.PublicKey = PublicKey;
+class SignData {
+    constructor(_value) {
+        this.size = 64;
+        this.valriable_length = false;
+        this.value = _value;
+    }
+}
+exports.SignData = SignData;
+class SignV {
+    constructor(_value) {
+        this.size = 6;
+        this.valriable_length = false;
+        this.value = _value;
+    }
+}
+exports.SignV = SignV;

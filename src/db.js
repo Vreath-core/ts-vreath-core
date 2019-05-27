@@ -64,8 +64,5 @@ class DB {
             catch(e){reject(e)}
           });*/
     }
-    leveldb() {
-        return this.db;
-    }
 }
 exports.DB = DB;

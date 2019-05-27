@@ -6,4 +6,4 @@ Object.defineProperty(exports, "__esModule", { value: true });
   nonce,8 byte,
   address:40 byte,
   unit_price:10 byte
-*/
+*/ 

@@ -1,24 +1,15 @@
-import levelup, { LevelUp } from 'levelup';
-import leveldown, { LevelDown } from 'leveldown';
+import * as T from './types'
 import * as P from 'p-iteration'
 const streamToPromise = require('stream-to-promise');
 
-type encode = "utf8" | "hex" | "ascii" | "base64";
 
-export interface db_able {
-    get(key:Buffer):Promise<Buffer>;
-    put(key:Buffer,val:Buffer):Promise<void>;
-    del(key:Buffer):Promise<void>;
-    createReadStream():void
-}
-
-export class DB {
-    private db:db_able;
-    constructor(_db:db_able){
+export class DB implements T.DB {
+    readonly db:T.db_able;
+    constructor(_db:T.db_able){
         this.db = _db;
     }
 
-    public async get(key:string,key_encode:encode='hex',val_encode:encode='utf8'):Promise<string|null>{
+    public async get(key:string,key_encode:T.encode='hex',val_encode:T.encode='utf8'):Promise<string|null>{
         try{
             const buffer = await this.db.get(Buffer.from(key,key_encode));
             return buffer.toString(val_encode);
@@ -28,11 +19,11 @@ export class DB {
         }
     }
 
-    public async put(key:string,val:string,key_encode:encode='hex',val_encode:encode='utf8'){
+    public async put(key:string,val:string,key_encode:T.encode='hex',val_encode:T.encode='utf8'){
         await this.db.put(Buffer.from(key,key_encode),Buffer.from(val,val_encode));
     }
 
-    public async del(key:string,key_encode:encode='hex'){
+    public async del(key:string,key_encode:T.encode='hex'){
         await this.db.del(Buffer.from(key,key_encode));
     }
 
@@ -46,7 +37,7 @@ export class DB {
         await this.put(key,JSON.stringify(obj));
     }
 
-    public async filter<T>(key_encode:encode='hex',val_encode:encode='utf8',check:(key:string,value:T)=>Promise<boolean>|boolean=(key:string,value:T)=>true){
+    public async filter<T>(key_encode:T.encode='hex',val_encode:T.encode='utf8',check:(key:string,value:T)=>Promise<boolean>|boolean=(key:string,value:T)=>true){
         let result:T[] = [];
         const stream = this.db.createReadStream();
         const data_array:{key:Buffer,value:Buffer}[] = await streamToPromise(stream);
@@ -72,9 +63,5 @@ export class DB {
             }
             catch(e){reject(e)}
           });*/
-    }
-
-    public leveldb(){
-        return this.db;
     }
 }

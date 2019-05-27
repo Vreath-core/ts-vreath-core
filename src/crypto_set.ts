@@ -1,5 +1,6 @@
 const ffi = require('../ffi-vreath/lib/index');
-//import * as crypto from 'crypto'
+import * as T from './types'
+import * as _ from './util'
 const cryptonight = require('node-cryptonight-lite').hash;
 
 export const get_sha256 = (hex:string):string=>{
@@ -58,3 +59,55 @@ export const compute_cryptonight = (data:string):string=>{
   const hash = cryptonight(Buffer.from(data,'hex'));
   return hash.toString('hex');
 }
+
+export class Hash implements T.Hash {
+  private value:string;
+  private size:32 = 32;
+  private valriable_length:false = false;
+  constructor(_value:string){
+    this.value = _value;
+  }
+  from_hex(hex:T.Hex){
+    const hash:string = ffi.get_sha256(hex);
+    this.value = hash;
+  }
+}
+
+export class PrivateKey extends _.Hex implements T.PrivateKey {
+  constructor(_value:string){
+    super(_value,32,false);
+  }
+
+  generate() {
+    const privKey:string = ffi.generate_key();
+    super.value = privKey;
+  }
+}
+
+export class PublicKey implements T.PublicKey {
+  private value:string;
+  private size:33 = 33;
+  private valriable_length:false = false;
+  constructor(_value:string){
+    this.value = _value;
+  }
+}
+
+export class SignData implements T.SignData {
+  private value:string;
+  private size:64 = 64;
+  private valriable_length:false = false;
+  constructor(_value:string){
+    this.value = _value;
+  }
+}
+
+export class SignV implements T.SignV {
+  private value:string;
+  private size:6 = 6;
+  private valriable_length:false = false;
+  constructor(_value:string){
+    this.value = _value;
+  }
+}
+

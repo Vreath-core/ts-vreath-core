@@ -10,6 +10,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const Err = __importStar(require("./error"));
 const crypto_set = __importStar(require("./crypto_set"));
 const lodash_1 = require("lodash");
 const big_integer_1 = __importDefault(require("big-integer"));
@@ -93,3 +94,107 @@ exports.slice_tokens = (addresses) => {
             return res;
     }, []);
 };
+class Result {
+    constructor(ok, err) {
+        this.ok = ok;
+        this.err = err;
+    }
+}
+class Hex {
+    constructor(_value, _size, _variable_length) {
+        this._value = _value;
+        this._size = _size;
+        this._variable_length = _variable_length;
+        this.value = _value;
+        this.size = _size;
+        this.variable_length = _variable_length;
+    }
+    form_verify() {
+        if (this.value == null || typeof this.value != 'string' || Buffer.from(this.value, 'hex').length * 2 != this.value.length || this.value.length % 2 != 0)
+            return new Result(false, new Err.HexError("invalid hex value"));
+        if (this.size != null && ((this.variable_length != true && this.value.length != this.size * 2) || (this.variable_length === true && this.value.length > this.size * 2)))
+            return new Result(false, new Err.HexError("hex doesn't meet the constraint"));
+        const array = this.value.split('');
+        const exp = new RegExp('[a-f0-9]');
+        const exp_test = array.some(str => {
+            return !exp.test(str);
+        });
+        if (exp_test)
+            return new Result(false, new Err.HexError("hex doesn't meet regexp"));
+        else
+            return new Result(true);
+    }
+    print() {
+        console.log(this.value);
+    }
+    to_num() {
+        return parseInt(this.value, 16);
+    }
+    to_str() {
+        //if(hex.length%2!=0) hex = "0"+hex;
+        return this.value;
+    }
+    eq(another) {
+        return big_integer_1.default(this.value, 16).eq(big_integer_1.default(another.value, 16));
+    }
+    larger(another) {
+        return !big_integer_1.default(this.value, 16).lesserOrEquals(big_integer_1.default(another.value, 16));
+    }
+    largerOrEq(another) {
+        return !big_integer_1.default(this.value, 16).lesser(big_integer_1.default(another.value, 16));
+    }
+    smaller(another) {
+        return big_integer_1.default(this.value, 16).lesser(big_integer_1.default(another.value, 16));
+    }
+    smallerOrEq(another) {
+        return big_integer_1.default(this.value, 16).lesserOrEquals(big_integer_1.default(another.value, 16));
+    }
+}
+exports.Hex = Hex;
+class HexArithmetic {
+    constructor() { }
+    static get instance() {
+        if (!this._instance) {
+            this._instance = new HexArithmetic();
+        }
+        return this._instance;
+    }
+    bigInt2hex(bigint) {
+        let hex = bigint.toString(16);
+        if (hex.length % 2 != 0)
+            hex = "0" + hex;
+        return hex;
+    }
+    get_size(str) {
+        const len = str.length;
+        return Math.floor(len / 2);
+    }
+    abst(one, two, fn_name) {
+        const fn = big_integer_1.default(one.to_str(), 16)[fn_name];
+        const new_value = fn(big_integer_1.default(two.to_str(), 16));
+        const str = this.bigInt2hex(new_value);
+        const size = this.get_size(str);
+        const hex = new Hex(str, size, true);
+        const verified = hex.form_verify();
+        if (verified.ok === false && verified.err != null)
+            return new Result(hex, verified.err);
+        else
+            return new Result(hex);
+    }
+    add(one, two) {
+        return this.abst(one, two, 'add');
+    }
+    sub(one, two) {
+        return this.abst(one, two, 'subtract');
+    }
+    mul(one, two) {
+        return this.abst(one, two, 'multiply');
+    }
+    div(one, two) {
+        return this.abst(one, two, 'divide');
+    }
+    mod(one, two) {
+        return this.abst(one, two, 'mod');
+    }
+}
+exports.HexArithmetic = HexArithmetic;
