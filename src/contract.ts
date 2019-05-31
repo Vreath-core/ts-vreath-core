@@ -1,11 +1,27 @@
 import * as _ from './util'
+import {Result} from './result'
+import * as Err from './error'
+import * as crypto_set from './crypto_set'
 import * as T from './types'
 import * as tx_set from './tx'
+import * as state_set from './state'
+import * as lock_set from './lock'
 import {constant} from './constant'
 import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
-import { DB } from './db';
+import { IDBRepository } from './db';
 
+export interface ContractServices {
+    native_prove(bases:crypto_set.IAddress[],base_state:state_set.IState[],input_data:_.IFreeHex[]):Result<Promise<state_set.IState[]>,Err.ContractError>;
+    native_verify(bases:crypto_set.IAddress[],base_state:state_set.IState[],input_data:_.IFreeHex[],output_state:state_set.IState[]):Result<Promise<boolean>,Err.ContractError>;
+    unit_prove(bases:crypto_set.IAddress[],base_state:state_set.IState[],input_data:_.IFreeHex[],block_db:IDBRepository,new_height:_.ICounter):Result<Promise<state_set.IState[]>,Err.ContractError>;
+    unit_verify(bases:crypto_set.IAddress[],base_state:state_set.IState[],input_data:_.IFreeHex[],output_state:state_set.IState[],block_db:IDBRepository,new_height:_.ICounter):Result<Promise<boolean>,Err.ContractError>;
+    req_tx_change(base_state:state_set.IState[],requester:crypto_set.IAddress,fee:_.IAmount,gas:_.IAmount):Result<state_set.IState[],Err.StateError>;
+    ref_tx_change(bases:crypto_set.IAddress[],base_state:state_set.IState[],requester:crypto_set.IAddress,refresher:crypto_set.IAddress,fee:_.IAmount,gas:_.IAmount,new_height:_.ICounter,income_map:{[key:string]:_.IAmount}):Result<state_set.IState[],Err.StateError>;
+    key_block_change(base_state:state_set.IState[],validator_1:crypto_set.IAddress,validator_2:crypto_set.IAddress,fee:_.IAmount,new_height:_.ICounter,locks:lock_set.ILock[]):Result<state_set.IState[],Err.StateError>;
+    micro_block_change(base_state:state_set.IState[],new_height:_.ICounter,locks:lock_set.ILock[]):Result<state_set.IState[],Err.StateError>;
+}
+/*
 export const native_prove = (bases:string[],base_state:T.State[],input_data:string[]):T.State[]=>{
     const native = constant.native;
     const type = input_data[0];
@@ -441,3 +457,4 @@ export const micro_block_change = (base_state:T.State[],new_height:string,locks:
         )
     })
 }
+*/

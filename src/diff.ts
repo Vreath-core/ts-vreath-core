@@ -1,13 +1,14 @@
 import * as T from './types'
-import  {DB} from './db'
+import  {IDBRepository} from './db'
 import {constant} from './constant'
 import * as _ from './util'
 import bigInt, { BigInteger } from 'big-integer'
+import { Result } from './result';
+import * as Err from './error'
 
-
-const size = constant.lwma_size;
+/*const size = constant.lwma_size;
 const def_diff = constant.def_pos_diff;
-const target_time = constant.block_time*(constant.max_blocks+1);
+const target_time = constant.block_time*(constant.max_blocks+1);*/
 
 /*const get_lwma_infos = async (block_db:DB,last_height:string)=>{
     let blocks:T.Block[] = [];
@@ -52,10 +53,15 @@ export const get_diff = async (block_db:DB,last_height:string):Promise<string>=>
     return _.bigInt2hex(next_D);
 }*/
 
-const times = bigInt(constant.block_time).multiply(constant.max_blocks+1);
+const times = constant.block_time * (constant.max_blocks+1);
 
-export const get_diff = (amount:string)=>{
-    const computed = bigInt(amount,16).multiply(times).divide(1);
-    if(computed.lesser(1)) return _.bigInt2hex(bigInt(1));
-    else return _.bigInt2hex(computed);
+export const get_diff = (amount:_.IAmount):Result<_.ICounter,Err.HexError>=>{
+    //const computed = bigInt(amount,16).multiply(times).divide(1);
+    const hex_fact = _.HexFactory.instance;
+    //const hex = new _.(amount)
+    const computed = new _.HexArithmetic(amount).mul(hex_fact.from_number(times,false).ok);
+    if(computed.err) return new Result(amount,computed.err);
+    const one = hex_fact.from_number(1,false).ok;
+    if(computed.err==null&&computed.ok.smaller(one)) return new Result(one);
+    else return new Result(computed.ok);
 }

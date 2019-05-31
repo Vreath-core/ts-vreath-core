@@ -1,17 +1,83 @@
 import * as _ from './util'
 import * as crypto_set from './crypto_set'
-import * as T from './types'
+import {Result} from './result'
+import * as Err from './error'
 import * as state_set from './state'
 import * as lock_set from './lock'
 import * as block_set from './block'
-import { Trie } from './merkle_patricia';
-import {DB} from './db';
+import { ITrie } from './merkle_patricia';
+import {IDBRepository} from './db';
 import * as data from './data'
 import {constant} from './constant'
 import * as contracts from './contract'
 import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
 
+export type TxKind = _.Bit;
+export type TxType = 0;
+
+export interface IRequest {
+  type:TxType;//1 bit
+  nonce:_.ICounter;//8 byte hex
+  feeprice:_.IAmount;//10 byte
+  gas:_.IAmount;//10 byte
+  bases:crypto_set.IAddress[];//40 byte * n
+  input:_.IFreeHex[];//free
+  log:_.IFreeHex;//free
+}
+
+export interface IRefresh {
+  height:_.ICounter;//8 byte
+  index:_.IUint;//1 byte
+  success:_.Bit;//1 bit
+  output:crypto_set.IHash[];//32 byte * n
+  witness:_.IFreeHex[];//free
+  nonce:_.ICounter;//8 byte
+  gas_share:_.IUint;//1 byte
+  unit_price:_.IAmount//10 byte
+}
+
+export interface ITxMeta {
+  kind:TxKind;//1 bit
+  request:IRequest;
+  refresh:IRefresh;
+  to_hash():crypto_set.IHash;
+}
+
+export interface ITxAdd {
+  height:_.ICounter;//8 byte
+  hash:crypto_set.IHash;//32 byte
+  index:_.IUint;//1 byte
+}
+
+
+export interface ITx {
+  hash:crypto_set.IHash;//32 byte
+  signature:crypto_set.ISign[];//70 byte * n
+  meta:ITxMeta;
+  additional:ITxAdd;
+  /*default():Tx;
+  req_verify(trie:Trie,state_db:DB,lock_db:DB,disabling:number[]):Promise<Result<boolean,Err.TxError>>;
+  ref_verify(output_states:State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB,last_height:Counter,disabling:number[]):Promise<Result<boolean,Err.TxError>>;
+  sign(private_key:PrivateKey):Tx;
+  req_accept(height:Counter,block_hash:Hash,index:number,trie:Trie,state_db:DB,lock_db:DB):Promise<Result<void,Err.TxError>>
+  ref_accept(output_states:State[],height:Counter,block_hash:Hash,index:number,trie:Trie,state_db:DB,lock_db:DB,block_db:DB):Promise<Result<void,Err.TxError>>*/
+}
+
+
+export interface ITxServices {
+  default():ITx;
+  req_verify(trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository,disabling:_.IUint[]):Promise<Result<boolean,Err.TxError>>;
+  ref_verify(output_states:state_set.IState[],block_db:IDBRepository,trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository,last_height:_.ICounter,disabling:_.IUint[]):Promise<Result<boolean,Err.TxError>>;
+  req_create(type:TxType,nonce:_.ICounter,bases:crypto_set.IAddress[],feeprice:_.IAmount,gas:_.IAmount,input:_.IFreeHex[],log:_.IFreeHex):Result<Promise<ITx>,Err.TxError>
+  ref_create(height:_.ICounter,index:_.IUint,success:_.Bit,output:crypto_set.IHash[],witness:_.IFreeHex[],nonce:_.ICounter,gas_share:_.IUint,unit_price:_.IAmount):Result<Promise<ITx>,Err.TxError>
+  sign(tx:ITx,private_key:crypto_set.IPrivateKey):ITx;
+  req_accept(tx:ITx,height:_.ICounter,block_hash:crypto_set.IHash,index:_.IUint,trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository):Result<Promise<void>,Err.TxError>
+  ref_accept(ref_tx:ITx,output_states:state_set.IState[],height:_.ICounter,block_hash:crypto_set.IHash,index:_.IUint,trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository,block_db:IDBRepository):Result<Promise<void>,Err.TxError>
+}
+
+
+/*
 
 export const empty_tx = ():T.Tx=>{
   const request:T.Request = {
@@ -119,7 +185,7 @@ export const unit_hash = async (request:string,height:string,block_hash:string,n
     additional:req_pure.additional
   }
 }*/
-
+/*
 const base_declaration_check = async (target:T.State,bases:string[])=>{
   return bases.indexOf(target.owner)===-1;
 }
@@ -135,6 +201,7 @@ const output_change_check = async (bases:string[],new_states:T.State[])=>{
   if(getted!=null||token_state.nonce!=0||math.smaller(token_state.amount,0)||math.smaller(token_state.issued,0)||token_state.code!=_.toHash(code)) return true;
   else return false;
 }*/
+/*
 export const find_req_tx = async (ref_tx:T.Tx,block_db:DB)=>{
   const height = ref_tx.meta.refresh.height;
   const index = ref_tx.meta.refresh.index;
@@ -497,3 +564,4 @@ export const accept_ref_tx = async (ref_tx:T.Tx,output_states:T.State[],height:s
     await data.write_trie(trie,state_db,lock_db,changed[i],added[i]);
   });
 }
+*/

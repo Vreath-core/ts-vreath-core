@@ -5,15 +5,54 @@ import * as state_set from './state'
 import * as lock_set from './lock'
 import * as tx_set from './tx'
 import {get_diff} from './diff'
-import { Trie } from './merkle_patricia';
-import {DB} from './db';
+import {Result} from './result'
+import * as Err from './error'
+import { ITrie } from './merkle_patricia';
+import {IDBRepository} from './db';
 import * as data from './data'
 import { constant } from './constant';
 import * as contract from './contract'
 import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
 
+export type BlockKind = _.Bit;//1 bit
 
+export interface IBlockMeta {
+  kind:BlockKind;
+  height:_.ICounter;//8 byte
+  previoushash:crypto_set.IHash;//32 byte
+  timestamp: _.ITimestamp;//0 ~ 9999999999
+  pos_diff:_.ICounter;//8 byte
+  trie_root: crypto_set.IHash;//32 byte
+  tx_root: crypto_set.IHash;//32 byte
+  fee_sum:_.IAmount;//10 byte
+  extra:_.IFreeHex;//free
+  to_hash():crypto_set.IHash;
+}
+
+export interface IBlockPure {
+  hash:crypto_set.IHash;//32 byte
+  signature: crypto_set.ISign;//70 byte
+  meta:IBlockMeta;
+}
+
+export interface IBlock {
+  hash:crypto_set.IHash;//32 byte
+  signature: crypto_set.ISign;//70 byte
+  meta:IBlockMeta;
+  txs:tx_set.ITx[];
+}
+
+export interface IBlockServices {
+  default():IBlock;
+  key_verify(block_db:IDBRepository,trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository,last_height:_.ICounter):Promise<Result<boolean,Err.BlockError>>;
+  micro_verify(output_states:state_set.IState[],block_db:IDBRepository,trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository,last_height:_.ICounter):Promise<Result<boolean,Err.BlockError>>;
+  key_create(private_key:crypto_set.IPrivateKey,block_db:IDBRepository,last_height:_.ICounter,trie:ITrie,state_db:IDBRepository,extra:_.IFreeHex):Promise<Result<IBlock,Err.BlockError>>;
+  micor_create(private_key:crypto_set.IPrivateKey,block_db:IDBRepository,last_height:_.ICounter,trie:ITrie,txs:tx_set.ITx[],extra:_.IFreeHex):Promise<Result<IBlock,Err.BlockError>>;
+  key_accept(block_db:IDBRepository,last_height:_.ICounter,trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository):Promise<Result<void,Err.BlockError>>;
+  micro_accept(output_states:state_set.IState[],block_db:IDBRepository,trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository):Promise<Result<void,Err.BlockError>>;
+}
+/*
 export const empty_block = ():T.Block=>{
     const meta:T.BlockMeta = {
         kind:0,
@@ -140,7 +179,7 @@ export const pos_hash = (previoushash:string,address:string,timestamp:number)=>{
     } while(math.chain(timestamp).subtract(pre).smaller(block_time))
     return timestamp;
 }*/
-
+/*
 export const txs_check = async (block:T.Block,output_states:T.State[],block_db:DB,trie:Trie,state_db:DB,lock_db:DB,last_height:string)=>{
     const txs = block.txs;
     const all_bases = txs.reduce((res:string[],tx)=>{
@@ -572,3 +611,4 @@ export const accept_micro_block = async (block:T.Block,output_states:T.State[],b
     const changed = contract.micro_block_change([unit_state],block.meta.height,[lock_state]);
     await data.write_trie(trie,state_db,lock_db,changed[0],lock_state);
 }
+*/

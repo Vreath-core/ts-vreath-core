@@ -1,17 +1,46 @@
 import * as T from './types'
+import * as Err from './error'
+import {Result} from './result'
 import * as P from 'p-iteration'
 const streamToPromise = require('stream-to-promise');
 
+export type encode = "utf8" | "hex" | "ascii" | "base64";
 
-export class DB implements T.DB {
-    readonly db:T.db_able;
-    constructor(_db:T.db_able){
+export interface db_able {
+    get(key:Buffer):Promise<Result<Buffer,Err.DBError>>;
+    put(key:Buffer,val:Buffer):Promise<Result<void,Err.DBError>>;
+    del(key:Buffer):Promise<Result<void,Err.DBError>>;
+    createReadStream():Result<void,Err.DBError>
+}
+
+export interface IDBRepository {
+  readonly db:db_able;
+
+  get(key:string,key_encode:encode,val_encode:encode):Result<Promise<string|null>,Err.DBError>
+
+  put(key:string,val:string,key_encode:encode,val_encode:encode):Result<Promise<void>,Err.DBError>
+
+  del(key:string,key_encode:encode):Result<Promise<void>,Err.DBError>
+
+  read_obj<T>(key:string):Result<Promise<T|null>,Err.DBError>
+
+  write_obj<T>(key:string,obj:T):Result<Promise<void>,Err.DBError>
+
+  filter<T>(key_encode:encode,val_encode:encode,check:(key:string,value:T)=>Promise<boolean>|boolean):Result<Promise<T[]>,Err.DBError>
+
+}
+
+/*
+export class DB implements IDB {
+    readonly db:db_able;
+    constructor(_db:db_able){
         this.db = _db;
     }
 
-    public async get(key:string,key_encode:T.encode='hex',val_encode:T.encode='utf8'):Promise<string|null>{
+    public async get(key:string,key_encode:encode='hex',val_encode:encode='utf8'):Promise<string|null>{
         try{
-            const buffer = await this.db.get(Buffer.from(key,key_encode));
+            const got = await this.db.get(Buffer.from(key,key_encode));
+            if(got.err!=null) return 
             return buffer.toString(val_encode);
         }
         catch(e){
@@ -63,5 +92,5 @@ export class DB implements T.DB {
             }
             catch(e){reject(e)}
           });*/
-    }
-}
+   /* }
+}*/

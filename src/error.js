@@ -10,6 +10,10 @@ class HexError extends OriginalErr {
     constructor(msg) { super(msg); }
 }
 exports.HexError = HexError;
+class UintError extends OriginalErr {
+    constructor(msg) { super(msg); }
+}
+exports.UintError = UintError;
 class SignError extends OriginalErr {
     constructor(msg) { super(msg); }
 }
@@ -46,3 +50,15 @@ class BlockError extends OriginalErr {
     constructor(msg) { super(msg); }
 }
 exports.BlockError = BlockError;
+class ContractError extends OriginalErr {
+    constructor(msg) { super(msg); }
+}
+exports.ContractError = ContractError;
+class PoolError extends OriginalErr {
+    constructor(msg) { super(msg); }
+}
+exports.PoolError = PoolError;
+class UnitError extends OriginalErr {
+    constructor(msg) { super(msg); }
+}
+exports.UnitError = UnitError;

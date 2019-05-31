@@ -1,10 +1,15 @@
 const Merkle = require('merkle-patricia-tree/secure');
 import * as T from './types'
+import * as Err from './error'
+import {Result} from './result'
+import {IHex,Bit} from './util'
+import {IHash,IAddress} from './crypto_set'
 import * as rlp from 'rlp'
-import {promisify} from 'util'
-import {DB} from './db';
-
-export const en_key = (key:T.Hex):T.Hex=>{
+import {IDBRepository} from './db';
+import {IState} from './state'
+import { ILock } from './lock';
+/*
+export const en_key = (key:IHex):T.Hex=>{
   const val = rlp.encode(key.to_str()).toString('hex');
 }
 
@@ -19,9 +24,43 @@ export const en_value = <T>(value:T):T.Hex=>{
 
 export const de_value = (value:T.Hex)=>{
   return JSON.parse(rlp.decode(Buffer.from(value,'hex')).toString());
+}*/
+
+type T_en_key = (key:IHex)=>IHex;
+type T_de_key = (key:IHex)=>IHex;
+type T_en_value = <T>(value:T)=>IHex;
+type T_de_value = <T>(value:IHex)=>IHex;
+
+export interface ITrie {
+  readonly trie:IDBRepository;
+
+  get<T>(key:IHex):Promise<Result<T|null,Err.TrieError>>
+
+  put<T>(key:IHex,value:T):Promise<Result<void,Err.TrieError>>
+
+  delete(key:IHex):Promise<Result<void,Err.TrieError>>
+
+  now_root():Result<IHash,Err.TrieError>
+
+  checkpoint():Result<void,Err.TrieError>
+
+  filter<T>(check:(value:T)=>Promise<boolean>|boolean):Promise<Result<T[],Err.TrieError>>
+
+  checkRoot(root:IHash):Promise<Result<boolean,Err.TrieError>>
+
 }
 
+export interface ITrieFactory {
+  trie_ins(db:IDBRepository,root?:IHash):ITrie;
+}
 
+export interface ITrieServices {
+  read_from_trie<T>(trie:ITrie,db:IDBRepository,key:IAddress,bit:Bit,empty:T):Result<Promise<T>,Err.TrieError>
+  write_state_hash(db:IDBRepository,state:IState):Result<Promise<IHash>,Err.TrieError>
+  write_lock_hash(db:IDBRepository,lock:ILock):Result<Promise<IHash>,Err.TrieError>
+  write_trie(trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository,state:IState,lock:ILock):Result<Promise<void>,Err.TrieError>
+}
+/*
 export class Trie implements T.Trie{
   readonly trie:any;
   constructor(db:DB,root:string=""){
@@ -76,4 +115,4 @@ export class Trie implements T.Trie{
     return result
   }
 }
-
+*/

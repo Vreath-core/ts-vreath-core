@@ -6,16 +6,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const constant_1 = require("./constant");
 const _ = __importStar(require("./util"));
-const big_integer_1 = __importDefault(require("big-integer"));
-const size = constant_1.constant.lwma_size;
-const def_diff = constant_1.constant.def_pos_diff;
-const target_time = constant_1.constant.block_time * (constant_1.constant.max_blocks + 1);
+const result_1 = require("./result");
+/*const size = constant.lwma_size;
+const def_diff = constant.def_pos_diff;
+const target_time = constant.block_time*(constant.max_blocks+1);*/
 /*const get_lwma_infos = async (block_db:DB,last_height:string)=>{
     let blocks:T.Block[] = [];
     let block:T.Block|null = null;
@@ -58,11 +55,17 @@ export const get_diff = async (block_db:DB,last_height:string):Promise<string>=>
     else next_D = bigInt(avg_D).multiply(size).multiply(size+1).multiply(target_time).multiply(99).divide(200).divide(L);
     return _.bigInt2hex(next_D);
 }*/
-const times = big_integer_1.default(constant_1.constant.block_time).multiply(constant_1.constant.max_blocks + 1);
+const times = constant_1.constant.block_time * (constant_1.constant.max_blocks + 1);
 exports.get_diff = (amount) => {
-    const computed = big_integer_1.default(amount, 16).multiply(times).divide(1);
-    if (computed.lesser(1))
-        return _.bigInt2hex(big_integer_1.default(1));
+    //const computed = bigInt(amount,16).multiply(times).divide(1);
+    const hex_fact = _.HexFactory.instance;
+    //const hex = new _.(amount)
+    const computed = new _.HexArithmetic(amount).mul(hex_fact.from_number(times, false).ok);
+    if (computed.err)
+        return new result_1.Result(amount, computed.err);
+    const one = hex_fact.from_number(1, false).ok;
+    if (computed.err == null && computed.ok.smaller(one))
+        return new result_1.Result(one);
     else
-        return _.bigInt2hex(computed);
+        return new result_1.Result(computed.ok);
 };

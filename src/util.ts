@@ -1,10 +1,11 @@
 import * as T from './types'
 import * as Err from './error'
+import {Result} from './result'
 import * as crypto_set from './crypto_set'
 import {cloneDeep} from 'lodash'
 import bigInt, { BigInteger } from 'big-integer'
 
-export const copy = <T>(data:T)=>{
+/*export const copy = <T>(data:T)=>{
   return cloneDeep(data);
 }
 
@@ -96,19 +97,91 @@ export const slice_tokens = (addresses:string[])=>{
     if(res.indexOf(sliced)===-1) return res.concat(sliced);
     else return res;
   },[]);
+}*/
+
+const bigInt2hex = (bigint:BigInteger):string=>{
+  let hex = bigint.toString(16);
+  if(hex.length%2!=0) hex = "0"+hex;
+  return hex;
 }
 
-class Result<T,E> implements T.Result<T,E> {
-  constructor(readonly ok:T,readonly err?:E){}
+export interface IComparison<T> {
+  eq(another:T):boolean;
+  larger(another:T):boolean;
+  largerOrEq(another:T):boolean;
+  smaller(another:T):boolean;
+  smallerOrEq(another:T):boolean;
+}
+
+export interface IArithmetic<T,E> {
+  readonly value:T;
+  add(another:T|Result<T,E>):Result<T,E>;
+  sub(another:T|Result<T,E>):Result<T,E>;
+  mul(another:T|Result<T,E>):Result<T,E>;
+  div(another:T|Result<T,E>):Result<T,E>;
+  mod(another:T|Result<T,E>):Result<T,E>;
+}
+
+export interface IComputation<T,E> extends IComparison<T>,IArithmetic<T,E> {}
+
+
+export interface IHex extends IComparison<IHex> {
+  readonly value:string;
+  readonly size:number;
+  readonly variable_length:boolean;
+  form_verify():Result<boolean,Err.HexError>;
+  print():void;
+  to_num():number;
+  to_str():string;
+}
+
+export interface IHexFactory {
+  from_number(num:number,valriable_length:boolean):Result<IHex,Err.HexError>;
+  from_bigInt(bigint:BigInteger,valriable_length:boolean):Result<IHex,Err.HexError>;
 }
 
 
-export class Hex implements T.Hex {
+export interface IHexArithmetic extends IArithmetic<IHex,Err.HexError> {}
+
+export interface ICounter extends IHex {
+  /*readonly size:8;
+  readonly valriable_length:false;*/
+}
+
+export interface ITokenKey extends IHex {
+  /*readonly size:8;
+  readonly valriable_length:false;*/
+}
+
+export interface IAmount extends IHex {
+  /*readonly size:10;
+  readonly valriable_length:false;*/
+}
+
+export interface IFreeHex extends IHex {
+  //readonly valriable_length:true;
+}
+
+export type Bit = 0|1;
+
+export interface IUint extends IComparison<IUint> {
+  readonly value:number;
+  form_verify():Result<boolean,Err.UintError>
+}
+
+export interface IUintArithmetic extends IArithmetic<IUint,Err.UintError> {}
+
+export interface ITimestamp extends IUint {
+  form_verify():Result<boolean,Err.TimestampError>
+}
+
+
+export class Hex implements IHex {
   readonly value:string;
   readonly size:number;
   readonly variable_length:boolean;
 
-  constructor(readonly _value:string,readonly _size:number,readonly _variable_length:boolean){
+  constructor(_value:string,_size:number,_variable_length:boolean){
     this.value = _value;
     this.size = _size;
     this.variable_length = _variable_length;
@@ -139,42 +212,64 @@ export class Hex implements T.Hex {
     return this.value;
   }
 
-  public eq(another:T.Hex):boolean{
+  public eq(another:IHex):boolean{
     return bigInt(this.value,16).eq(bigInt(another.value,16));
   }
 
-  public larger(another:T.Hex){
+  public larger(another:IHex){
     return !bigInt(this.value,16).lesserOrEquals(bigInt(another.value,16));
   }
 
-  public largerOrEq(another:T.Hex){
+  public largerOrEq(another:IHex){
     return !bigInt(this.value,16).lesser(bigInt(another.value,16));
   }
 
-  public smaller(another:T.Hex){
+  public smaller(another:IHex){
     return bigInt(this.value,16).lesser(bigInt(another.value,16));
   }
 
-  public smallerOrEq(another:T.Hex){
+  public smallerOrEq(another:IHex){
     return bigInt(this.value,16).lesserOrEquals(bigInt(another.value,16));
   }
 }
 
-export class HexArithmetic implements T.HexArithmetic {
-  private static _instance:HexArithmetic;
+export class HexFactory implements IHexFactory {
+  private static _instance:HexFactory;
   private constructor(){}
 
-  public static get instance():HexArithmetic{
+  public static get instance():HexFactory{
     if (!this._instance) {
-      this._instance = new HexArithmetic();
+      this._instance = new HexFactory();
     }
     return this._instance;
   }
 
-  private bigInt2hex(bigint:BigInteger):string{
-    let hex = bigint.toString(16);
-    if(hex.length%2!=0) hex = "0"+hex;
-    return hex;
+  public from_number(num:number,valriable_length:boolean):Result<Hex,Err.HexError>{
+    try{
+      let value = num.toString(16);
+      if(value.length%2!=0) value = "0"+value;
+      return new Result(new Hex(value,Math.floor(value.length),valriable_length));
+    }
+    catch(e){
+      return new Result(new Hex("",0,false),new Err.HexError(e));
+    }
+  }
+
+  public from_bigInt(bigint:BigInteger,valriable_length:boolean):Result<Hex,Err.HexError>{
+    try{
+      const value = bigInt2hex(bigint);
+      return new Result(new Hex(value,Math.floor(value.length/2),valriable_length));
+    }
+    catch(e){
+      return new Result(new Hex("",0,false),new Err.HexError(e));
+    }
+  }
+}
+
+export class HexArithmetic implements IHexArithmetic {
+  readonly value:Hex;
+  constructor(_value:Hex){
+    this.value = _value;
   }
 
   private get_size(str:string):number{
@@ -182,10 +277,12 @@ export class HexArithmetic implements T.HexArithmetic {
     return Math.floor(len/2);
   }
 
-  private abst(one:Hex,two:Hex,fn_name:'add'|'subtract'|'multiply'|'divide'|'mod'):Result<Hex,Err.HexError>{
-    const fn = bigInt(one.to_str(),16)[fn_name]
-    const new_value = fn(bigInt(two.to_str(),16));
-    const str = this.bigInt2hex(new_value);
+  private abst(another:Hex|Result<Hex,Err.HexError>,fn_name:'add'|'subtract'|'multiply'|'divide'|'mod'):Result<IHex,Err.HexError>{
+    if(another instanceof Result &&another.err!=null) return another;
+    const ano_val = another instanceof Result ? another.ok : another;
+    const fn = bigInt(this.value.to_str(),16)[fn_name]
+    const new_value = fn(bigInt(ano_val.to_str(),16));
+    const str = bigInt2hex(new_value);
     const size = this.get_size(str);
     const hex = new Hex(str,size,true);
     const verified = hex.form_verify();
@@ -193,23 +290,94 @@ export class HexArithmetic implements T.HexArithmetic {
     else return new Result(hex);
   }
 
-  public add(one:Hex,two:Hex){
-    return this.abst(one,two,'add');
+  public add(another:Hex){
+    return this.abst(another,'add');
   }
 
-  public sub(one:Hex,two:Hex){
-    return this.abst(one,two,'subtract');
+  public sub(another:IHex){
+    return this.abst(another,'subtract');
   }
 
-  public mul(one:Hex,two:Hex){
-    return this.abst(one,two,'multiply');
+  public mul(another:IHex){
+    return this.abst(another,'multiply');
   }
 
-  public div(one:Hex,two:Hex){
-    return this.abst(one,two,'divide');
+  public div(another:IHex){
+    return this.abst(another,'divide');
   }
 
-  public mod(one:Hex,two:Hex){
-    return this.abst(one,two,'mod');
+  public mod(another:IHex){
+    return this.abst(another,'mod');
   }
 }
+
+
+export class Counter extends Hex implements ICounter {
+  constructor(_value:string){
+    super(_value,8,false)
+  }
+}
+
+export class TokenKey extends Hex implements ITokenKey {
+  constructor(_value:string){
+    super(_value,8,false)
+  }
+}
+
+export class Amount extends Hex implements IAmount {
+  constructor(_value:string){
+    super(_value,10,false)
+  }
+}
+
+export class FreeHex extends Hex implements IFreeHex {
+  constructor(_value:string,_size:number){
+    super(_value,_size,true);
+  }
+}
+
+export class Uint implements IUint {
+  readonly value:number;
+
+  constructor(_value:number){
+    this.value = _value;
+  }
+
+  form_verify():Result<boolean,Err.UintError>{
+    if(this.value==null || typeof this.value != 'number' || !Number.isInteger(this.value) || this.value<0) return new Result(false,new Err.UintError("invalid uint"));
+    else return new Result(true);
+  }
+
+  eq(another:Uint):boolean{
+    return this.value===another.value;
+  }
+
+  larger(another:Uint):boolean{
+    return this.value > another.value;
+  }
+
+  largerOrEq(another:Uint):boolean{
+    return this.value >= another.value;
+  }
+
+  smaller(another:Uint):boolean{
+    return this.value < another.value;
+  }
+
+  smallerOrEq(another:Uint):boolean{
+    return this.value <= another.value;
+  }
+}
+
+export class Timestamp extends Uint implements ITimestamp {
+  constructor(_value:number){
+    super(_value);
+  }
+
+  form_verify():Result<boolean,Err.TimestampError>{
+    if(super.form_verify().ok===false) return new Result(false,new Err.TimestampError("invalid timestamp because of the form as uint"));
+    else if(super.value.toString(10).length!=10) return new Result(false,new Err.TimestampError("invalid timestamp because of the size"));
+    else return new Result(true);
+  }
+}
+

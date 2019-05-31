@@ -9,6 +9,10 @@ export class HexError extends OriginalErr {
     constructor(msg:string){super(msg)}
 }
 
+export class UintError extends OriginalErr {
+    constructor(msg:string){super(msg)}
+}
+
 export class SignError extends OriginalErr {
     constructor(msg:string){super(msg)}
 }
@@ -45,4 +49,14 @@ export class BlockError extends OriginalErr {
     constructor(msg:string){super(msg)}
 }
 
+export class ContractError extends OriginalErr {
+    constructor(msg:string){super(msg)}
+}
 
+export class PoolError extends OriginalErr {
+    constructor(msg:string){super(msg)}
+}
+
+export class UnitError extends OriginalErr {
+    constructor(msg:string){super(msg)}
+}

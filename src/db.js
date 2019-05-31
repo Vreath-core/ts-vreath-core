@@ -1,53 +1,53 @@
 "use strict";
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const P = __importStar(require("p-iteration"));
 const streamToPromise = require('stream-to-promise');
-class DB {
-    constructor(_db) {
+/*
+export class DB implements IDB {
+    readonly db:db_able;
+    constructor(_db:db_able){
         this.db = _db;
     }
-    async get(key, key_encode = 'hex', val_encode = 'utf8') {
-        try {
-            const buffer = await this.db.get(Buffer.from(key, key_encode));
+
+    public async get(key:string,key_encode:encode='hex',val_encode:encode='utf8'):Promise<string|null>{
+        try{
+            const got = await this.db.get(Buffer.from(key,key_encode));
+            if(got.err!=null) return
             return buffer.toString(val_encode);
         }
-        catch (e) {
+        catch(e){
             return null;
         }
     }
-    async put(key, val, key_encode = 'hex', val_encode = 'utf8') {
-        await this.db.put(Buffer.from(key, key_encode), Buffer.from(val, val_encode));
+
+    public async put(key:string,val:string,key_encode:T.encode='hex',val_encode:T.encode='utf8'){
+        await this.db.put(Buffer.from(key,key_encode),Buffer.from(val,val_encode));
     }
-    async del(key, key_encode = 'hex') {
-        await this.db.del(Buffer.from(key, key_encode));
+
+    public async del(key:string,key_encode:T.encode='hex'){
+        await this.db.del(Buffer.from(key,key_encode));
     }
-    async read_obj(key) {
+
+    public async read_obj<T>(key:string):Promise<T|null>{
         const read = await this.get(key);
-        if (read == null)
-            return null;
+        if(read==null) return null
         return JSON.parse(read);
     }
-    async write_obj(key, obj) {
-        await this.put(key, JSON.stringify(obj));
+
+    public async write_obj<T>(key:string,obj:T){
+        await this.put(key,JSON.stringify(obj));
     }
-    async filter(key_encode = 'hex', val_encode = 'utf8', check = (key, value) => true) {
-        let result = [];
+
+    public async filter<T>(key_encode:T.encode='hex',val_encode:T.encode='utf8',check:(key:string,value:T)=>Promise<boolean>|boolean=(key:string,value:T)=>true){
+        let result:T[] = [];
         const stream = this.db.createReadStream();
-        const data_array = await streamToPromise(stream);
-        await P.forEach(data_array, async (data) => {
+        const data_array:{key:Buffer,value:Buffer}[] = await streamToPromise(stream);
+        await P.forEach(data_array, async (data)=>{
             const key = data.key.toString(key_encode);
-            const value = JSON.parse(data.value.toString(val_encode));
-            if (await check(key, value))
-                result.push(value);
+            const value:T = JSON.parse(data.value.toString(val_encode));
+            if(await check(key,value)) result.push(value);
         });
         return result;
+
         /*return new Promise<T[]>((resolve,reject)=>{
             try{
               stream.on('data',async (data:{key:Buffer,value:Buffer})=>{
@@ -63,6 +63,5 @@ class DB {
             }
             catch(e){reject(e)}
           });*/
-    }
-}
-exports.DB = DB;
+/* }
+}*/
