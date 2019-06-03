@@ -1,7 +1,5 @@
-import * as T from './types'
 import * as Err from './error'
 import {Result} from './result'
-import * as crypto_set from './crypto_set'
 import {cloneDeep} from 'lodash'
 import bigInt, { BigInteger } from 'big-integer'
 
@@ -136,6 +134,7 @@ export interface IHex extends IComparison<IHex> {
 }
 
 export interface IHexFactory {
+  zero(size:number):IHex;
   from_number(num:number,valriable_length:boolean):Result<IHex,Err.HexError>;
   from_bigInt(bigint:BigInteger,valriable_length:boolean):Result<IHex,Err.HexError>;
 }
@@ -244,7 +243,16 @@ export class HexFactory implements IHexFactory {
     return this._instance;
   }
 
-  public from_number(num:number,valriable_length:boolean):Result<Hex,Err.HexError>{
+  public zero(size:number):IHex{
+    let val = '';
+    let i = 1;
+    for(i;i<=size;i++){
+      val = val + '00';
+    }
+    return new Hex(val,size,false);
+  }
+
+  public from_number(num:number,valriable_length:boolean):Result<IHex,Err.HexError>{
     try{
       let value = num.toString(16);
       if(value.length%2!=0) value = "0"+value;
@@ -255,7 +263,7 @@ export class HexFactory implements IHexFactory {
     }
   }
 
-  public from_bigInt(bigint:BigInteger,valriable_length:boolean):Result<Hex,Err.HexError>{
+  public from_bigInt(bigint:BigInteger,valriable_length:boolean):Result<IHex,Err.HexError>{
     try{
       const value = bigInt2hex(bigint);
       return new Result(new Hex(value,Math.floor(value.length/2),valriable_length));
@@ -267,8 +275,8 @@ export class HexFactory implements IHexFactory {
 }
 
 export class HexArithmetic implements IHexArithmetic {
-  readonly value:Hex;
-  constructor(_value:Hex){
+  readonly value:IHex;
+  constructor(_value:IHex){
     this.value = _value;
   }
 
@@ -277,7 +285,7 @@ export class HexArithmetic implements IHexArithmetic {
     return Math.floor(len/2);
   }
 
-  private abst(another:Hex|Result<Hex,Err.HexError>,fn_name:'add'|'subtract'|'multiply'|'divide'|'mod'):Result<IHex,Err.HexError>{
+  private abst(another:IHex|Result<IHex,Err.HexError>,fn_name:'add'|'subtract'|'multiply'|'divide'|'mod'):Result<IHex,Err.HexError>{
     if(another instanceof Result &&another.err!=null) return another;
     const ano_val = another instanceof Result ? another.ok : another;
     const fn = bigInt(this.value.to_str(),16)[fn_name]
@@ -290,7 +298,7 @@ export class HexArithmetic implements IHexArithmetic {
     else return new Result(hex);
   }
 
-  public add(another:Hex){
+  public add(another:IHex){
     return this.abst(another,'add');
   }
 
@@ -313,19 +321,19 @@ export class HexArithmetic implements IHexArithmetic {
 
 
 export class Counter extends Hex implements ICounter {
-  constructor(_value:string){
+  constructor(_value:string=HexFactory.instance.zero(8).value){
     super(_value,8,false)
   }
 }
 
 export class TokenKey extends Hex implements ITokenKey {
-  constructor(_value:string){
+  constructor(_value:string=HexFactory.instance.zero(8).value){
     super(_value,8,false)
   }
 }
 
 export class Amount extends Hex implements IAmount {
-  constructor(_value:string){
+  constructor(_value:string=HexFactory.instance.zero(10).value){
     super(_value,10,false)
   }
 }
@@ -339,7 +347,7 @@ export class FreeHex extends Hex implements IFreeHex {
 export class Uint implements IUint {
   readonly value:number;
 
-  constructor(_value:number){
+  constructor(_value:number=0){
     this.value = _value;
   }
 
@@ -370,7 +378,7 @@ export class Uint implements IUint {
 }
 
 export class Timestamp extends Uint implements ITimestamp {
-  constructor(_value:number){
+  constructor(_value:number=1000000000){
     super(_value);
   }
 

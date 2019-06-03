@@ -1,4 +1,3 @@
-import * as T from './types'
 import  {IDBRepository} from './db'
 import {constant} from './constant'
 import * as _ from './util'

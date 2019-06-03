@@ -24,30 +24,55 @@ export const CreateToken = (nonce:string="00",name:string="00",issued:string="00
 */
 
 export interface IState {
-  nonce:_.ICounter;//8 byte hex
-  token:_.ITokenKey;//8 byte hex
-  owner:crypto_set.IAddress;//40 byte hex
-  amount: _.IAmount;//10 byte hex
-  data:_.IFreeHex[];//free
+  readonly nonce:_.ICounter;//8 byte hex
+  readonly token:_.ITokenKey;//8 byte hex
+  readonly owner:crypto_set.IAddress;//40 byte hex
+  readonly amount: _.IAmount;//10 byte hex
+  readonly data:_.IFreeHex[];//free
 
   verify():Result<boolean,Err.StateError>;
-}
-
-export interface IStateFactory {
-  default():IState
-  create(nonce?:_.ICounter,token?:_.ITokenKey,owner?:crypto_set.IAddress,amount?:_.IAmount,data?:_.IFreeHex[]):IState;
 }
 
 export interface IToken {
-  nonce:_.ICounter;//8 byte hex
-  name:_.ITokenKey;//8 byte hex
-  issued:_.IAmount;//10 byte hex
-  code:crypto_set.IHash;//32 byte hex
-
-  verify():Result<boolean,Err.StateError>;
+  readonly nonce:_.ICounter;//8 byte hex
+  readonly name:_.ITokenKey;//8 byte hex
+  readonly issued:_.IAmount;//10 byte hex
+  readonly code:crypto_set.IHash;//32 byte hex
 }
 
-export interface ITokenFactory {
-  default():IToken
-  create(nonce?:_.ICounter,name?:_.ITokenKey,issued?:_.IAmount,code?:crypto_set.IHash):IToken;
+
+export class State implements IState {
+  readonly nonce:_.ICounter;//8 byte hex
+  readonly token:_.ITokenKey;//8 byte hex
+  readonly owner:crypto_set.IAddress;//40 byte hex
+  readonly amount: _.IAmount;//10 byte hex
+  readonly data:_.IFreeHex[];//free
+
+  constructor(_nonce=new _.Counter(), _token=new _.TokenKey(),_owner=new crypto_set.Addrees(),_amount=new _.Amount(),_data=[]){
+    this.nonce = _nonce;
+    this.token = _token;
+    this.owner = _owner;
+    this.amount = _amount;
+    this.data = _data;
+  }
+
+  verify():Result<boolean,Err.StateError> {
+    if(this.owner.slice_token_part().eq(this.token)) return new Result(true);
+    else return new Result(false,new Err.StateError("invalid state"));
+  }
 }
+
+export class Token implements IToken {
+  readonly nonce:_.ICounter;//8 byte hex
+  readonly name:_.ITokenKey;//8 byte hex
+  readonly issued: _.IAmount;//10 byte hex
+  readonly code:crypto_set.IHash;//32 byte hex
+
+  constructor(_nonce=new _.Counter(), _name=new _.TokenKey(),_issued=new _.Amount(),_code=new crypto_set.Hash()){
+    this.nonce = _nonce;
+    this.name = _name;
+    this.issued = _issued;
+    this.code = _code;
+  }
+}
+

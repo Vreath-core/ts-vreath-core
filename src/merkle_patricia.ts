@@ -1,13 +1,13 @@
 const Merkle = require('merkle-patricia-tree/secure');
-import * as T from './types'
 import * as Err from './error'
 import {Result} from './result'
 import {IHex,Bit} from './util'
 import {IHash,IAddress} from './crypto_set'
 import * as rlp from 'rlp'
-import {IDBRepository} from './db';
+import {IDBRepository,db_able} from './db';
 import {IState} from './state'
 import { ILock } from './lock';
+import {promisify} from 'util'
 /*
 export const en_key = (key:IHex):T.Hex=>{
   const val = rlp.encode(key.to_str()).toString('hex');
@@ -32,17 +32,17 @@ type T_en_value = <T>(value:T)=>IHex;
 type T_de_value = <T>(value:IHex)=>IHex;
 
 export interface ITrie {
-  readonly trie:IDBRepository;
+  readonly trie:db_able;
 
   get<T>(key:IHex):Promise<Result<T|null,Err.TrieError>>
 
-  put<T>(key:IHex,value:T):Promise<Result<void,Err.TrieError>>
+  put<T>(key:IHex,value:T):Promise<Result<Bit,Err.TrieError>>
 
-  delete(key:IHex):Promise<Result<void,Err.TrieError>>
+  delete(key:IHex):Promise<Result<Bit,Err.TrieError>>
 
   now_root():Result<IHash,Err.TrieError>
 
-  checkpoint():Result<void,Err.TrieError>
+  checkpoint():Result<Bit,Err.TrieError>
 
   filter<T>(check:(value:T)=>Promise<boolean>|boolean):Promise<Result<T[],Err.TrieError>>
 
@@ -58,23 +58,23 @@ export interface ITrieServices {
   read_from_trie<T>(trie:ITrie,db:IDBRepository,key:IAddress,bit:Bit,empty:T):Result<Promise<T>,Err.TrieError>
   write_state_hash(db:IDBRepository,state:IState):Result<Promise<IHash>,Err.TrieError>
   write_lock_hash(db:IDBRepository,lock:ILock):Result<Promise<IHash>,Err.TrieError>
-  write_trie(trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository,state:IState,lock:ILock):Result<Promise<void>,Err.TrieError>
+  write_trie(trie:ITrie,state_db:IDBRepository,lock_db:IDBRepository,state:IState,lock:ILock):Result<Promise<Bit>,Err.TrieError>
 }
 /*
-export class Trie implements T.Trie{
-  readonly trie:any;
-  constructor(db:DB,root:string=""){
+export class Trie implements ITrie{
+  readonly trie:db_able;
+  constructor(db:IDBRepository,root:string=""){
     if(root==="") this.trie = new Merkle(db.db);
     else this.trie = new Merkle(db.db,Buffer.from(root,'hex'));
   }
 
-  async get<T>(key:T.Hex):Promise<T|null>{
-    const result:string = await promisify(this.trie.get).bind(this.trie)(key);
-    if(result==null) return null;
-    return JSON.parse(result);
+  async get<T>(key:IHex):Promise<Result<T|null,Err.TrieError>>{
+    const result:string = await promisify(this.trie.get).bind(this.trie)(key.value);
+    if(result==null) return new Result(null, new Err.TrieError("got null data from trie"));
+    else return new Result(JSON.parse(result));
   }
 
-  async put<T>(key:T.Hex,value:T):Promise<void>{
+  async put<T>(key:IHex,value:T):Promise<void>{
     await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
   }
 

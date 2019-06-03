@@ -1,6 +1,5 @@
 import * as _ from './util'
 import * as crypto_set from './crypto_set'
-import * as T from './types'
 import * as state_set from './state'
 import * as lock_set from './lock'
 import * as tx_set from './tx'

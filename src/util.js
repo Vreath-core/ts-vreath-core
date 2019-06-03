@@ -168,6 +168,14 @@ class HexFactory {
         }
         return this._instance;
     }
+    zero(size) {
+        let val = '';
+        let i = 1;
+        for (i; i <= size; i++) {
+            val = val + '00';
+        }
+        return new Hex(val, size, false);
+    }
     from_number(num, valriable_length) {
         try {
             let value = num.toString(16);
@@ -231,19 +239,19 @@ class HexArithmetic {
 }
 exports.HexArithmetic = HexArithmetic;
 class Counter extends Hex {
-    constructor(_value) {
+    constructor(_value = HexFactory.instance.zero(8).value) {
         super(_value, 8, false);
     }
 }
 exports.Counter = Counter;
 class TokenKey extends Hex {
-    constructor(_value) {
+    constructor(_value = HexFactory.instance.zero(8).value) {
         super(_value, 8, false);
     }
 }
 exports.TokenKey = TokenKey;
 class Amount extends Hex {
-    constructor(_value) {
+    constructor(_value = HexFactory.instance.zero(10).value) {
         super(_value, 10, false);
     }
 }
@@ -255,7 +263,7 @@ class FreeHex extends Hex {
 }
 exports.FreeHex = FreeHex;
 class Uint {
-    constructor(_value) {
+    constructor(_value = 0) {
         this.value = _value;
     }
     form_verify() {
@@ -282,7 +290,7 @@ class Uint {
 }
 exports.Uint = Uint;
 class Timestamp extends Uint {
-    constructor(_value) {
+    constructor(_value = 1000000000) {
         super(_value);
     }
     form_verify() {

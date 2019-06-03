@@ -2,20 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Merkle = require('merkle-patricia-tree/secure');
 /*
-export class Trie implements T.Trie{
-  readonly trie:any;
-  constructor(db:DB,root:string=""){
+export class Trie implements ITrie{
+  readonly trie:db_able;
+  constructor(db:IDBRepository,root:string=""){
     if(root==="") this.trie = new Merkle(db.db);
     else this.trie = new Merkle(db.db,Buffer.from(root,'hex'));
   }
 
-  async get<T>(key:T.Hex):Promise<T|null>{
-    const result:string = await promisify(this.trie.get).bind(this.trie)(key);
-    if(result==null) return null;
-    return JSON.parse(result);
+  async get<T>(key:IHex):Promise<Result<T|null,Err.TrieError>>{
+    const result:string = await promisify(this.trie.get).bind(this.trie)(key.value);
+    if(result==null) return new Result(null, new Err.TrieError("got null data from trie"));
+    else return new Result(JSON.parse(result));
   }
 
-  async put<T>(key:T.Hex,value:T):Promise<void>{
+  async put<T>(key:IHex,value:T):Promise<void>{
     await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
   }
 

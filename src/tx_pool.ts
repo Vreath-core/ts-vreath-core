@@ -1,5 +1,4 @@
 import * as tx_set from './tx'
-import * as T from './types'
 import {Result} from './result'
 import * as Err from './error'
 import * as _ from './util'

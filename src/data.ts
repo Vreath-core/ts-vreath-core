@@ -1,6 +1,5 @@
 import * as _ from './util'
 import * as crypto_set from './crypto_set'
-import * as T from './types'
 import { ITrie } from './merkle_patricia';
 import {IDBRepository} from './db'
 

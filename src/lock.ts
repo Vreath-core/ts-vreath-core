@@ -1,4 +1,3 @@
-import * as T from './types'
 import * as _ from './util'
 import * as crypto_set from './crypto_set'
 import {Result} from './result'
@@ -16,17 +15,28 @@ export const CreateLock = (address:string=crypto_set.generate_address("",""),sta
   }
 */
 export interface ILock {
-    address:crypto_set.IAddress;//40 byte
-    state:_.Bit;//1 bit
-    height:_.ICounter;//8 byte
-    block_hash:crypto_set.IHash;//32 byte
-    index:_.IUint;//1 byte
-    tx_hash:crypto_set.IHash;//32 byte
-
-    verify():Result<boolean,Err.StateError>;
+    readonly address:crypto_set.IAddress;//40 byte
+    readonly state:_.Bit;//1 bit
+    readonly height:_.ICounter;//8 byte
+    readonly block_hash:crypto_set.IHash;//32 byte
+    readonly index:_.IUint;//1 byte
+    readonly tx_hash:crypto_set.IHash;//32 byte
 }
 
-export interface ILockFactory {
-    default():ILock;
-    create(address?:crypto_set.IAddress,state?:_.Bit,height?:_.ICounter,index?:_.IUint,tx_hash?:crypto_set.IHash):ILock;
+export class Lock implements ILock {
+    readonly address:crypto_set.IAddress;//40 byte
+    readonly state:_.Bit;//1 bit
+    readonly height:_.ICounter;//8 byte
+    readonly block_hash:crypto_set.IHash;//32 byte
+    readonly index:_.IUint;//1 byte
+    readonly tx_hash:crypto_set.IHash;//32 byte
+
+    constructor(_address=new crypto_set.Addrees(), _state:_.Bit=0,_height=new _.Counter(),_block_hash=new crypto_set.Hash(),_index=new _.Uint(),_tx_hash=new crypto_set.Hash()){
+      this.address = _address;
+      this.state = _state;
+      this.height = _height;
+      this.block_hash = _block_hash;
+      this.index = _index;
+      this.tx_hash = _tx_hash;
+    }
 }
