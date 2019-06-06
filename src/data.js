@@ -23,7 +23,6 @@ class PromiseMerkle {
         return await util_1.promisify(this.merkle.get).bind(this.merkle)(key);
     }
     async put(key, value) {
-        console.log(this.merkle);
         await util_1.promisify(this.merkle.put).bind(this.merkle)(key, value);
     }
     async del(key) {
