@@ -16,6 +16,8 @@ class DB {
     async get(key, key_encode = 'hex', val_encode = 'utf8') {
         try {
             const buffer = await this.db.get(Buffer.from(key, key_encode));
+            if (buffer == null)
+                return null;
             return buffer.toString(val_encode);
         }
         catch (e) {

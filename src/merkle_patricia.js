@@ -18,11 +18,11 @@ class Trie {
         const result = await this.trie.get(Buffer.from(key, 'hex'));
         if (result == null)
             return null;
-        return JSON.parse(result.toString('hex'));
+        return JSON.parse(result.toString('utf8'));
     }
     async put(key, value) {
         //await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
-        await this.trie.put(Buffer.from(key, 'utf8'), Buffer.from(JSON.stringify(value), 'hex'));
+        await this.trie.put(Buffer.from(key, 'hex'), Buffer.from(JSON.stringify(value), 'utf8'));
     }
     async delete(key) {
         //await promisify(this.trie.del).bind(this.trie)(key);
@@ -37,7 +37,7 @@ class Trie {
         const data_array = await streamToPromise(stream);
         await P.forEach(data_array, async (data) => {
             const key = data.key.toString('hex');
-            const value = JSON.parse(data.value.toString('hex'));
+            const value = JSON.parse(data.value.toString('utf8'));
             if (await check(key, value))
                 result.push(value);
         });
