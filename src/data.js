@@ -10,11 +10,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _ = __importStar(require("./util"));
 const merkle_patricia_1 = require("./merkle_patricia");
 const Merkle = require('merkle-patricia-tree/secure');
+const util_1 = require("util");
+class PromiseMerkle {
+    constructor(_db, _root) {
+        this._root = _root;
+        this.merkle = _root != null ? new Merkle(_db, _root) : new Merkle(_db);
+    }
+    get root() {
+        return this.merkle.root;
+    }
+    async get(key) {
+        return await util_1.promisify(this.merkle.get).bind(this.merkle)(key);
+    }
+    async put(key, value) {
+        await util_1.promisify(this.merkle.put).bind(this.merkle)(key, value);
+    }
+    async del(key) {
+        await util_1.promisify(this.merkle.del).bind(this.merkle)(key);
+    }
+    createReadStream() {
+        return this.merkle.createReadStream();
+    }
+}
 exports.db_trie_ins = (db, root) => {
-    if (root == null)
-        return new merkle_patricia_1.Trie(new Merkle(db));
-    else
-        return new merkle_patricia_1.Trie(new Merkle(db, root));
+    return new merkle_patricia_1.Trie(new PromiseMerkle(db, root));
 };
 exports.read_from_trie = async (trie, db, key, index, empty) => {
     const hashes = await trie.get(key);

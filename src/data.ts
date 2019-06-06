@@ -1,13 +1,35 @@
 import * as _ from './util'
 import * as crypto_set from './crypto_set'
 import * as T from './types'
-import { Trie } from './merkle_patricia';
+import { Trie,trie_able } from './merkle_patricia';
 const Merkle = require('merkle-patricia-tree/secure');
 import {DB} from './db'
+import {promisify} from 'util'
+
+class PromiseMerkle implements trie_able {
+    private merkle:any;
+    constructor(_db:DB,private _root?:string){
+        this.merkle = _root!=null ? new Merkle(_db,_root) : new Merkle(_db);
+    }
+    get root():Buffer{
+        return this.merkle.root;
+    }
+    async get(key:Buffer):Promise<Buffer|null>{
+        return await promisify(this.merkle.get).bind(this.merkle)(key);
+    }
+    async put(key:Buffer,value:Buffer){
+        await promisify(this.merkle.put).bind(this.merkle)(key,value);
+    }
+    async del(key:Buffer){
+        await promisify(this.merkle.del).bind(this.merkle)(key);
+    }
+    createReadStream(){
+        return this.merkle.createReadStream();
+    }
+}
 
 export const db_trie_ins = (db:DB,root?:string)=>{
-    if(root==null) return new Trie(new Merkle(db));
-    else return new Trie(new Merkle(db,root));
+    return new Trie(new PromiseMerkle(db,root));
 }
 
 
