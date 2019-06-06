@@ -9,11 +9,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = __importStar(require("./util"));
 const merkle_patricia_1 = require("./merkle_patricia");
-exports.trie_ins = (db, root) => {
+const Merkle = require('merkle-patricia-tree/secure');
+exports.db_trie_ins = (db, root) => {
     if (root == null)
-        return new merkle_patricia_1.Trie(db);
+        return new merkle_patricia_1.Trie(new Merkle(db));
     else
-        return new merkle_patricia_1.Trie(db, root);
+        return new merkle_patricia_1.Trie(new Merkle(db, root));
 };
 exports.read_from_trie = async (trie, db, key, index, empty) => {
     const hashes = await trie.get(key);

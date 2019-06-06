@@ -1,5 +1,3 @@
-import levelup, { LevelUp } from 'levelup';
-import leveldown, { LevelDown } from 'leveldown';
 import * as P from 'p-iteration'
 const streamToPromise = require('stream-to-promise');
 
@@ -9,7 +7,7 @@ export interface db_able {
     get(key:Buffer):Promise<Buffer>;
     put(key:Buffer,val:Buffer):Promise<void>;
     del(key:Buffer):Promise<void>;
-    createReadStream():void
+    createReadStream<T>():ReadableStream<T>;
 }
 
 export class DB {
@@ -48,7 +46,7 @@ export class DB {
 
     public async filter<T>(key_encode:encode='hex',val_encode:encode='utf8',check:(key:string,value:T)=>Promise<boolean>|boolean=(key:string,value:T)=>true){
         let result:T[] = [];
-        const stream = this.db.createReadStream();
+        const stream = this.db.createReadStream<T>();
         const data_array:{key:Buffer,value:Buffer}[] = await streamToPromise(stream);
         await P.forEach(data_array, async (data)=>{
             const key = data.key.toString(key_encode);
@@ -74,7 +72,7 @@ export class DB {
           });*/
     }
 
-    public leveldb(){
+    get set_db():db_able{
         return this.db;
     }
 }

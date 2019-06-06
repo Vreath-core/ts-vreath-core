@@ -1,59 +1,49 @@
-const Merkle = require('merkle-patricia-tree/secure');
-import * as rlp from 'rlp'
 import {promisify} from 'util'
-import {DB} from './db';
+import * as P from 'p-iteration'
+import {DB,db_able} from './db';
+const streamToPromise = require('stream-to-promise');
 
-export const en_key = (key:string):string=>{
-  return rlp.encode(key).toString('hex');
+export interface trie_able extends db_able{
+  root:Buffer;
 }
-
-export const de_key = (key:string):string=>{
-  return rlp.decode(Buffer.from(key,'hex')).toString('utf-8')
-}
-
-
-export const en_value = <T>(value:T):string=>{
-  return rlp.encode(JSON.stringify(value)).toString('hex');
-}
-
-export const de_value = (value:string)=>{
-  return JSON.parse(rlp.decode(Buffer.from(value,'hex')).toString());
-}
-
 
 export class Trie {
-  private trie:any;
-  constructor(db:DB,root:string=""){
-    if(root==="") this.trie = new Merkle(db.leveldb());
-    else this.trie = new Merkle(db.leveldb(),Buffer.from(root,'hex'));
+  constructor(private trie:trie_able){
   }
 
   async get<T>(key:string):Promise<T|null>{
-    const result:string = await promisify(this.trie.get).bind(this.trie)(key);
+    //const result:string = await promisify(this.trie.get).bind(this.trie)(key);
+    const result = await this.trie.get(Buffer.from(key,'hex'));
     if(result==null) return null;
-    return JSON.parse(result);
+    return JSON.parse(result.toString('hex'));
   }
 
   async put<T>(key:string,value:T):Promise<void>{
-    await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
+    //await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
+    await this.trie.put(Buffer.from(key,'utf8'),Buffer.from(JSON.stringify(value),'hex'))
   }
 
   async delete(key:string):Promise<void>{
-    await promisify(this.trie.del).bind(this.trie)(key);
+    //await promisify(this.trie.del).bind(this.trie)(key);
+    await this.trie.del(Buffer.from(key,'hex'));
   }
 
   now_root():string{
     return this.trie.root.toString("hex");
   }
 
-  checkpoint():void{
-    this.trie.checkpoint();
-  }
-
-  async filter<T>(check:(value:T)=>Promise<boolean>|boolean=(value:T)=>true){
+  async filter<T>(check:(key:string,value:T)=>Promise<boolean>|boolean=(key:string,value:T)=>true){
     let result:T[] = [];
-    const stream = this.trie.createReadStream();
-    return new Promise<T[]>((resolve,reject)=>{
+    const stream = this.trie.createReadStream<T>();
+    const data_array:{key:Buffer,value:Buffer}[] = await streamToPromise(stream);
+    await P.forEach(data_array, async (data)=>{
+      const key = data.key.toString('hex');
+      const value:T = JSON.parse(data.value.toString('hex'));
+      if(await check(key,value)) result.push(value);
+    });
+    return result;
+
+    /*return new Promise<T[]>((resolve,reject)=>{
       try{
         stream.on('data',async (data:{key:Buffer,value:Buffer})=>{
           if(data.value==null) return result;
@@ -66,12 +56,6 @@ export class Trie {
         });
       }
       catch(e){reject(e)}
-    });
-  }
-
-  async checkRoot(root:string){
-    const result:boolean = await promisify(this.trie.checkRoot).bind(this.trie)(en_key(root));
-    if(result==null) return false;
-    return result
+    });*/
   }
 }

@@ -7,72 +7,55 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Merkle = require('merkle-patricia-tree/secure');
-const rlp = __importStar(require("rlp"));
-const util_1 = require("util");
-exports.en_key = (key) => {
-    return rlp.encode(key).toString('hex');
-};
-exports.de_key = (key) => {
-    return rlp.decode(Buffer.from(key, 'hex')).toString('utf-8');
-};
-exports.en_value = (value) => {
-    return rlp.encode(JSON.stringify(value)).toString('hex');
-};
-exports.de_value = (value) => {
-    return JSON.parse(rlp.decode(Buffer.from(value, 'hex')).toString());
-};
+const P = __importStar(require("p-iteration"));
+const streamToPromise = require('stream-to-promise');
 class Trie {
-    constructor(db, root = "") {
-        if (root === "")
-            this.trie = new Merkle(db.leveldb());
-        else
-            this.trie = new Merkle(db.leveldb(), Buffer.from(root, 'hex'));
+    constructor(trie) {
+        this.trie = trie;
     }
     async get(key) {
-        const result = await util_1.promisify(this.trie.get).bind(this.trie)(key);
+        //const result:string = await promisify(this.trie.get).bind(this.trie)(key);
+        const result = await this.trie.get(Buffer.from(key, 'hex'));
         if (result == null)
             return null;
-        return JSON.parse(result);
+        return JSON.parse(result.toString('hex'));
     }
     async put(key, value) {
-        await util_1.promisify(this.trie.put).bind(this.trie)(key, JSON.stringify(value));
+        //await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
+        await this.trie.put(Buffer.from(key, 'utf8'), Buffer.from(JSON.stringify(value), 'hex'));
     }
     async delete(key) {
-        await util_1.promisify(this.trie.del).bind(this.trie)(key);
+        //await promisify(this.trie.del).bind(this.trie)(key);
+        await this.trie.del(Buffer.from(key, 'hex'));
     }
     now_root() {
         return this.trie.root.toString("hex");
     }
-    checkpoint() {
-        this.trie.checkpoint();
-    }
-    async filter(check = (value) => true) {
+    async filter(check = (key, value) => true) {
         let result = [];
         const stream = this.trie.createReadStream();
-        return new Promise((resolve, reject) => {
-            try {
-                stream.on('data', async (data) => {
-                    if (data.value == null)
-                        return result;
-                    const value = JSON.parse(data.value.toString());
-                    if (await check(value))
-                        result.push(value);
-                });
-                stream.on('end', (data) => {
-                    resolve(result);
-                });
-            }
-            catch (e) {
-                reject(e);
-            }
+        const data_array = await streamToPromise(stream);
+        await P.forEach(data_array, async (data) => {
+            const key = data.key.toString('hex');
+            const value = JSON.parse(data.value.toString('hex'));
+            if (await check(key, value))
+                result.push(value);
         });
-    }
-    async checkRoot(root) {
-        const result = await util_1.promisify(this.trie.checkRoot).bind(this.trie)(exports.en_key(root));
-        if (result == null)
-            return false;
         return result;
+        /*return new Promise<T[]>((resolve,reject)=>{
+          try{
+            stream.on('data',async (data:{key:Buffer,value:Buffer})=>{
+              if(data.value==null) return result;
+              const value:T = JSON.parse(data.value.toString());
+              if(await check(value)) result.push(value);
+            });
+    
+            stream.on('end',(data:{key:string,value:any})=>{
+              resolve(result);
+            });
+          }
+          catch(e){reject(e)}
+        });*/
     }
 }
 exports.Trie = Trie;

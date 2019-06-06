@@ -2,11 +2,12 @@ import * as _ from './util'
 import * as crypto_set from './crypto_set'
 import * as T from './types'
 import { Trie } from './merkle_patricia';
+const Merkle = require('merkle-patricia-tree/secure');
 import {DB} from './db'
 
-export const trie_ins = <T>(db:DB,root?:string)=>{
-    if(root==null) return new Trie(db);
-    else return new Trie(db,root);
+export const db_trie_ins = (db:DB,root?:string)=>{
+    if(root==null) return new Trie(new Merkle(db));
+    else return new Trie(new Merkle(db,root));
 }
 
 

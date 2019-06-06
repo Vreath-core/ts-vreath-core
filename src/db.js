@@ -64,7 +64,7 @@ class DB {
             catch(e){reject(e)}
           });*/
     }
-    leveldb() {
+    get set_db() {
         return this.db;
     }
 }
