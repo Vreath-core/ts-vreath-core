@@ -13,8 +13,7 @@ const Merkle = require('merkle-patricia-tree/secure');
 const util_1 = require("util");
 class PromiseMerkle {
     constructor(_db, _root) {
-        this._root = _root;
-        this.merkle = _root != null ? new Merkle(_db.set_db.raw_db, _root) : new Merkle(_db.set_db.raw_db);
+        this.merkle = _root != null ? new Merkle(_db.set_db.raw_db, Buffer.from(_root, 'hex')) : new Merkle(_db.set_db.raw_db);
     }
     get root() {
         return this.merkle.root;

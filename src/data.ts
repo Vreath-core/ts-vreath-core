@@ -8,8 +8,8 @@ import {promisify} from 'util'
 
 class PromiseMerkle implements trie_able {
     private merkle:any;
-    constructor(_db:DB,private _root?:string){
-        this.merkle = _root!=null ? new Merkle(_db.set_db.raw_db,_root) : new Merkle(_db.set_db.raw_db);
+    constructor(_db:DB,_root?:string){
+        this.merkle = _root!=null ? new Merkle(_db.set_db.raw_db,Buffer.from(_root,'hex')) : new Merkle(_db.set_db.raw_db);
     }
     get root():Buffer{
         return this.merkle.root;
