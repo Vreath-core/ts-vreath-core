@@ -194,13 +194,15 @@ exports.con = {
     constant: constant_1.constant,
     change_configs: change_configs
 };
+class db extends db_1.DB {
+}
+exports.db = db;
+;
+;
 class trie extends merkle_patricia_1.Trie {
 }
 exports.trie = trie;
 ;
-class db extends db_1.DB {
-}
-exports.db = db;
 ;
 const trie_ins = (db, root) => {
     if (root != null && hex_check(root, 32))

@@ -3,8 +3,8 @@ import * as T from './src/types'
 import {constant,change_config, Config} from './src/constant'
 import * as crypto_set from './src/crypto_set'
 import * as _ from './src/util'
-import { Trie } from './src/merkle_patricia'
-import {DB} from './src/db'
+import {Trie,trie_able} from './src/merkle_patricia'
+import {DB,db_able} from './src/db'
 import * as data_set from './src/data'
 import * as state_set from './src/state'
 import * as lock_set from './src/lock'
@@ -187,8 +187,10 @@ export const con = {
     change_configs:change_configs
 }
 
-export class trie extends Trie{};
 export class db extends DB{};
+export interface db_impl extends db_able{};
+export class trie extends Trie{};
+export interface trie_impl extends trie_able{};
 
 const trie_ins = (db:DB,root?:string)=>{
     if(root!=null&&hex_check(root,32)) throw error;
