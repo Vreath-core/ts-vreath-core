@@ -14,7 +14,7 @@ const util_1 = require("util");
 class PromiseMerkle {
     constructor(_db, _root) {
         this._root = _root;
-        this.merkle = _root != null ? new Merkle(_db, _root) : new Merkle(_db);
+        this.merkle = _root != null ? new Merkle(_db.set_db.raw_db, _root) : new Merkle(_db.set_db.raw_db);
     }
     get root() {
         return this.merkle.root;
@@ -23,6 +23,7 @@ class PromiseMerkle {
         return await util_1.promisify(this.merkle.get).bind(this.merkle)(key);
     }
     async put(key, value) {
+        console.log(this.merkle);
         await util_1.promisify(this.merkle.put).bind(this.merkle)(key, value);
     }
     async del(key) {

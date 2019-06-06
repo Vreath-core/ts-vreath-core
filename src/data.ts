@@ -9,7 +9,7 @@ import {promisify} from 'util'
 class PromiseMerkle implements trie_able {
     private merkle:any;
     constructor(_db:DB,private _root?:string){
-        this.merkle = _root!=null ? new Merkle(_db,_root) : new Merkle(_db);
+        this.merkle = _root!=null ? new Merkle(_db.set_db.raw_db,_root) : new Merkle(_db.set_db.raw_db);
     }
     get root():Buffer{
         return this.merkle.root;
@@ -18,6 +18,7 @@ class PromiseMerkle implements trie_able {
         return await promisify(this.merkle.get).bind(this.merkle)(key);
     }
     async put(key:Buffer,value:Buffer){
+        console.log(this.merkle)
         await promisify(this.merkle.put).bind(this.merkle)(key,value);
     }
     async del(key:Buffer){

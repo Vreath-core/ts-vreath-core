@@ -51,6 +51,9 @@ class TestDB {
         const stream = new ReadableStream(keys, values);
         return stream;
     }
+    get raw_db() {
+        return this.keys;
+    }
 }
 exports.TestDB = TestDB;
 describe('DB', () => {

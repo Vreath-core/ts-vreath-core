@@ -9,6 +9,7 @@ export interface db_able {
     put(key:Buffer,val:Buffer):Promise<void>;
     del(key:Buffer):Promise<void>;
     createReadStream():NodeJS.ReadableStream;
+    raw_db?:any;
 }
 
 export class DB {

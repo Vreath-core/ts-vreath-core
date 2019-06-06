@@ -5,6 +5,7 @@ const streamToPromise = require('stream-to-promise');
 
 export interface trie_able extends db_able{
   root:Buffer;
+
 }
 
 export class Trie {
@@ -20,7 +21,7 @@ export class Trie {
 
   async put<T>(key:string,value:T):Promise<void>{
     //await promisify(this.trie.put).bind(this.trie)(key,JSON.stringify(value));
-    await this.trie.put(Buffer.from(key,'hex'),Buffer.from(JSON.stringify(value),'utf8'))
+    await this.trie.put(Buffer.from(key,'hex'),Buffer.from(JSON.stringify(value),'utf8'));
   }
 
   async delete(key:string):Promise<void>{

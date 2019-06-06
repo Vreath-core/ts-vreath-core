@@ -50,6 +50,10 @@ export class TestDB implements db_able {
         const stream = new ReadableStream(keys,values);
         return stream;
     }
+
+    get raw_db(){
+        return this.keys;
+    }
 }
 
 
