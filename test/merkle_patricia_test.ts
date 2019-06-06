@@ -3,7 +3,7 @@ import {Trie,trie_able} from '../src/merkle_patricia'
 import {ReadableStream,TestDB} from './db_test'
 import {MerklePatriciaTree,MerklePatriciaTreeNode} from '@rainblock/merkle-patricia-tree';
 
-class Merkle implements trie_able{
+class Merkle implements trie_able {
     private keys:Buffer[] = [];
     private merkle = new MerklePatriciaTree()
     constructor(){}

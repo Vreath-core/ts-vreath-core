@@ -2,7 +2,7 @@ import assert = require('assert');
 import {db_able,DB} from '../src/db'
 import {Readable} from 'stream'
 
-export class ReadableStream extends Readable{
+export class ReadableStream extends Readable implements NodeJS.ReadableStream{
     private i:number = 0;
     constructor(private keys:Buffer[],private values:Buffer[]){
         super({objectMode:true});

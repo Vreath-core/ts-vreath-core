@@ -8,7 +8,7 @@ export interface db_able {
     get(key:Buffer):Promise<Buffer|null>;
     put(key:Buffer,val:Buffer):Promise<void>;
     del(key:Buffer):Promise<void>;
-    createReadStream():Readable;
+    createReadStream():NodeJS.ReadableStream;
 }
 
 export class DB {
