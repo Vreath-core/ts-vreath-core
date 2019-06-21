@@ -1,8 +1,9 @@
 import assert = require('assert');
-import {db_able,DB} from '../src/db'
-import {Readable} from 'stream'
+/*import {db_able,DB} from '../src/db'
+import {Readable} from 'stream'*/
+import {make_db_obj} from './com'
 
-export class ReadableStream extends Readable implements NodeJS.ReadableStream{
+/*export class ReadableStream extends Readable implements NodeJS.ReadableStream{
     private i:number = 0;
     constructor(private keys:Buffer[],private values:Buffer[]){
         super({objectMode:true});
@@ -54,13 +55,13 @@ export class TestDB implements db_able {
     get raw_db(){
         return this.keys;
     }
-}
+}*/
 
 
 describe('DB',()=>{
-    const test_db = new TestDB([],[]);
-    const alice = Buffer.from('alice');
-    const bob = Buffer.from('bob');
+    const test_db = make_db_obj();
+    const alice = Buffer.from('alice').toString('hex');
+    const bob = Buffer.from('bob').toString('hex');
     it('test get, put and del',async ()=>{
         await test_db.put(alice,bob);
         assert.equal(await test_db.get(alice),bob,'error in get and put funcs');
@@ -68,17 +69,12 @@ describe('DB',()=>{
         assert.equal(await test_db.get(alice),null,"error in del funcs");
     });
     it('test createReadStream',async ()=>{
-        const streamToPromise = require('stream-to-promise');
-        const one = Buffer.from('1');
-        const two = Buffer.from('2');
+        const one = Buffer.from('1').toString('hex');
+        const two = Buffer.from('2').toString('hex');
         await test_db.put(alice,one);
         await test_db.put(bob,two);
-        const stream = test_db.createReadStream();
-        const data_array:{key:Buffer,value:Buffer}[] = await streamToPromise(stream);
-        const expected = [
-            {key:alice,value:one},
-            {key:bob,value:two}
-        ];
+        const data_array:{key:Buffer,value:Buffer}[] = await test_db.filter();
+        const expected = [one,two];
         assert.deepEqual(data_array,expected,'error in create_readstream');
     });
 });

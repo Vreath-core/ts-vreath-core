@@ -1,9 +1,9 @@
 import assert = require('assert');
-import {Trie,trie_able} from '../src/merkle_patricia'
-import {ReadableStream,TestDB} from './db_test'
-import {MerklePatriciaTree,MerklePatriciaTreeNode} from '@rainblock/merkle-patricia-tree';
+//import {ReadableStream,TestDB} from './db_test'
+import {trie_ins} from '../src/data'
+import {make_db_obj} from './com'
 
-class Merkle implements trie_able {
+/*class Merkle implements trie_able {
     private keys:Buffer[] = [];
     private merkle = new MerklePatriciaTree()
     constructor(){}
@@ -46,11 +46,11 @@ class Merkle implements trie_able {
         const stream = new ReadableStream(keys,result);
         return stream;
     }
-}
+}*/
 
 describe('Trie',()=>{
-    const merkle = new Merkle();
-    const trie = new Trie(merkle);
+    const db = make_db_obj();
+    const trie = trie_ins(db);
     const alice = "123456"
     const state1 = {nonce:10,owner:alice,amount:100};
     const bob = "789876"

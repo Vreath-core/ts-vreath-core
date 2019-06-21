@@ -31,7 +31,28 @@ class PromiseMerkle {
         return this.merkle.createReadStream();
     }
 }
-exports.db_trie_ins = (db, root) => {
+/*class MemoryMerkle implements trie_able {
+    private merkle = new MemMerkle.MerklePatriciaTree();
+    constructor(){}
+
+    get root():Buffer{
+        return this.merkle.root();
+    }
+    async get(key:Buffer):Promise<Buffer|null>{
+        return await this.merkle.get(key).value;
+    }
+    async put(key:Buffer,value:Buffer){
+        await this.merkle.put(key,value);
+    }
+    async del(key:Buffer){
+        await this.merkle.del(key);
+    }
+    createReadStream(){
+        console.log(this.merkle.createReadStream())
+        return this.merkle.createReadStream();
+    }
+}*/
+exports.trie_ins = (db, root) => {
     return new merkle_patricia_1.Trie(new PromiseMerkle(db, root));
 };
 exports.read_from_trie = async (trie, db, key, index, empty) => {

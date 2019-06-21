@@ -1,5 +1,4 @@
 import * as _ from './util'
-import * as crypto_set from './crypto_set'
 import * as T from './types'
 import { Trie,trie_able } from './merkle_patricia';
 const Merkle = require('merkle-patricia-tree/secure');
@@ -28,7 +27,29 @@ class PromiseMerkle implements trie_able {
     }
 }
 
-export const db_trie_ins = (db:DB,root?:string)=>{
+/*class MemoryMerkle implements trie_able {
+    private merkle = new MemMerkle.MerklePatriciaTree();
+    constructor(){}
+
+    get root():Buffer{
+        return this.merkle.root();
+    }
+    async get(key:Buffer):Promise<Buffer|null>{
+        return await this.merkle.get(key).value;
+    }
+    async put(key:Buffer,value:Buffer){
+        await this.merkle.put(key,value);
+    }
+    async del(key:Buffer){
+        await this.merkle.del(key);
+    }
+    createReadStream(){
+        console.log(this.merkle.createReadStream())
+        return this.merkle.createReadStream();
+    }
+}*/
+
+export const trie_ins = (db:DB,root?:string)=>{
     return new Trie(new PromiseMerkle(db,root));
 }
 

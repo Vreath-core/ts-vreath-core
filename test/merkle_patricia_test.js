@@ -1,57 +1,56 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const assert = require("assert");
-const merkle_patricia_1 = require("../src/merkle_patricia");
-const db_test_1 = require("./db_test");
-const merkle_patricia_tree_1 = require("@rainblock/merkle-patricia-tree");
-class Merkle {
-    constructor() {
-        this.keys = [];
-        this.merkle = new merkle_patricia_tree_1.MerklePatriciaTree();
-    }
-    get root() {
+//import {ReadableStream,TestDB} from './db_test'
+const data_1 = require("../src/data");
+const com_1 = require("./com");
+/*class Merkle implements trie_able {
+    private keys:Buffer[] = [];
+    private merkle = new MerklePatriciaTree()
+    constructor(){}
+
+    get root(){
         return this.merkle.root;
     }
-    async get(key) {
+
+    async get(key:Buffer){
         const got = this.merkle.get(key).value;
-        if (got == null)
-            return null;
-        else
-            return got;
+        if(got==null) return null;
+        else return got;
     }
-    async put(key, val) {
-        this.merkle.put(key, val);
+    async put(key:Buffer,val:Buffer){
+        this.merkle.put(key,val);
         this.keys.push(key);
     }
-    async del(key) {
+    async del(key:Buffer){
         this.merkle.del(key);
         const i = this.keys.indexOf(key);
-        this.keys.splice(i, 1);
+        this.keys.splice(i,1);
     }
-    createReadStream() {
+    createReadStream(){
         let keys = this.keys;
-        let values = keys.map(key => this.merkle.get(key).value);
-        let i;
-        let val;
-        let buf;
-        let result = [];
-        for (i in values) {
+        let values = keys.map(key=>this.merkle.get(key).value);
+        let i:string;
+        let val:Buffer|null;
+        let buf:Buffer;
+        let result:Buffer[] = [];
+        for(i in values){
             val = values[i];
-            if (val == null) {
-                keys.splice(Number(i), 1);
+            if(val==null){
+                keys.splice(Number(i),1);
             }
-            else {
+            else{
                 buf = val;
                 result.push(buf);
             }
         }
-        const stream = new db_test_1.ReadableStream(keys, result);
+        const stream = new ReadableStream(keys,result);
         return stream;
     }
-}
+}*/
 describe('Trie', () => {
-    const merkle = new Merkle();
-    const trie = new merkle_patricia_1.Trie(merkle);
+    const db = com_1.make_db_obj();
+    const trie = data_1.trie_ins(db);
     const alice = "123456";
     const state1 = { nonce: 10, owner: alice, amount: 100 };
     const bob = "789876";
