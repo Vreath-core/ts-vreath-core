@@ -207,7 +207,7 @@ exports.trie = trie;
 const trie_ins = (db, root) => {
     if (root != null && hex_check(root, 32))
         throw error;
-    return data_set.db_trie_ins(db, root);
+    return data_set.trie_ins(db, root);
 };
 const read_from_trie = async (trie, db, key, index, empty) => {
     if (hex_check(key) || [0, 1].indexOf(index) === -1)

@@ -194,7 +194,7 @@ export interface trie_impl extends trie_able{};
 
 const trie_ins = (db:DB,root?:string)=>{
     if(root!=null&&hex_check(root,32)) throw error;
-    return data_set.db_trie_ins(db,root);
+    return data_set.trie_ins(db,root);
 }
 
 
