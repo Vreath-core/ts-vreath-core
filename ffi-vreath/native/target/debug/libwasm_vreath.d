@@ -1,0 +1,1 @@
+/Users/suegamisora/GoogleDrive/projects/ts-vreath-core/wasm-vreath/native/target/debug/libwasm_vreath.dylib: /Users/suegamisora/GoogleDrive/projects/ts-vreath-core/wasm-vreath/native/build.rs /Users/suegamisora/GoogleDrive/projects/ts-vreath-core/wasm-vreath/native/src/lib.rs

@@ -1,0 +1,1 @@
+/Users/suegamisora/GoogleDrive/projects/ts-vreath-core/ffi-vreath/native/target/debug/libffi_vreath.dylib: /Users/suegamisora/GoogleDrive/projects/ts-vreath-core/ffi-vreath/native/build.rs /Users/suegamisora/GoogleDrive/projects/ts-vreath-core/ffi-vreath/native/src/crypto.rs /Users/suegamisora/GoogleDrive/projects/ts-vreath-core/ffi-vreath/native/src/lib.rs
