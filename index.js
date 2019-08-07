@@ -355,6 +355,11 @@ const tx_meta2array = (meta) => {
         throw error;
     return tx_set.tx_meta2array(meta);
 };
+const get_recover_id_from_sign = (sign) => {
+    if (!isSignature(sign))
+        throw error;
+    return tx_set.get_recover_id_from_sign(sign);
+};
 const tx_fee = (tx) => {
     if (!isTx(tx))
         throw error;
@@ -445,6 +450,7 @@ exports.tx = {
     refreshed_check: refreshed_check,
     state_check: state_check,
     tx_meta2array: tx_meta2array,
+    get_recover_id_from_sign: get_recover_id_from_sign,
     tx_fee: tx_fee,
     get_tx_fee: get_tx_fee,
     mining: mining,
