@@ -52,7 +52,7 @@ exports.block_meta2array = (meta) => {
 exports.get_info_from_block = (block) => {
     const sign = block.signature;
     const meta_data = exports.block_meta2array(block.meta);
-    const recover_id = big_integer_1.default(sign.v, 16).mod(2).toJSNumber();
+    const recover_id = tx_set.get_recover_id_from_sign(sign);
     const id = ("000000000000" + _.bigInt2hex(big_integer_1.default(big_integer_1.default(sign.v, 16).minus(8).minus(28 - recover_id)).divide(2))).slice(-12);
     const raw_array = meta_data.concat(id);
     const meta_hash = _.array2hash(raw_array);

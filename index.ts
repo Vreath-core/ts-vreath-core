@@ -14,6 +14,7 @@ import * as tx_set from './src/tx'
 import * as block_set from './src/block'
 import * as pool_set from './src/tx_pool'
 import * as unit_set from './src/unit'
+import * as finalize_set from './src/finalize'
 import bigInt, { BigInteger } from 'big-integer'
 
 const hex_check = (hex:string,byte?:number,variable_length?:boolean)=>{
@@ -652,3 +653,25 @@ export const unit = {
     isUnit:isUnit,
     get_info_from_unit:get_info_from_unit
 }
+
+const rocate_finalize_validators = (uniters:string[])=>{
+    if(uniters.some(add=>hex_check(add,40))) throw error;
+    return finalize_set.rocate_finalize_validators(uniters);
+}
+
+const verify_finalized = async (key_block:T.Block,signatures:T.Sign[],uniters:string[],trie:Trie,state_db:DB)=>{
+    if(!isBlock(key_block)||signatures.some(sign=>!isSignature(sign))||uniters.some(add=>hex_check(add,40))) throw error;
+    return finalize_set.verify_finalized(key_block,signatures,uniters,trie,state_db);
+}
+
+const sign_finalize = (hash:string,private_key:string)=>{
+    if(hex_check(hash,32)||hex_check(private_key,32)) throw error;
+    return finalize_set.sign_finalize(hash,private_key);
+}
+
+export const finalize = {
+    rocate:rocate_finalize_validators,
+    verify:verify_finalized,
+    sign:sign_finalize
+}
+

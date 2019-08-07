@@ -138,14 +138,13 @@ exports.find_req_tx = async (ref_tx, block_db) => {
         return exports.empty_tx();
     return req_tx;
 };
+exports.get_recover_id_from_sign = (sign) => big_integer_1.default(sign.v, 16).mod(2).toJSNumber();
 exports.get_info_from_tx = (tx) => {
     const sign = tx.signature;
     const meta = tx.meta;
     const sign_data = sign.map(s => s.data);
     const meta_array = exports.tx_meta2array(meta);
-    const recover_ids = sign.map(s => {
-        return big_integer_1.default(s.v, 16).mod(2).toJSNumber();
-    });
+    const recover_ids = sign.map(s => exports.get_recover_id_from_sign(s));
     const ids = sign.map((s, i) => {
         return ("000000000000" + _.bigInt2hex(big_integer_1.default(big_integer_1.default(s.v, 16).minus(8).minus(28 - recover_ids[i])).divide(2))).slice(-12);
     });

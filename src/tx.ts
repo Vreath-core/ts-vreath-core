@@ -144,14 +144,14 @@ export const find_req_tx = async (ref_tx:T.Tx,block_db:DB)=>{
   return req_tx;
 }
 
+export const get_recover_id_from_sign = (sign:T.Sign)=> bigInt(sign.v,16).mod(2).toJSNumber();
+
 export const get_info_from_tx = (tx:T.Tx):[string,string[],string[],string[],string]=>{
   const sign = tx.signature;
   const meta = tx.meta;
   const sign_data = sign.map(s=>s.data);
   const meta_array = tx_meta2array(meta);
-  const recover_ids = sign.map(s=>{
-    return bigInt(s.v,16).mod(2).toJSNumber();
-  });
+  const recover_ids = sign.map(s=>get_recover_id_from_sign(s));
   const ids = sign.map((s,i)=>{
     return ("000000000000"+_.bigInt2hex(bigInt(bigInt(s.v,16).minus(8).minus(28-recover_ids[i])).divide(2))).slice(-12);
   });

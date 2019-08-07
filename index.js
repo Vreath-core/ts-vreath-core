@@ -24,6 +24,7 @@ const tx_set = __importStar(require("./src/tx"));
 const block_set = __importStar(require("./src/block"));
 const pool_set = __importStar(require("./src/tx_pool"));
 const unit_set = __importStar(require("./src/unit"));
+const finalize_set = __importStar(require("./src/finalize"));
 const big_integer_1 = __importDefault(require("big-integer"));
 const hex_check = (hex, byte, variable_length) => {
     if (hex == null || typeof hex != 'string' || Buffer.from(hex, 'hex').length * 2 != hex.length || hex.length % 2 != 0)
@@ -675,4 +676,24 @@ const get_info_from_unit = async (unit, block_db) => {
 exports.unit = {
     isUnit: isUnit,
     get_info_from_unit: get_info_from_unit
+};
+const rocate_finalize_validators = (uniters) => {
+    if (uniters.some(add => hex_check(add, 40)))
+        throw error;
+    return finalize_set.rocate_finalize_validators(uniters);
+};
+const verify_finalized = async (key_block, signatures, uniters, trie, state_db) => {
+    if (!isBlock(key_block) || signatures.some(sign => !isSignature(sign)) || uniters.some(add => hex_check(add, 40)))
+        throw error;
+    return finalize_set.verify_finalized(key_block, signatures, uniters, trie, state_db);
+};
+const sign_finalize = (hash, private_key) => {
+    if (hex_check(hash, 32) || hex_check(private_key, 32))
+        throw error;
+    return finalize_set.sign_finalize(hash, private_key);
+};
+exports.finalize = {
+    rocate: rocate_finalize_validators,
+    verify: verify_finalized,
+    sign: sign_finalize
 };

@@ -28,6 +28,8 @@ export let constant = {
     def_pos_diff:"246139ca8000",
     lwma_size:8,
     unit_rate:90,
+    fault_tolerance:66,
+    finalize_size:600,
     compatible_version:compatible_version,
     one_hex:"e8d4a51000"
 }

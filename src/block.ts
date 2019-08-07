@@ -44,10 +44,11 @@ export const block_meta2array = (meta:T.BlockMeta):string[]=>{
     return [kind,meta.height,meta.previoushash,meta.timestamp.toString(16),meta.pos_diff,meta.trie_root,meta.tx_root,meta.extra];
 }
 
+
 export const get_info_from_block = (block:T.Block):[string,string[],string,string,string]=>{
     const sign = block.signature;
     const meta_data = block_meta2array(block.meta);
-    const recover_id = bigInt(sign.v,16).mod(2).toJSNumber();
+    const recover_id = tx_set.get_recover_id_from_sign(sign);
     const id = ("000000000000"+_.bigInt2hex(bigInt(bigInt(sign.v,16).minus(8).minus(28-recover_id)).divide(2))).slice(-12);
     const raw_array = meta_data.concat(id);
     const meta_hash = _.array2hash(raw_array);
@@ -572,3 +573,4 @@ export const accept_micro_block = async (block:T.Block,output_states:T.State[],b
     const changed = contract.micro_block_change([unit_state],block.meta.height,[lock_state]);
     await data.write_trie(trie,state_db,lock_db,changed[0],lock_state);
 }
+
