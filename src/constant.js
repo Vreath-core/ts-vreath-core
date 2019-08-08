@@ -31,6 +31,7 @@ exports.constant = {
     def_pos_diff: "246139ca8000",
     lwma_size: 8,
     unit_rate: 90,
+    finalize_keyword: '66696e616c697a65',
     fault_tolerance: 66,
     finalize_size: 600,
     compatible_version: compatible_version,

@@ -683,6 +683,14 @@ exports.unit = {
     isUnit: isUnit,
     get_info_from_unit: get_info_from_unit
 };
+const isFinalize = (finalize) => {
+    return !hex_check(finalize.height, 8, true) && !hex_check(finalize.hash, 32) && isSignature(finalize.sign);
+};
+const finalize_hash = (height, hash) => {
+    if (hex_check(height, 8, true) || hex_check(hash, 32))
+        throw error;
+    return finalize_set.finalize_hash(height, hash);
+};
 const choose_finalize_validators = async (uniters, block_height, trie, state_db) => {
     if (uniters.some(add => hex_check(add, 40) || hex_check(block_height, 8, true)))
         throw error;
@@ -693,17 +701,19 @@ const rocate_finalize_validators = (uniters) => {
         throw error;
     return finalize_set.rocate_finalize_validators(uniters);
 };
-const verify_finalized = async (key_block, signatures, uniters, trie, state_db) => {
-    if (!isBlock(key_block) || signatures.some(sign => !isSignature(sign)) || uniters.some(add => hex_check(add, 40)))
+const verify_finalized = async (key_block, finalizes, uniters, trie, state_db) => {
+    if (!isBlock(key_block) || finalizes.some(f => !isFinalize(f)) || uniters.some(add => hex_check(add, 40)))
         throw error;
-    return await finalize_set.verify_finalized(key_block, signatures, uniters, trie, state_db);
+    return await finalize_set.verify_finalized(key_block, finalizes, uniters, trie, state_db);
 };
-const sign_finalize = (hash, private_key) => {
-    if (hex_check(hash, 32) || hex_check(private_key, 32))
+const sign_finalize = (height, hash, private_key) => {
+    if (hex_check(height, 8, true) || hex_check(hash, 32) || hex_check(private_key, 32))
         throw error;
-    return finalize_set.sign_finalize(hash, private_key);
+    return finalize_set.sign_finalize(height, hash, private_key);
 };
 exports.finalize = {
+    isFinalize: isFinalize,
+    hash: finalize_hash,
     choose: choose_finalize_validators,
     rocate: rocate_finalize_validators,
     verify: verify_finalized,

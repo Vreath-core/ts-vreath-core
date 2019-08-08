@@ -573,4 +573,3 @@ export const accept_micro_block = async (block:T.Block,output_states:T.State[],b
     const changed = contract.micro_block_change([unit_state],block.meta.height,[lock_state]);
     await data.write_trie(trie,state_db,lock_db,changed[0],lock_state);
 }
-

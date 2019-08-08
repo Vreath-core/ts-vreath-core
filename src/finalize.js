@@ -18,6 +18,10 @@ const data = __importStar(require("./data"));
 const constant_1 = require("./constant");
 const big_integer_1 = __importDefault(require("big-integer"));
 const P = __importStar(require("p-iteration"));
+exports.finalize_hash = (height, hash) => {
+    const id = constant_1.constant.finalize_keyword + constant_1.constant.my_version + constant_1.constant.my_chain_id + constant_1.constant.my_net_id;
+    return crypto_set.get_sha256(_.array2hash([id, height, hash]));
+};
 exports.rocate_finalize_validators = (uniters) => {
     return uniters.reduce((res, val, i) => {
         if (i === 0)
@@ -62,9 +66,9 @@ exports.choose_finalize_validators = async (uniters, block_height, trie, state_d
         choosed = uniters.slice(0, constant_1.constant.finalize_size);
     return await validators_drop_out(choosed, block_height, trie, state_db);
 };
-exports.verify_finalized = async (key_block, signatures, uniters, trie, state_db) => {
-    const v_s = signatures.map(s => tx_set.get_recover_id_from_sign(s));
-    const pub_keys = signatures.map((s, i) => crypto_set.recover(key_block.hash, s.data, v_s[i]));
+exports.verify_finalized = async (key_block, finalizes, uniters, trie, state_db) => {
+    const v_s = finalizes.map(f => tx_set.get_recover_id_from_sign(f.sign));
+    const pub_keys = finalizes.map((f, i) => crypto_set.recover(exports.finalize_hash(f.height, f.hash), f.sign.data, v_s[i]));
     const addresses = pub_keys.map(key => crypto_set.generate_address(constant_1.constant.unit, key));
     const finalize_validators = await exports.choose_finalize_validators(uniters, key_block.meta.height, trie, state_db);
     if (addresses.some(add => finalize_validators.indexOf(add) === -1) || addresses.filter((val, i, array) => array.indexOf(val) === i).length != addresses.length)
@@ -74,13 +78,18 @@ exports.verify_finalized = async (key_block, signatures, uniters, trie, state_db
     else
         return true;
 };
-exports.sign_finalize = (hash, private_key) => {
+exports.sign_finalize = (height, hash, private_key) => {
     const id = constant_1.constant.my_version + constant_1.constant.my_chain_id + constant_1.constant.my_net_id;
-    const signed = crypto_set.sign(hash, private_key);
+    const signed = crypto_set.sign(exports.finalize_hash(height, hash), private_key);
     const v = _.bigInt2hex(big_integer_1.default(id, 16).multiply(2).add(8).add(big_integer_1.default(28).subtract(big_integer_1.default(signed[0], 16))));
     const sign = {
         data: signed[1],
         v: v
     };
-    return sign;
+    const finalize = {
+        height: height,
+        hash: hash,
+        sign: sign
+    };
+    return finalize;
 };

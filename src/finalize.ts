@@ -14,6 +14,11 @@ import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
 
 
+export const finalize_hash = (height:string,hash:string)=>{
+    const id = constant.finalize_keyword+constant.my_version+constant.my_chain_id+constant.my_net_id;
+    return crypto_set.get_sha256(_.array2hash([id,height,hash]));
+}
+
 export const rocate_finalize_validators = (uniters:string[])=>{
     return uniters.reduce((res:string[],val,i)=>{
         if(i===0) res[uniters.length-1] = val;
@@ -51,9 +56,9 @@ export const choose_finalize_validators = async (uniters:string[],block_height:s
     return await validators_drop_out(choosed,block_height,trie,state_db);
 }
 
-export const verify_finalized = async (key_block:T.Block,signatures:T.Sign[],uniters:string[],trie:Trie,state_db:DB)=>{
-    const v_s = signatures.map(s=>tx_set.get_recover_id_from_sign(s));
-    const pub_keys = signatures.map((s,i)=>crypto_set.recover(key_block.hash,s.data,v_s[i]));
+export const verify_finalized = async (key_block:T.Block,finalizes:T.Finalize[],uniters:string[],trie:Trie,state_db:DB)=>{
+    const v_s = finalizes.map(f=>tx_set.get_recover_id_from_sign(f.sign));
+    const pub_keys = finalizes.map((f,i)=>crypto_set.recover(finalize_hash(f.height,f.hash),f.sign.data,v_s[i]));
     const addresses = pub_keys.map(key=>crypto_set.generate_address(constant.unit,key));
     const finalize_validators = await choose_finalize_validators(uniters,key_block.meta.height,trie,state_db);
     if(addresses.some(add=>finalize_validators.indexOf(add)===-1)||addresses.filter((val,i,array)=>array.indexOf(val)===i).length!=addresses.length) return false;
@@ -61,13 +66,18 @@ export const verify_finalized = async (key_block:T.Block,signatures:T.Sign[],uni
     else return true;
 }
 
-export const sign_finalize = (hash:string,private_key:string)=>{
+export const sign_finalize = (height:string,hash:string,private_key:string)=>{
     const id = constant.my_version+constant.my_chain_id+constant.my_net_id;
-    const signed = crypto_set.sign(hash,private_key);
+    const signed = crypto_set.sign(finalize_hash(height,hash),private_key);
     const v = _.bigInt2hex(bigInt(id,16).multiply(2).add(8).add(bigInt(28).subtract(bigInt(signed[0],16))));
     const sign:T.Sign = {
         data:signed[1],
         v:v
     }
-    return sign;
+    const finalize:T.Finalize = {
+        height:height,
+        hash:hash,
+        sign:sign
+    }
+    return finalize;
 }

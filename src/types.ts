@@ -107,3 +107,9 @@ export type Unit = [string,number,string,string,string];
   address:40 byte,
   unit_price:10 byte
 */
+
+export type Finalize = {
+  height:string,
+  hash:string,
+  sign:Sign
+}
