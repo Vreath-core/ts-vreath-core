@@ -44,7 +44,7 @@ const validators_drop_out = async (validators:string[],block_height:string,trie:
     })
 }
 
-const choose_finalize_validators = async (uniters:string[],block_height:string,trie:Trie,state_db:DB)=>{
+export const choose_finalize_validators = async (uniters:string[],block_height:string,trie:Trie,state_db:DB)=>{
     let choosed:string[] = [];
     if(uniters.length<constant.finalize_size) choosed = uniters;
     else choosed = uniters.slice(0,constant.finalize_size);

@@ -660,6 +660,11 @@ export const unit = {
     get_info_from_unit:get_info_from_unit
 }
 
+const choose_finalize_validators = async (uniters:string[],block_height:string,trie:Trie,state_db:DB)=>{
+    if(uniters.some(add=>hex_check(add,40)||hex_check(block_height,8,true))) throw error;
+    return await finalize_set.choose_finalize_validators(uniters,block_height,trie,state_db);
+}
+
 const rocate_finalize_validators = (uniters:string[])=>{
     if(uniters.some(add=>hex_check(add,40))) throw error;
     return finalize_set.rocate_finalize_validators(uniters);
@@ -667,7 +672,7 @@ const rocate_finalize_validators = (uniters:string[])=>{
 
 const verify_finalized = async (key_block:T.Block,signatures:T.Sign[],uniters:string[],trie:Trie,state_db:DB)=>{
     if(!isBlock(key_block)||signatures.some(sign=>!isSignature(sign))||uniters.some(add=>hex_check(add,40))) throw error;
-    return finalize_set.verify_finalized(key_block,signatures,uniters,trie,state_db);
+    return await finalize_set.verify_finalized(key_block,signatures,uniters,trie,state_db);
 }
 
 const sign_finalize = (hash:string,private_key:string)=>{
@@ -676,6 +681,7 @@ const sign_finalize = (hash:string,private_key:string)=>{
 }
 
 export const finalize = {
+    choose:choose_finalize_validators,
     rocate:rocate_finalize_validators,
     verify:verify_finalized,
     sign:sign_finalize

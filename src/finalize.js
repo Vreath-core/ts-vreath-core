@@ -54,7 +54,7 @@ const validators_drop_out = async (validators, block_height, trie, state_db) => 
             return true;
     });
 };
-const choose_finalize_validators = async (uniters, block_height, trie, state_db) => {
+exports.choose_finalize_validators = async (uniters, block_height, trie, state_db) => {
     let choosed = [];
     if (uniters.length < constant_1.constant.finalize_size)
         choosed = uniters;
@@ -66,7 +66,7 @@ exports.verify_finalized = async (key_block, signatures, uniters, trie, state_db
     const v_s = signatures.map(s => tx_set.get_recover_id_from_sign(s));
     const pub_keys = signatures.map((s, i) => crypto_set.recover(key_block.hash, s.data, v_s[i]));
     const addresses = pub_keys.map(key => crypto_set.generate_address(constant_1.constant.unit, key));
-    const finalize_validators = await choose_finalize_validators(uniters, key_block.meta.height, trie, state_db);
+    const finalize_validators = await exports.choose_finalize_validators(uniters, key_block.meta.height, trie, state_db);
     if (addresses.some(add => finalize_validators.indexOf(add) === -1) || addresses.filter((val, i, array) => array.indexOf(val) === i).length != addresses.length)
         return false;
     else if (big_integer_1.default(addresses.length).lesser(big_integer_1.default(finalize_validators.length).times(constant_1.constant.fault_tolerance).divide(100)))

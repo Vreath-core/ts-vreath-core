@@ -683,6 +683,11 @@ exports.unit = {
     isUnit: isUnit,
     get_info_from_unit: get_info_from_unit
 };
+const choose_finalize_validators = async (uniters, block_height, trie, state_db) => {
+    if (uniters.some(add => hex_check(add, 40) || hex_check(block_height, 8, true)))
+        throw error;
+    return await finalize_set.choose_finalize_validators(uniters, block_height, trie, state_db);
+};
 const rocate_finalize_validators = (uniters) => {
     if (uniters.some(add => hex_check(add, 40)))
         throw error;
@@ -691,7 +696,7 @@ const rocate_finalize_validators = (uniters) => {
 const verify_finalized = async (key_block, signatures, uniters, trie, state_db) => {
     if (!isBlock(key_block) || signatures.some(sign => !isSignature(sign)) || uniters.some(add => hex_check(add, 40)))
         throw error;
-    return finalize_set.verify_finalized(key_block, signatures, uniters, trie, state_db);
+    return await finalize_set.verify_finalized(key_block, signatures, uniters, trie, state_db);
 };
 const sign_finalize = (hash, private_key) => {
     if (hex_check(hash, 32) || hex_check(private_key, 32))
@@ -699,6 +704,7 @@ const sign_finalize = (hash, private_key) => {
     return finalize_set.sign_finalize(hash, private_key);
 };
 exports.finalize = {
+    choose: choose_finalize_validators,
     rocate: rocate_finalize_validators,
     verify: verify_finalized,
     sign: sign_finalize
