@@ -22,6 +22,8 @@ exports.constant = {
     my_chain_id: my_chain_id,
     native: "01",
     unit: "02",
+    bitcoin: "03",
+    ethereum: "04",
     block_time: 12,
     max_blocks: 9,
     block_size: 25000,

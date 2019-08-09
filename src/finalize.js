@@ -67,6 +67,8 @@ exports.choose_finalize_validators = async (uniters, block_height, trie, state_d
     return await validators_drop_out(choosed, block_height, trie, state_db);
 };
 exports.verify_finalized = async (key_block, finalizes, uniters, trie, state_db) => {
+    if (finalizes.some(f => f.hash != key_block.hash || big_integer_1.default(f.height, 16).notEquals(big_integer_1.default(key_block.meta.height, 16))))
+        return false;
     const v_s = finalizes.map(f => tx_set.get_recover_id_from_sign(f.sign));
     const pub_keys = finalizes.map((f, i) => crypto_set.recover(exports.finalize_hash(f.height, f.hash), f.sign.data, v_s[i]));
     const addresses = pub_keys.map(key => crypto_set.generate_address(constant_1.constant.unit, key));

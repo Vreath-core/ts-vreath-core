@@ -18,7 +18,7 @@ const tx_set = __importStar(require("./tx"));
 const diff_1 = require("./diff");
 const data = __importStar(require("./data"));
 const constant_1 = require("./constant");
-const contract = __importStar(require("./contract"));
+const contract_1 = __importDefault(require("./contract"));
 const big_integer_1 = __importDefault(require("big-integer"));
 const P = __importStar(require("p-iteration"));
 exports.empty_block = () => {
@@ -541,7 +541,7 @@ exports.accept_key_block = async (block, block_db, last_height, trie, state_db, 
     const lock_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));
     });
-    const changed = contract.key_block_change(base_states, pre_native, new_native, fee_sum, block.meta.height, lock_states);
+    const changed = contract_1.default.basic.key_block_change(base_states, pre_native, new_native, fee_sum, block.meta.height, lock_states);
     await P.forEach(bases, async (key, i) => {
         await data.write_trie(trie, state_db, lock_db, changed[i], lock_states[i]);
     });
@@ -561,6 +561,6 @@ exports.accept_micro_block = async (block, output_states, block_db, trie, state_
     const unit_validator = crypto_set.generate_address(constant_1.constant.unit, public_key);
     const unit_state = await data.read_from_trie(trie, state_db, unit_validator, 0, state_set.CreateState("00", constant_1.constant.unit, unit_validator, "00", ["01", "00"]));
     const lock_state = await data.read_from_trie(trie, lock_db, unit_validator, 1, lock_set.CreateLock(unit_validator));
-    const changed = contract.micro_block_change([unit_state], block.meta.height, [lock_state]);
+    const changed = contract_1.default.basic.micro_block_change([unit_state], block.meta.height, [lock_state]);
     await data.write_trie(trie, state_db, lock_db, changed[0], lock_state);
 };

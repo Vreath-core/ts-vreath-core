@@ -9,7 +9,7 @@ import { Trie } from './merkle_patricia';
 import {DB} from './db';
 import * as data from './data'
 import { constant } from './constant';
-import * as contract from './contract'
+import contract from './contract'
 import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
 
@@ -550,7 +550,7 @@ export const accept_key_block = async (block:T.Block,block_db:DB,last_height:str
     const lock_states = await P.map(bases, async key=>{
         return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));
     });
-    const changed =contract.key_block_change(base_states,pre_native,new_native,fee_sum,block.meta.height,lock_states);
+    const changed =contract.basic.key_block_change(base_states,pre_native,new_native,fee_sum,block.meta.height,lock_states);
     await P.forEach(bases, async (key,i)=>{
         await data.write_trie(trie,state_db,lock_db,changed[i],lock_states[i]);
     });
@@ -570,6 +570,6 @@ export const accept_micro_block = async (block:T.Block,output_states:T.State[],b
     const unit_validator = crypto_set.generate_address(constant.unit,public_key);
     const unit_state = await data.read_from_trie(trie,state_db,unit_validator,0,state_set.CreateState("00",constant.unit,unit_validator,"00",["01","00"]));
     const lock_state = await data.read_from_trie(trie,lock_db,unit_validator,1,lock_set.CreateLock(unit_validator));
-    const changed = contract.micro_block_change([unit_state],block.meta.height,[lock_state]);
+    const changed = contract.basic.micro_block_change([unit_state],block.meta.height,[lock_state]);
     await data.write_trie(trie,state_db,lock_db,changed[0],lock_state);
 }

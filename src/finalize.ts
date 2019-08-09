@@ -2,14 +2,11 @@ import * as _ from './util'
 import * as crypto_set from './crypto_set'
 import * as T from './types'
 import * as state_set from './state'
-import * as lock_set from './lock'
 import * as tx_set from './tx'
-import {get_diff} from './diff'
 import { Trie } from './merkle_patricia';
 import {DB} from './db';
 import * as data from './data'
 import { constant } from './constant';
-import * as contract from './contract'
 import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
 
@@ -57,6 +54,7 @@ export const choose_finalize_validators = async (uniters:string[],block_height:s
 }
 
 export const verify_finalized = async (key_block:T.Block,finalizes:T.Finalize[],uniters:string[],trie:Trie,state_db:DB)=>{
+    if(finalizes.some(f=>f.hash!=key_block.hash||bigInt(f.height,16).notEquals(bigInt(key_block.meta.height,16)))) return false;
     const v_s = finalizes.map(f=>tx_set.get_recover_id_from_sign(f.sign));
     const pub_keys = finalizes.map((f,i)=>crypto_set.recover(finalize_hash(f.height,f.hash),f.sign.data,v_s[i]));
     const addresses = pub_keys.map(key=>crypto_set.generate_address(constant.unit,key));

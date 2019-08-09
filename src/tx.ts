@@ -8,7 +8,7 @@ import { Trie } from './merkle_patricia';
 import {DB} from './db';
 import * as data from './data'
 import {constant} from './constant'
-import * as contracts from './contract'
+import contracts from './contract'
 import bigInt, { BigInteger } from 'big-integer'
 import * as P from 'p-iteration'
 
@@ -167,10 +167,10 @@ export const get_info_from_tx = (tx:T.Tx):[string,string[],string[],string[],str
 
 export const contract_check = async (token:string,bases:string[],base_state:T.State[],input_data:string[],output_state:T.State[],block_db?:DB,last_height?:string)=>{
   if(bigInt(token,16).eq(bigInt(constant.native,16))){
-    return !contracts.native_verify(bases,base_state,input_data,output_state);
+    return !contracts.native.native_verify(bases,base_state,input_data,output_state);
   }
   else if(bigInt(token,16).eq(bigInt(constant.unit,16))&&block_db!=null&&last_height!=null){
-    return !contracts.unit_verify(bases,base_state,input_data,output_state,block_db,last_height);
+    return !contracts.unit.unit_verify(bases,base_state,input_data,output_state,block_db,last_height);
   }
   else return true;
 }
@@ -434,7 +434,7 @@ export const accept_req_tx = async (tx:T.Tx,height:string,block_hash:string,inde
 
   const requester_state:T.State = await data.read_from_trie(trie,state_db,requester,0,state_set.CreateState("00",constant.native,requester,"00"));
 
-  const changed_states = contracts.req_tx_change([requester_state],requester,fee,gas);
+  const changed_states = contracts.basic.req_tx_change([requester_state],requester,fee,gas);
 
   const bases = tx.meta.request.bases;
   const base_states = await P.map(bases, async key=>{
@@ -475,7 +475,7 @@ export const accept_ref_tx = async (ref_tx:T.Tx,output_states:T.State[],height:s
     res[s.owner] = s.data[2] || "00";
     return res;
   },{});
-  const changed = await contracts.ref_tx_change(bases,output_states,requester,refresher,fee,gas,height,income_map);
+  const changed = await contracts.basic.ref_tx_change(bases,output_states,requester,refresher,fee,gas,height,income_map);
 
   const lock_states = await P.map(bases, async key=>{
     return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));

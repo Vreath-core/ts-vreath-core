@@ -18,7 +18,7 @@ const db_1 = require("./src/db");
 const data_set = __importStar(require("./src/data"));
 const state_set = __importStar(require("./src/state"));
 const lock_set = __importStar(require("./src/lock"));
-const contract = __importStar(require("./src/contract"));
+const contract_1 = __importDefault(require("./src/contract"));
 const diff_1 = require("./src/diff");
 const tx_set = __importStar(require("./src/tx"));
 const block_set = __importStar(require("./src/block"));
@@ -466,38 +466,10 @@ exports.tx = {
     accept_ref_tx: accept_ref_tx
 };
 const output_state_error = new Error('invalid output state');
-const native_prove = (bases, base_state, input_data) => {
-    if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s) || input_data.some(str => hex_check(str))))
-        throw error;
-    const output = contract.native_prove(bases, base_state, input_data);
-    if (output.some(s => !isState(s)))
-        throw output_state_error;
-    return output;
-};
-const native_verify = (bases, base_state, input_data, output_state) => {
-    if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || output_state.some(s => !isState(s)))
-        throw error;
-    const verified = contract.native_verify(bases, base_state, input_data, output_state);
-    return verified;
-};
-const unit_prove = async (bases, base_state, input_data, block_db, last_height) => {
-    if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || hex_check(last_height, 8, true))
-        throw error;
-    const output = await contract.unit_prove(bases, base_state, input_data, block_db, last_height);
-    if (output.some(s => !isState(s)))
-        throw output_state_error;
-    return output;
-};
-const unit_verify = async (bases, base_state, input_data, output_state, block_db, last_height) => {
-    if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || output_state.some(s => !isState(s)) || hex_check(last_height, 8, true))
-        throw error;
-    const verified = await contract.unit_verify(bases, base_state, input_data, output_state, block_db, last_height);
-    return verified;
-};
 const req_tx_change = (base_state, requester, fee, gas) => {
     if (base_state.some(s => !isState(s)) || hex_check(requester, 40) || hex_check(fee, 10, true) || hex_check(gas, 10, true))
         throw error;
-    const output = contract.req_tx_change(base_state, requester, fee, gas);
+    const output = contract_1.default.basic.req_tx_change(base_state, requester, fee, gas);
     if (output.some(s => !isState(s)))
         throw output_state_error;
     return output;
@@ -506,7 +478,7 @@ const req_tx_change = (base_state, requester, fee, gas) => {
 const ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last_height, income_map) => {
     if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s)) || hex_check(requester, 40) || hex_check(refresher, 40) || hex_check(fee, 10, true) || hex_check(gas, 10, true) || hex_check(last_height, 8, true) || Object.keys(income_map).some(key => hex_check(key, 40)) || Object.values(income_map).some(amount => hex_check(amount, 10, true)))
         throw error;
-    const output = contract.ref_tx_change(bases, base_state, requester, refresher, fee, gas, last_height, income_map);
+    const output = contract_1.default.basic.ref_tx_change(bases, base_state, requester, refresher, fee, gas, last_height, income_map);
     if (output.some(s => !isState(s)))
         throw output_state_error;
     return output;
@@ -515,7 +487,7 @@ const ref_tx_change = (bases, base_state, requester, refresher, fee, gas, last_h
 const key_block_change = (base_state, validator_1, validator_2, fee, last_height, locks) => {
     if (base_state.some(s => !isState(s)) || hex_check(validator_1, 40) || hex_check(validator_2, 40) || hex_check(fee, 10, true) || hex_check(last_height, 8, true) || locks.some(l => !isLock(l)))
         throw error;
-    const output = contract.key_block_change(base_state, validator_1, validator_2, fee, last_height, locks);
+    const output = contract_1.default.basic.key_block_change(base_state, validator_1, validator_2, fee, last_height, locks);
     if (output.some(s => !isState(s)))
         throw output_state_error;
     return output;
@@ -524,20 +496,75 @@ const key_block_change = (base_state, validator_1, validator_2, fee, last_height
 const micro_block_change = (base_state, last_height, locks) => {
     if (base_state.some(s => !isState(s)) || hex_check(last_height, 8, true) || locks.some(l => !isLock(l)))
         throw error;
-    const output = contract.micro_block_change(base_state, last_height, locks);
+    const output = contract_1.default.basic.micro_block_change(base_state, last_height, locks);
     if (output.some(s => !isState(s)))
         throw output_state_error;
     return output;
 };
+const native_prove = (bases, base_state, input_data) => {
+    if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s) || input_data.some(str => hex_check(str))))
+        throw error;
+    const output = contract_1.default.native.native_prove(bases, base_state, input_data);
+    if (output.some(s => !isState(s)))
+        throw output_state_error;
+    return output;
+};
+const native_verify = (bases, base_state, input_data, output_state) => {
+    if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || output_state.some(s => !isState(s)))
+        throw error;
+    const verified = contract_1.default.native.native_verify(bases, base_state, input_data, output_state);
+    return verified;
+};
+const unit_prove = async (bases, base_state, input_data, block_db, last_height) => {
+    if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || hex_check(last_height, 8, true))
+        throw error;
+    const output = await contract_1.default.unit.unit_prove(bases, base_state, input_data, block_db, last_height);
+    if (output.some(s => !isState(s)))
+        throw output_state_error;
+    return output;
+};
+const unit_verify = async (bases, base_state, input_data, output_state, block_db, last_height) => {
+    if (bases.some(key => hex_check(key, 40)) || base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || output_state.some(s => !isState(s)) || hex_check(last_height, 8, true))
+        throw error;
+    const verified = await contract_1.default.unit.unit_verify(bases, base_state, input_data, output_state, block_db, last_height);
+    return verified;
+};
+const ethereum_prove = async (base_state, input_data, trie, state_db, validators, signatures) => {
+    if (base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || validators.some(add => hex_check(add, 40)) || signatures.some(s => !isSignature(s)))
+        throw error;
+    const output = await contract_1.default.ethereum.ethereum_prove(base_state, input_data, trie, state_db, validators, signatures);
+    if (output.some(o => !isState(o)))
+        throw output_state_error;
+    return output;
+};
+const ethereum_verify = async (base_state, input_data, output_state, trie, state_db, validators, signatures) => {
+    if (base_state.some(s => !isState(s)) || input_data.some(str => hex_check(str)) || output_state.some(o => !isState(o)) || validators.some(add => hex_check(add, 40)) || signatures.some(s => !isSignature(s)))
+        throw error;
+    const verified = await contract_1.default.ethereum.ethereum_verify(base_state, input_data, output_state, trie, state_db, validators, signatures);
+    return verified;
+};
+const ethereum_memory_id = async (height, hash) => {
+    if (hex_check(height, 8, true) || hex_check(hash, 32))
+        throw error;
+    const id = contract_1.default.ethereum.block_id(height, hash);
+    if (hex_check(id, 32))
+        throw output_state_error;
+    return id;
+};
 exports.contracts = {
+    req_tx_change: req_tx_change,
+    ref_tx_change: ref_tx_change,
+    key_block_change: key_block_change,
+    micro_block_change: micro_block_change,
     native_prove: native_prove,
     native_verify: native_verify,
     unit_prove: unit_prove,
     unit_verify: unit_verify,
-    req_tx_change: req_tx_change,
-    ref_tx_change: ref_tx_change,
-    key_block_change: key_block_change,
-    micro_block_change: micro_block_change
+    ethereum_prove: ethereum_prove,
+    ethereum_verify: ethereum_verify,
+    ethereum_memory_id: ethereum_memory_id,
+    ethereum_finality_height: contract_1.default.ethereum.finality_height,
+    ethereum_meta_address: contract_1.default.ethereum.ethereum_info_address
 };
 const block_meta2array = (meta) => {
     if (!isBlockMeta(meta))
