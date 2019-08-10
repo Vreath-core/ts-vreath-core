@@ -560,11 +560,13 @@ exports.contracts = {
     native_verify: native_verify,
     unit_prove: unit_prove,
     unit_verify: unit_verify,
-    ethereum_prove: ethereum_prove,
-    ethereum_verify: ethereum_verify,
-    ethereum_memory_id: ethereum_memory_id,
-    ethereum_finality_height: contract_1.default.ethereum.finality_height,
-    ethereum_meta_address: contract_1.default.ethereum.ethereum_info_address
+    ethereum: {
+        prove: ethereum_prove,
+        verify: ethereum_verify,
+        memory_id: ethereum_memory_id,
+        finality_height: contract_1.default.ethereum.finality_height,
+        meta_address: contract_1.default.ethereum.ethereum_info_address
+    }
 };
 const block_meta2array = (meta) => {
     if (!isBlockMeta(meta))

@@ -1,3 +1,5 @@
+import contract from './contract'
+
 export type State = {
   nonce:string;//8 byte hex
   token:string;//8 byte hex
@@ -112,4 +114,21 @@ export type Finalize = {
   height:string,
   hash:string,
   sign:Sign
+}
+
+export type ethereum_header = {
+  difficulty: string,
+  extraData: string,
+  hash: string,
+  logsBloom: string,
+  miner: string,
+  number: string,
+  parentHash: string,
+  receiptsRoot: string,
+  signature: string,
+  size: string,
+  stateRoot: string,
+  timestamp: string,
+  totalDifficulty: string,
+  transactionsRoot: string,
 }

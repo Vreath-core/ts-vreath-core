@@ -5,32 +5,15 @@ import * as crypto_set from '../crypto_set'
 import {constant} from '../constant'
 import {CreateState} from '../state'
 import bigInt, { BigInteger } from 'big-integer'
-import * as P from 'p-iteration'
 import { DB } from '../db';
 import { Trie } from '../merkle_patricia';
 import {read_from_trie} from '../data'
-import { data } from '../..';
+
 
 const ethereum = constant.ethereum;
 export const finality_height = 10;
 export const ethereum_info_address = crypto_set.generate_address(constant.ethereum,"00");
 
-export type ethereum_header = {
-  difficulty: string,
-  extraData: string,
-  hash: string,
-  logsBloom: string,
-  miner: string,
-  number: string,
-  parentHash: string,
-  receiptsRoot: string,
-  signature: string,
-  size: string,
-  stateRoot: string,
-  timestamp: string,
-  totalDifficulty: string,
-  transactionsRoot: string,
-}
 
 export const ethereum_prove = async (base_state:T.State[],input_data:string[],trie:Trie,state_db:DB,validators:string[],signatures:T.Sign[]):Promise<T.State[]>=>{
     const type = input_data[0];
@@ -62,7 +45,7 @@ export const ethereum_verify = async (base_state:T.State[],input_data:string[],o
 
 
 const transfer = async (input_data:string[],trie:Trie,state_db:DB,validators:string[],signatures:T.Sign[]):Promise<[T.State,T.State,T.State|null]|null>=>{
-  const header:ethereum_header = {
+  const header:T.ethereum_header = {
     difficulty:input_data[0],
     extraData:input_data[1],
     hash:input_data[2],
