@@ -58,12 +58,11 @@ const transfer = async (input_data, trie, state_db, validators, signatures) => {
         number: input_data[5],
         parentHash: input_data[6],
         receiptsRoot: input_data[7],
-        signature: input_data[8],
-        size: input_data[9],
-        stateRoot: input_data[10],
-        timestamp: input_data[11],
-        totalDifficulty: input_data[12],
-        transactionsRoot: input_data[13]
+        size: input_data[8],
+        stateRoot: input_data[9],
+        timestamp: input_data[10],
+        totalDifficulty: input_data[11],
+        transactionsRoot: input_data[12]
     };
     // data := [kind(memory="00"),last height,last block hash,finalized last height,finalized last block hash]
     let meta_state = await data_1.read_from_trie(trie, state_db, exports.ethereum_info_address, 0, state_1.CreateState("00", constant_1.constant.ethereum, exports.ethereum_info_address, "00", ["00", "00", crypto_set.get_sha256(""), "00", crypto_set.get_sha256("")]));

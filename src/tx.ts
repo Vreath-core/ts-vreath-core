@@ -475,7 +475,15 @@ export const accept_ref_tx = async (ref_tx:T.Tx,output_states:T.State[],height:s
     res[s.owner] = s.data[2] || "00";
     return res;
   },{});
-  const changed = await contracts.basic.ref_tx_change(bases,output_states,requester,refresher,fee,gas,height,income_map);
+  const failed_state = (states:T.State[],income_map:{[key:string]:string},native_states:T.State[])=>{
+    const requester_state = states.filter(s=>bigInt(s.token,16).eq(bigInt(constant.native,16))&&s.owner===requester)[0];
+    const refresher_state = states.filter(s=>bigInt(s.token,16).eq(bigInt(constant.native,16))&&s.owner===refresher)[0];
+    const validator_keys = Object.entries(income_map).filter(obj=>obj[1]!='00').map(obj=>obj[0]);
+    const validator_states = native_states.filter(s=>validator_keys.indexOf(s.owner)!=-1);
+    return [requester_state,refresher_state].concat(validator_states);
+  }
+  const pre_ref_states = ref_tx.meta.refresh.success===1 ? output_states : failed_state(output_states,income_map,native_base_states);
+  const changed = await contracts.basic.ref_tx_change(bases,pre_ref_states,requester,refresher,fee,gas,height,income_map);
 
   const lock_states = await P.map(bases, async key=>{
     return await data.read_from_trie(trie,lock_db,key,1,lock_set.CreateLock(key));

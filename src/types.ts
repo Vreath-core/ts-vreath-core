@@ -125,7 +125,6 @@ export type ethereum_header = {
   number: string,
   parentHash: string,
   receiptsRoot: string,
-  signature: string,
   size: string,
   stateRoot: string,
   timestamp: string,
