@@ -433,18 +433,19 @@ exports.accept_ref_tx = async (ref_tx, output_states, height, block_hash, index,
         res[s.owner] = s.data[2] || "00";
         return res;
     }, {});
-    const failed_state = (states, income_map, native_states) => {
+    const validator_keys = Object.entries(income_map).filter(obj => obj[1] != '00').map(obj => obj[0]);
+    const failed_state = (states, validator_keys, native_states) => {
         const requester_state = states.filter(s => big_integer_1.default(s.token, 16).eq(big_integer_1.default(constant_1.constant.native, 16)) && s.owner === requester)[0];
         const refresher_state = states.filter(s => big_integer_1.default(s.token, 16).eq(big_integer_1.default(constant_1.constant.native, 16)) && s.owner === refresher)[0];
-        const validator_keys = Object.entries(income_map).filter(obj => obj[1] != '00').map(obj => obj[0]);
         const validator_states = native_states.filter(s => validator_keys.indexOf(s.owner) != -1);
         const sum = [requester_state, refresher_state].concat(validator_states).filter(s => s != null);
         const keys = sum.map(s => s.owner);
         return sum.filter((s, i) => keys.indexOf(s.owner) === i);
     };
-    const pre_ref_states = ref_tx.meta.refresh.success === 1 ? output_states : failed_state(output_states, income_map, native_base_states);
-    const changed = await contract_1.default.basic.ref_tx_change(bases, pre_ref_states, requester, refresher, fee, gas, height, income_map);
-    const lock_states = await P.map(bases, async (key) => {
+    const pre_ref_bases = ref_tx.meta.refresh.success === 1 ? bases : [requester, refresher].concat(validator_keys).filter((val, i, array) => array.indexOf(val) === i);
+    const pre_ref_states = ref_tx.meta.refresh.success === 1 ? output_states : failed_state(output_states, validator_keys, native_base_states);
+    const changed = await contract_1.default.basic.ref_tx_change(pre_ref_bases, pre_ref_states, requester, refresher, fee, gas, height, income_map);
+    const lock_states = await P.map(pre_ref_bases, async (key) => {
         return await data.read_from_trie(trie, lock_db, key, 1, lock_set.CreateLock(key));
     });
     const added = lock_states.map(l => {
@@ -457,7 +458,7 @@ exports.accept_ref_tx = async (ref_tx, output_states, height, block_hash, index,
             return l;
         });
     });
-    await P.forEach(bases, async (key, i) => {
+    await P.forEach(pre_ref_bases, async (key, i) => {
         await data.write_trie(trie, state_db, lock_db, changed[i], added[i]);
     });
 };
