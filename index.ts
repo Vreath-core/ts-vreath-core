@@ -376,7 +376,7 @@ const contract_check = async (token:string,bases:string[],base_state:T.State[],i
 }
 
 const verify_req_tx = async (req_tx:T.Tx,trie:Trie,state_db:DB,lock_db:DB,disabling?:number[])=>{
-    if(!isTx(req_tx)||req_tx.meta.kind!=0||(disabling!=null&&disabling.some(num=>[0,1,2,3,4,5].indexOf(num)===-1))) throw error
+    if(!isTx(req_tx)||req_tx.meta.kind!=0||(disabling!=null&&disabling.some(num=>[0,1,2,3,4,5,6].indexOf(num)===-1))) throw error
     else return await tx_set.verify_req_tx(req_tx,trie,state_db,lock_db,disabling);
 }
 
