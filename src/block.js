@@ -535,7 +535,7 @@ exports.accept_key_block = async (block, block_db, last_height, trie, state_db, 
     const base_states = await P.map(bases, async (key) => {
         return await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key));
     });
-    const fees = last_micros.reduce((sum, b) => big_integer_1.default(sum).add(b.meta.fee_sum), big_integer_1.default(0));
+    const fees = last_micros.reduce((sum, b) => big_integer_1.default(sum).add(big_integer_1.default(b.meta.fee_sum, 16)), big_integer_1.default(0));
     const issues = last_micros.concat(last_key).reduce((sum, b) => sum.add(big_integer_1.default(compute_issue(b.meta.height), 16)), big_integer_1.default(0));
     const fee_sum = _.bigInt2hex(fees.add(issues));
     const lock_states = await P.map(bases, async (key) => {

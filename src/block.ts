@@ -544,7 +544,7 @@ export const accept_key_block = async (block:T.Block,block_db:DB,last_height:str
         return await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("00",_.slice_token_part(key),key));
     });
 
-    const fees = last_micros.reduce((sum,b)=>bigInt(sum).add(b.meta.fee_sum),bigInt(0));
+    const fees = last_micros.reduce((sum,b)=>bigInt(sum).add(bigInt(b.meta.fee_sum,16)),bigInt(0));
     const issues = last_micros.concat(last_key).reduce((sum,b)=>sum.add(bigInt(compute_issue(b.meta.height),16)),bigInt(0));
     const fee_sum = _.bigInt2hex(fees.add(issues));
     const lock_states = await P.map(bases, async key=>{
