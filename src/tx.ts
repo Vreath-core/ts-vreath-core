@@ -481,11 +481,11 @@ export const accept_ref_tx = async (ref_tx:T.Tx,output_states:T.State[],height:s
   }*/
   let pre_ref_bases = bases;
   let pre_ref_states = output_states;
-  if(pre_ref_bases.indexOf(refresher)===-1){
+  /*if(pre_ref_bases.indexOf(refresher)===-1){
     pre_ref_bases.push(refresher);
     const refresher_state = await data.read_from_trie(trie,state_db,refresher,0,state_set.CreateState("00",constant.native,refresher));
     pre_ref_states.push(refresher_state);
-  }
+  }*/
   const native_base_states = await P.map(pre_ref_bases.filter(key=>bigInt(_.slice_token_part(key),16).eq(bigInt(constant.native,16))), async key=>await data.read_from_trie(trie,state_db,key,0,state_set.CreateState("00",_.slice_token_part(key),key,"00",[])));
   const income_map:{[key:string]:string} = native_base_states.reduce((res:{[key:string]:string},s)=>{
     res[s.owner] = s.data[2] || "00";

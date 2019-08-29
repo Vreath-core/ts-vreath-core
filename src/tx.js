@@ -439,11 +439,11 @@ exports.accept_ref_tx = async (ref_tx, output_states, height, block_hash, index,
     }*/
     let pre_ref_bases = bases;
     let pre_ref_states = output_states;
-    if (pre_ref_bases.indexOf(refresher) === -1) {
-        pre_ref_bases.push(refresher);
-        const refresher_state = await data.read_from_trie(trie, state_db, refresher, 0, state_set.CreateState("00", constant_1.constant.native, refresher));
-        pre_ref_states.push(refresher_state);
-    }
+    /*if(pre_ref_bases.indexOf(refresher)===-1){
+      pre_ref_bases.push(refresher);
+      const refresher_state = await data.read_from_trie(trie,state_db,refresher,0,state_set.CreateState("00",constant.native,refresher));
+      pre_ref_states.push(refresher_state);
+    }*/
     const native_base_states = await P.map(pre_ref_bases.filter(key => big_integer_1.default(_.slice_token_part(key), 16).eq(big_integer_1.default(constant_1.constant.native, 16))), async (key) => await data.read_from_trie(trie, state_db, key, 0, state_set.CreateState("00", _.slice_token_part(key), key, "00", [])));
     const income_map = native_base_states.reduce((res, s) => {
         res[s.owner] = s.data[2] || "00";
