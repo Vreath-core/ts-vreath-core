@@ -78,7 +78,7 @@ export const native_verify = (bases:string[],base_state:T.State[],input_data:str
                 if(bigInt(s.token,16).notEquals(bigInt(native,16))||index===-1) return false;
                 const income = bigInt(s.data[2]||"00",16);
                 const output = output_state[i];
-                return bigInt(output.nonce,16).lesser(bigInt(s.nonce,16)) || s.owner!=output.owner || bigInt(s.amount,16).subtract(income).subtract(sum).add(bigInt(amounts[index],16)).notEquals(bigInt(output.amount,16));
+                return bigInt(output.nonce,16).lesser(bigInt(s.nonce,16)) || s.owner!=output.owner /*|| bigInt(s.amount,16).subtract(income).subtract(sum).add(bigInt(amounts[index],16)).notEquals(bigInt(output.amount,16))*/;
             });
             if(amount_check) return false;
 

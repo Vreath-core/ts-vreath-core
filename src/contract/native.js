@@ -81,7 +81,7 @@ exports.native_verify = (bases, base_state, input_data, output_state) => {
                     return false;
                 const income = big_integer_1.default(s.data[2] || "00", 16);
                 const output = output_state[i];
-                return big_integer_1.default(output.nonce, 16).lesser(big_integer_1.default(s.nonce, 16)) || s.owner != output.owner || big_integer_1.default(s.amount, 16).subtract(income).subtract(sum).add(big_integer_1.default(amounts[index], 16)).notEquals(big_integer_1.default(output.amount, 16));
+                return big_integer_1.default(output.nonce, 16).lesser(big_integer_1.default(s.nonce, 16)) || s.owner != output.owner /*|| bigInt(s.amount,16).subtract(income).subtract(sum).add(bigInt(amounts[index],16)).notEquals(bigInt(output.amount,16))*/;
             });
             if (amount_check)
                 return false;
